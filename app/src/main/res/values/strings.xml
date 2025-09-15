@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">TALauncher</string>
+    <string name="focus_mode">Focus Mode</string>
+    <string name="usage_insights">Usage Insights</string>
+    <string name="settings">Settings</string>
+    <string name="essential_apps">Essential Apps</string>
+    <string name="distracting_apps">Distracting Apps</string>
+    <string name="search_apps">Search apps...</string>
+    <string name="time_spent_today">Time spent today</string>
+    <string name="enable_focus_mode">Enable Focus Mode</string>
+    <string name="disable_focus_mode">Disable Focus Mode</string>
+    <string name="app_blocked">This app is blocked in Focus Mode</string>
+    <string name="why_open_app">Why do you want to open this app?</string>
+    <string name="continue_to_app">Continue to App</string>
+</resources>

@@ -1,0 +1,25 @@
+package com.talauncher.data.repository
+
+import com.talauncher.data.database.SettingsDao
+import com.talauncher.data.model.LauncherSettings
+import kotlinx.coroutines.flow.Flow
+
+class SettingsRepository(private val settingsDao: SettingsDao) {
+
+    fun getSettings(): Flow<LauncherSettings?> = settingsDao.getSettings()
+
+    suspend fun getSettingsSync(): LauncherSettings {
+        return settingsDao.getSettingsSync() ?: LauncherSettings().also {
+            settingsDao.insertSettings(it)
+        }
+    }
+
+    suspend fun updateFocusMode(enabled: Boolean) {
+        val settings = getSettingsSync()
+        settingsDao.updateSettings(settings.copy(isFocusModeEnabled = enabled))
+    }
+
+    suspend fun updateSettings(settings: LauncherSettings) {
+        settingsDao.updateSettings(settings)
+    }
+}

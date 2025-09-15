@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "Bash(gradlew.bat assembleDebug:*)",
+      "Bash(gradle:*)",
+      "Bash(wget:*)",
+      "Bash(curl:*)",
+      "Bash(cmd /c:*)",
+      "Bash(powershell:*)",
+      "Bash(java:*)",
+      "Read(//c/Program Files/Microsoft/**)",
+      "Bash(dir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
