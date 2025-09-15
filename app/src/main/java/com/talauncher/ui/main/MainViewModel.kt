@@ -2,6 +2,7 @@ package com.talauncher.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,7 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val appRepository: AppRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -17,6 +19,7 @@ class MainViewModel(
 
     init {
         checkOnboardingStatus()
+        syncApps()
     }
 
     private fun checkOnboardingStatus() {
@@ -26,6 +29,12 @@ class MainViewModel(
                 isOnboardingCompleted = isOnboardingCompleted,
                 isLoading = false
             )
+        }
+    }
+
+    private fun syncApps() {
+        viewModelScope.launch {
+            appRepository.syncInstalledApps()
         }
     }
 

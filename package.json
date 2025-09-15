@@ -1,0 +1,11 @@
+{
+  "name": "talauncher-build-scripts",
+  "version": "1.0.0",
+  "description": "Build scripts for TALauncher Android app",
+  "scripts": {
+    "makeAPK": "bun run makeAPK.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

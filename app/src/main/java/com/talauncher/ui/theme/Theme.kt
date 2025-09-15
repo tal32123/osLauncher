@@ -7,35 +7,74 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val ZenDarkColorScheme = darkColorScheme(
-    primary = ZenAccentDark,
-    secondary = ZenSecondaryDark,
-    tertiary = ZenPrimaryDark,
-    background = BackgroundDark,
-    surface = SurfaceDark,
-    onPrimary = Color.Black,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White,
-    primaryContainer = ZenPrimaryDark,
-    onPrimaryContainer = ZenAccentDark,
+// GitHub Primer-inspired color schemes
+private val PrimerDarkColorScheme = darkColorScheme(
+    primary = PrimerBlueDark,
+    secondary = PrimerGray600Dark,
+    tertiary = PrimerGray500Dark,
+    background = PrimerGray50Dark,
+    surface = PrimerGray100Dark,
+    surfaceVariant = PrimerGray200Dark,
+    surfaceContainer = PrimerGray200Dark,
+
+    onPrimary = PrimerGray50Dark,
+    onSecondary = PrimerGray900Dark,
+    onTertiary = PrimerGray900Dark,
+    onBackground = PrimerGray900Dark,
+    onSurface = PrimerGray900Dark,
+    onSurfaceVariant = PrimerGray700Dark,
+
+    primaryContainer = FocusModeBackgroundDark,
+    onPrimaryContainer = PrimerGray900Dark,
+    secondaryContainer = PrimerGray300Dark,
+    onSecondaryContainer = PrimerGray900Dark,
+
+    outline = PrimerGray300Dark,
+    outlineVariant = PrimerGray200Dark,
+    scrim = Color.Black.copy(alpha = 0.6f),
+
+    // Status colors
+    error = PrimerRedDark,
+    onError = PrimerGray50Dark,
+    errorContainer = PrimerRedDark.copy(alpha = 0.1f),
+    onErrorContainer = PrimerRedDark,
 )
 
-private val ZenLightColorScheme = lightColorScheme(
-    primary = ZenPrimary,
-    secondary = ZenSecondary,
-    tertiary = ZenAccent,
-    background = Background,
-    surface = Surface,
+private val PrimerLightColorScheme = lightColorScheme(
+    primary = PrimerBlue,
+    secondary = PrimerGray700,
+    tertiary = PrimerGray600,
+    background = PrimerGray50,
+    surface = Color.White,
+    surfaceVariant = PrimerGray100,
+    surfaceContainer = PrimerGray100,
+
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
+    onBackground = PrimerGray900,
+    onSurface = PrimerGray900,
+    onSurfaceVariant = PrimerGray700,
+
     primaryContainer = FocusModeBackground,
-    onPrimaryContainer = ZenPrimary,
+    onPrimaryContainer = PrimerBlue,
+    secondaryContainer = PrimerGray100,
+    onSecondaryContainer = PrimerGray900,
+
+    outline = PrimerGray300,
+    outlineVariant = PrimerGray200,
+    scrim = Color.Black.copy(alpha = 0.6f),
+
+    // Status colors
+    error = PrimerRed,
+    onError = Color.White,
+    errorContainer = PrimerRed.copy(alpha = 0.1f),
+    onErrorContainer = PrimerRed,
 )
+
+// Legacy color schemes for backward compatibility
+private val ZenDarkColorScheme = PrimerDarkColorScheme
+private val ZenLightColorScheme = PrimerLightColorScheme
 
 @Composable
 fun TALauncherTheme(
@@ -43,13 +82,13 @@ fun TALauncherTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        darkTheme -> ZenDarkColorScheme
-        else -> ZenLightColorScheme
+        darkTheme -> PrimerDarkColorScheme
+        else -> PrimerLightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = PrimerTypography,
         content = content
     )
 }

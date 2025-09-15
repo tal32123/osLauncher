@@ -1,12 +1,12 @@
-# AGENTS.MD: A Guide for Developing ZenLauncher
+# AGENTS.MD: A Guide for Developing TALauncher
 
-This document outlines the vision, technical standards, and workflow for the ZenLauncher project. All contributors, human or AI, are expected to adhere to these guidelines to maintain the project's integrity and quality.
+This document outlines the vision, technical standards, and workflow for the TALauncher project. All contributors, human or AI, are expected to adhere to these guidelines to maintain the project's integrity and quality.
 
 ## 1. Project Goal & Vision
 
 **The Goal:** To create a minimalist, aesthetically pleasing Android launcher that helps people reduce screen time and combat digital distraction.
 
-**The Vision:** ZenLauncher is not just another app; it's a tool for a more intentional digital life. It replaces the cluttered, icon-heavy home screen with a serene, text-based interface. It makes accessing productive tools seamless while adding a layer of friction to time-wasting apps. The user should feel calmer and more in control of their device.
+**The Vision:** TALauncher is not just another app; it's a tool for a more intentional digital life. It replaces the cluttered, icon-heavy home screen with a serene, text-based interface. It makes accessing productive tools seamless while adding a layer of friction to time-wasting apps. The user should feel calmer and more in control of their device.
 
 ## 2. Design Philosophy & Aesthetics
 
@@ -14,13 +14,15 @@ This document outlines the vision, technical standards, and workflow for the Zen
 *   **Text-Centric:** The interface will be primarily text-based. Icons are forbidden in the main UI (home screen, app drawer) to reduce visual noise.
 *   **Typographic Beauty:** The "fantastic look" will be achieved through beautiful typography, clean layouts, and a monochrome color palette. Font choice, spacing, and alignment are paramount.
 *   **Calm & Focused:** The user experience should be tranquil. No flashy animations, no bright colors, no notification badges.
+*   **Excluded Features:** To protect the app's vision, we will deliberately avoid widgets, app icons (the interface is text-only), notification badges/dots, and complex theming options.
 
 ## 3. Core Features
 
-1.  **Home Screen:** Displays only the time, date, and a user-curated list of "Essential Apps."
-2.  **App Drawer:** A simple, alphabetical, and searchable list of all installed apps, rendered in plain text.
+1.  **Home Screen:** Displays the device wallpaper (or a solid color), time, date, and a user-curated list of "Essential Apps." Supports a swipe-down gesture to open the notification shade.
+2.  **App Drawer:** A simple, alphabetical, and searchable list of all installed apps. Includes an entry for "Device Settings". Long-pressing an app provides "Uninstall" and "App Info" options.
 3.  **Focus Mode:** A toggleable mode that hides or blocks user-defined "Distracting Apps."
-4.  **Usage Insights:** A non-intrusive screen that shows time spent in distracting apps, providing awareness without creating a new obsession.
+4.  **Usage Insights:** A non-intrusive screen that shows time spent in distracting apps.
+5.  **Settings:** Allows the user to set a custom wallpaper or a solid background color.
 
 Refer to the `spec.md` file for a more detailed breakdown of these features.
 

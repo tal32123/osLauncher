@@ -90,3 +90,6 @@ crashlytics-build.properties
 # Any other temporary or sensitive files
 *.swp
 *.swo
+
+# Kotlin temporary files
+.kotlin/

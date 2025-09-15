@@ -45,7 +45,7 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Welcome to ZenLauncher",
+            text = "Welcome to TALauncher",
             style = MaterialTheme.typography.displayMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.primary,
@@ -76,7 +76,7 @@ fun OnboardingScreen(
         OnboardingStepCard(
             icon = Icons.Default.Home,
             title = "Set as Default Launcher",
-            description = "Make ZenLauncher your default home screen",
+            description = "Make TALauncher your default home screen",
             isCompleted = uiState.isDefaultLauncher,
             buttonText = if (uiState.isDefaultLauncher) "Completed" else "Set as Default",
             onButtonClick = {
@@ -128,7 +128,7 @@ fun OnboardingScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "ZenLauncher is ready to help you focus",
+                        text = "TALauncher is ready to help you focus",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         textAlign = TextAlign.Center

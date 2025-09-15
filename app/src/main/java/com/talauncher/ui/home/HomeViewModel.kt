@@ -16,7 +16,8 @@ import java.util.*
 
 class HomeViewModel(
     private val appRepository: AppRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val onLaunchApp: ((String) -> Unit)? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -33,14 +34,16 @@ class HomeViewModel(
     private fun observeData() {
         viewModelScope.launch {
             combine(
-                appRepository.getEssentialApps(),
+                appRepository.getPinnedApps(),
                 settingsRepository.getSettings()
-            ) { essentialApps, settings ->
+            ) { pinnedApps, settings ->
                 _uiState.value = _uiState.value.copy(
-                    essentialApps = essentialApps,
+                    pinnedApps = pinnedApps,
                     isFocusModeEnabled = settings?.isFocusModeEnabled ?: false,
                     showTime = settings?.showTimeOnHomeScreen ?: true,
-                    showDate = settings?.showDateOnHomeScreen ?: true
+                    showDate = settings?.showDateOnHomeScreen ?: true,
+                    showWallpaper = settings?.showWallpaper ?: true,
+                    backgroundColor = settings?.backgroundColor ?: "system"
                 )
             }.collect { /* Data collection handled in the combine block */ }
         }
@@ -57,8 +60,34 @@ class HomeViewModel(
     }
 
     fun launchApp(packageName: String) {
+        if (onLaunchApp != null) {
+            onLaunchApp(packageName)
+        } else {
+            viewModelScope.launch {
+                val launched = appRepository.launchApp(packageName)
+                if (!launched) {
+                    // Show friction barrier for distracting app
+                    _uiState.value = _uiState.value.copy(
+                        showFrictionDialog = true,
+                        selectedAppForFriction = packageName
+                    )
+                }
+            }
+        }
+    }
+
+    fun dismissFrictionDialog() {
+        _uiState.value = _uiState.value.copy(
+            showFrictionDialog = false,
+            selectedAppForFriction = null
+        )
+    }
+
+    fun launchAppWithReason(packageName: String, reason: String) {
         viewModelScope.launch {
-            appRepository.launchApp(packageName)
+            // Log the reason for analytics/insights if needed
+            appRepository.launchApp(packageName, bypassFriction = true)
+            dismissFrictionDialog()
         }
     }
 
@@ -72,14 +101,30 @@ class HomeViewModel(
     fun refreshTime() {
         updateTime()
     }
+
+    fun pinApp(packageName: String) {
+        viewModelScope.launch {
+            appRepository.pinApp(packageName)
+        }
+    }
+
+    fun unpinApp(packageName: String) {
+        viewModelScope.launch {
+            appRepository.unpinApp(packageName)
+        }
+    }
 }
 
 data class HomeUiState(
-    val essentialApps: List<AppInfo> = emptyList(),
+    val pinnedApps: List<AppInfo> = emptyList(),
     val currentTime: String = "",
     val currentDate: String = "",
     val isFocusModeEnabled: Boolean = false,
     val showTime: Boolean = true,
     val showDate: Boolean = true,
+    val showWallpaper: Boolean = true,
+    val backgroundColor: String = "system",
+    val showFrictionDialog: Boolean = false,
+    val selectedAppForFriction: String? = null,
     val isLoading: Boolean = false
 )

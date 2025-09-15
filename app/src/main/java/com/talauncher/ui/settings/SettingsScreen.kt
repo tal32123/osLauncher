@@ -16,6 +16,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.talauncher.ui.insights.InsightsScreen
+import com.talauncher.ui.insights.InsightsViewModel
+import com.talauncher.utils.UsageStatsHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,7 +28,7 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("General", "Essential Apps", "Distracting Apps")
+    val tabs = listOf("General", "Essential Apps", "Distracting Apps", "Usage Insights")
 
     Column(
         modifier = Modifier
@@ -57,11 +60,11 @@ fun SettingsScreen(
                 onToggleFocusMode = viewModel::toggleFocusMode
             )
             1 -> AppSelectionTab(
-                title = "Essential Apps",
+                title = "Pinned Apps",
                 subtitle = "Apps that will appear on your home screen",
                 apps = viewModel.getFilteredApps(),
-                selectedApps = uiState.essentialApps.map { it.packageName }.toSet(),
-                onToggleApp = viewModel::toggleEssentialApp,
+                selectedApps = uiState.pinnedApps.map { it.packageName }.toSet(),
+                onToggleApp = viewModel::togglePinnedApp,
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 isLoading = uiState.isLoading
@@ -76,6 +79,15 @@ fun SettingsScreen(
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 isLoading = uiState.isLoading
             )
+            3 -> {
+                val insightsViewModel: InsightsViewModel = viewModel {
+                    InsightsViewModel(viewModel.usageStatsHelper)
+                }
+                InsightsScreen(
+                    onNavigateBack = onNavigateBack,
+                    viewModel = insightsViewModel
+                )
+            }
         }
     }
 }

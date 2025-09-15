@@ -6,6 +6,7 @@ import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
+import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +15,8 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val appRepository: AppRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    val usageStatsHelper: UsageStatsHelper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -33,12 +35,12 @@ class SettingsViewModel(
             allInstalledApps = appRepository.getInstalledApps()
 
             combine(
-                appRepository.getEssentialApps(),
+                appRepository.getPinnedApps(),
                 appRepository.getDistractingApps(),
                 settingsRepository.getSettings()
-            ) { essentialApps, distractingApps, settings ->
+            ) { pinnedApps, distractingApps, settings ->
                 _uiState.value = _uiState.value.copy(
-                    essentialApps = essentialApps,
+                    pinnedApps = pinnedApps,
                     distractingApps = distractingApps,
                     isFocusModeEnabled = settings?.isFocusModeEnabled ?: false,
                     availableApps = allInstalledApps,
@@ -48,19 +50,31 @@ class SettingsViewModel(
         }
     }
 
+    fun togglePinnedApp(packageName: String) {
+        viewModelScope.launch {
+            val currentApp = appRepository.getApp(packageName)
+            if (currentApp?.isPinned == true) {
+                appRepository.unpinApp(packageName)
+            } else {
+                appRepository.pinApp(packageName)
+            }
+        }
+    }
+
     fun toggleEssentialApp(packageName: String) {
         viewModelScope.launch {
             val currentApp = appRepository.getApp(packageName)
             val installedApp = allInstalledApps.find { it.packageName == packageName }
 
             if (currentApp != null) {
-                appRepository.updateEssentialStatus(packageName, !currentApp.isEssential)
+                appRepository.updateDistractingStatus(packageName, !currentApp.isDistracting)
             } else if (installedApp != null) {
                 appRepository.insertApp(
                     AppInfo(
                         packageName = packageName,
                         appName = installedApp.appName,
-                        isEssential = true,
+                        isPinned = false,
+                        isHidden = false,
                         isDistracting = false
                     )
                 )
@@ -80,7 +94,8 @@ class SettingsViewModel(
                     AppInfo(
                         packageName = packageName,
                         appName = installedApp.appName,
-                        isEssential = false,
+                        isPinned = false,
+                        isHidden = false,
                         isDistracting = true
                     )
                 )
@@ -109,8 +124,8 @@ class SettingsViewModel(
         }
     }
 
-    fun isAppEssential(packageName: String): Boolean {
-        return _uiState.value.essentialApps.any { it.packageName == packageName }
+    fun isAppPinned(packageName: String): Boolean {
+        return _uiState.value.pinnedApps.any { it.packageName == packageName }
     }
 
     fun isAppDistracting(packageName: String): Boolean {
@@ -119,7 +134,7 @@ class SettingsViewModel(
 }
 
 data class SettingsUiState(
-    val essentialApps: List<AppInfo> = emptyList(),
+    val pinnedApps: List<AppInfo> = emptyList(),
     val distractingApps: List<AppInfo> = emptyList(),
     val availableApps: List<InstalledApp> = emptyList(),
     val isFocusModeEnabled: Boolean = false,

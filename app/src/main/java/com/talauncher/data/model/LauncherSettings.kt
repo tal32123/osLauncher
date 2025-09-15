@@ -9,5 +9,8 @@ data class LauncherSettings(
     val isFocusModeEnabled: Boolean = false,
     val showTimeOnHomeScreen: Boolean = true,
     val showDateOnHomeScreen: Boolean = true,
-    val isOnboardingCompleted: Boolean = false
+    val isOnboardingCompleted: Boolean = false,
+    val backgroundColor: String = "system", // "system", "black", "white", or hex color
+    val enableHapticFeedback: Boolean = true,
+    val showWallpaper: Boolean = true // Whether to show device wallpaper or solid background
 )

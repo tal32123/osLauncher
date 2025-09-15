@@ -3,6 +3,7 @@ package com.talauncher.data.repository
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import com.talauncher.data.database.AppDao
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
@@ -10,11 +11,16 @@ import kotlinx.coroutines.flow.Flow
 
 class AppRepository(
     private val appDao: AppDao,
-    private val context: Context
+    private val context: Context,
+    private val settingsRepository: SettingsRepository
 ) {
     fun getAllApps(): Flow<List<AppInfo>> = appDao.getAllApps()
 
-    fun getEssentialApps(): Flow<List<AppInfo>> = appDao.getEssentialApps()
+    fun getAllVisibleApps(): Flow<List<AppInfo>> = appDao.getAllVisibleApps()
+
+    fun getPinnedApps(): Flow<List<AppInfo>> = appDao.getPinnedApps()
+
+    fun getHiddenApps(): Flow<List<AppInfo>> = appDao.getHiddenApps()
 
     fun getDistractingApps(): Flow<List<AppInfo>> = appDao.getDistractingApps()
 
@@ -22,12 +28,49 @@ class AppRepository(
 
     suspend fun insertApp(app: AppInfo) = appDao.insertApp(app)
 
-    suspend fun updateEssentialStatus(packageName: String, isEssential: Boolean) {
-        appDao.updateEssentialStatus(packageName, isEssential)
+    suspend fun pinApp(packageName: String) {
+        // Get current app or create new one
+        val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
+        if (app != null) {
+            val maxOrder = appDao.getMaxPinnedOrder() ?: 0
+            appDao.updatePinnedStatus(packageName, true, maxOrder + 1)
+            if (getApp(packageName) == null) {
+                insertApp(app.copy(isPinned = true, pinnedOrder = maxOrder + 1))
+            }
+        }
+    }
+
+    suspend fun unpinApp(packageName: String) {
+        appDao.updatePinnedStatus(packageName, false)
+    }
+
+    suspend fun hideApp(packageName: String) {
+        val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
+        if (app != null) {
+            appDao.updateHiddenStatus(packageName, true)
+            if (getApp(packageName) == null) {
+                insertApp(app.copy(isHidden = true))
+            }
+        }
+    }
+
+    suspend fun unhideApp(packageName: String) {
+        appDao.updateHiddenStatus(packageName, false)
     }
 
     suspend fun updateDistractingStatus(packageName: String, isDistracting: Boolean) {
         appDao.updateDistractingStatus(packageName, isDistracting)
+    }
+
+    private suspend fun getAppInfoFromPackage(packageName: String): AppInfo? {
+        val packageManager = context.packageManager
+        return try {
+            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            val appName = packageManager.getApplicationLabel(appInfo).toString()
+            AppInfo(packageName = packageName, appName = appName)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun getInstalledApps(): List<InstalledApp> {
@@ -49,11 +92,60 @@ class AppRepository(
             .sortedBy { it.appName }
     }
 
-    suspend fun launchApp(packageName: String) {
-        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-        intent?.let {
-            it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(it)
+    suspend fun launchApp(packageName: String, bypassFriction: Boolean = false): Boolean {
+        // Check if app is distracting and focus mode is enabled
+        val app = getApp(packageName)
+        val settings = settingsRepository.getSettingsSync()
+
+        if (!bypassFriction && app?.isDistracting == true && settings.isFocusModeEnabled) {
+            // Return false to indicate friction barrier should be shown
+            return false
+        }
+
+        if (packageName == "android.settings") {
+            // Special case for Device Settings
+            val intent = Intent(Settings.ACTION_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } else {
+            val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+            intent?.let {
+                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(it)
+            }
+        }
+        return true
+    }
+
+    suspend fun getAllAppsSync(): List<AppInfo> = appDao.getAllAppsSync()
+
+    suspend fun syncInstalledApps() {
+        val installedApps = getInstalledApps()
+        val existingApps = getAllAppsSync()
+
+        // Create a map of existing apps for quick lookup
+        val existingAppMap = existingApps.associateBy { it.packageName }
+
+        // Add new apps that don't exist in database
+        installedApps.forEach { installedApp ->
+            if (!existingAppMap.containsKey(installedApp.packageName)) {
+                val appInfo = AppInfo(
+                    packageName = installedApp.packageName,
+                    appName = installedApp.appName
+                )
+                insertApp(appInfo)
+            }
+        }
+
+        // Add Device Settings entry if it doesn't exist
+        val deviceSettingsPackage = "android.settings"
+        if (!existingAppMap.containsKey(deviceSettingsPackage)) {
+            val deviceSettingsApp = AppInfo(
+                packageName = deviceSettingsPackage,
+                appName = "Device Settings"
+            )
+            insertApp(deviceSettingsApp)
         }
     }
 }
