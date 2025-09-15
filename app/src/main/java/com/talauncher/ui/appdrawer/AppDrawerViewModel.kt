@@ -7,9 +7,11 @@ import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppInfo
+import com.talauncher.data.model.AppUsage
 import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
+import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 class AppDrawerViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
+    private val usageStatsHelper: UsageStatsHelper,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null
 ) : ViewModel() {
 
@@ -36,11 +39,24 @@ class AppDrawerViewModel(
                 appRepository.getHiddenApps(),
                 settingsRepository.getSettings()
             ) { visibleApps, hiddenApps, settings ->
+                // Get top used apps from usage stats
+                val recentApps = getRecentApps(visibleApps)
+
                 _uiState.value = _uiState.value.copy(
                     allApps = visibleApps,
-                    hiddenApps = hiddenApps
+                    hiddenApps = hiddenApps,
+                    recentApps = recentApps
                 )
             }.collect { /* Data collection handled in the combine block */ }
+        }
+    }
+
+    private fun getRecentApps(allApps: List<AppInfo>): List<AppInfo> {
+        val topUsedApps = usageStatsHelper.getTopUsedApps(5)
+        val appMap = allApps.associateBy { it.packageName }
+
+        return topUsedApps.mapNotNull { usageApp ->
+            appMap[usageApp.packageName]
         }
     }
 
@@ -184,6 +200,7 @@ class AppDrawerViewModel(
 data class AppDrawerUiState(
     val allApps: List<AppInfo> = emptyList(),
     val hiddenApps: List<AppInfo> = emptyList(),
+    val recentApps: List<AppInfo> = emptyList(), // Top 5 most used apps from past 48 hours
     val isLoading: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val showFrictionDialog: Boolean = false,

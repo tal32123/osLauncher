@@ -208,7 +208,7 @@ fun NiagaraLauncherPager(
             2 -> {
                 // All Apps Screen
                 val appDrawerViewModel: AppDrawerViewModel = viewModel {
-                    AppDrawerViewModel(appRepository, settingsRepository, onLaunchApp)
+                    AppDrawerViewModel(appRepository, settingsRepository, usageStatsHelper, onLaunchApp)
                 }
                 NewAppDrawerScreen(
                     viewModel = appDrawerViewModel

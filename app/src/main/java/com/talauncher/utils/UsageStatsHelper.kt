@@ -61,6 +61,46 @@ class UsageStatsHelper(private val context: Context) {
         } ?: emptyList()
     }
 
+    fun getPast48HoursUsageStats(): List<AppUsage> {
+        if (!hasUsageStatsPermission()) {
+            return emptyList()
+        }
+
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val endTime = System.currentTimeMillis()
+        val startTime = endTime - (48 * 60 * 60 * 1000L) // 48 hours ago
+
+        val usageStats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            startTime,
+            endTime
+        )
+
+        // Group by package name and sum usage times across multiple days
+        val packageUsageMap = mutableMapOf<String, Long>()
+
+        usageStats?.forEach { stats ->
+            if (stats.totalTimeInForeground > 0) {
+                packageUsageMap[stats.packageName] =
+                    (packageUsageMap[stats.packageName] ?: 0) + stats.totalTimeInForeground
+            }
+        }
+
+        return packageUsageMap.map { (packageName, totalTime) ->
+            AppUsage(
+                packageName = packageName,
+                timeInForeground = totalTime
+            )
+        }
+    }
+
+    fun getTopUsedApps(limit: Int = 5): List<AppUsage> {
+        return getPast48HoursUsageStats()
+            .sortedByDescending { it.timeInForeground }
+            .take(limit)
+            .filter { it.timeInForeground > 0 }
+    }
+
     fun getAppName(packageName: String): String? {
         return try {
             val packageManager = context.packageManager

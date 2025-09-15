@@ -147,6 +147,54 @@ fun NewAppDrawerScreen(
                 contentPadding = PaddingValues(horizontal = PrimerSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
             ) {
+                // Recently Used Apps Section
+                if (uiState.recentApps.isNotEmpty() && searchQuery.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Recently Used",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = PrimerGray600,
+                            modifier = Modifier.padding(
+                                start = PrimerSpacing.xs,
+                                top = PrimerSpacing.sm,
+                                bottom = PrimerSpacing.xs
+                            )
+                        )
+                    }
+
+                    items(uiState.recentApps, key = { "recent_${it.packageName}" }) { app ->
+                        RecentAppItem(
+                            appInfo = app,
+                            onClick = {
+                                viewModel.launchApp(app.packageName)
+                                keyboardController?.hide()
+                            },
+                            onLongClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.showAppActionDialog(app)
+                            }
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(PrimerSpacing.md))
+                        HorizontalDivider(
+                            color = PrimerGray200,
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = PrimerSpacing.sm)
+                        )
+                        Text(
+                            text = "All Apps",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = PrimerGray600,
+                            modifier = Modifier.padding(
+                                start = PrimerSpacing.xs,
+                                bottom = PrimerSpacing.xs
+                            )
+                        )
+                    }
+                }
+
                 // Regular Apps
                 items(filteredApps, key = { it.packageName }) { app ->
                     AppDrawerItem(
@@ -524,5 +572,58 @@ fun IconActionButton(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun RecentAppItem(
+    appInfo: AppInfo,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    PrimerCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = PrimerBlue.copy(alpha = 0.05f) // Slight blue tint for recent apps
+        ),
+        border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PrimerSpacing.md)
+                .heightIn(min = PrimerListItemDefaults.minHeight),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = appInfo.appName,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            // Show a "recent" indicator
+            Surface(
+                color = PrimerBlue.copy(alpha = 0.1f),
+                shape = PrimerShapes.small,
+                border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.3f))
+            ) {
+                Text(
+                    text = "Recent",
+                    modifier = Modifier.padding(
+                        horizontal = PrimerSpacing.xs,
+                        vertical = 2.dp
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PrimerBlue
+                )
+            }
+        }
     }
 }
