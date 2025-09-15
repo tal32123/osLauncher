@@ -6,9 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -79,40 +76,6 @@ fun NewHomeScreen(
 
     Box(
         modifier = backgroundModifier
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    val up = waitForUpOrCancellation()
-
-                    if (up != null) {
-                        val dragAmount = up.position - down.position
-                        val longPress = up.uptimeMillis - down.uptimeMillis > 500 // 500ms for long press
-
-                        when {
-                            // Long press - navigate to settings
-                            longPress && abs(dragAmount.x) < 50 && abs(dragAmount.y) < 50 -> {
-                                onNavigateToSettings?.invoke()
-                            }
-                            // Swipe down from top - open notification shade
-                            dragAmount.y > 50 && down.position.y < 200 -> {
-                                try {
-                                    @Suppress("DEPRECATION")
-                                    val statusBarService = context.getSystemService("statusbar")
-                                    val statusBarClass = Class.forName("android.app.StatusBarManager")
-                                    val method = statusBarClass.getMethod("expandNotificationsPanel")
-                                    method.invoke(statusBarService)
-                                } catch (e: Exception) {
-                                    // Fallback - some devices might not support this
-                                }
-                            }
-                            // Swipe right - navigate to app drawer
-                            dragAmount.x > 100 && abs(dragAmount.y) < 50 -> {
-                                onNavigateToAppDrawer?.invoke()
-                            }
-                        }
-                    }
-                }
-            }
     ) {
         Column(
             modifier = Modifier
@@ -276,6 +239,61 @@ fun NewHomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
+        // Gesture Detection Overlays - Invisible areas for reliable gesture capture
+
+        // Right edge swipe area for app drawer navigation
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
+                .width(60.dp) // Wide enough swipe area
+                .pointerInput("right_swipe") {
+                    detectDragGestures { _, dragAmount ->
+                        // Swipe right with more lenient requirements
+                        if (dragAmount.x > 80 && abs(dragAmount.y) < 150) {
+                            onNavigateToAppDrawer?.invoke()
+                        }
+                    }
+                }
+        )
+
+        // Top area swipe down for notifications
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(100.dp) // Top swipe area
+                .pointerInput("top_swipe") {
+                    detectDragGestures { change, dragAmount ->
+                        // Swipe down from top area
+                        if (dragAmount.y > 80 && change.position.y < 100) {
+                            try {
+                                @Suppress("DEPRECATION")
+                                val statusBarService = context.getSystemService("statusbar")
+                                val statusBarClass = Class.forName("android.app.StatusBarManager")
+                                val method = statusBarClass.getMethod("expandNotificationsPanel")
+                                method.invoke(statusBarService)
+                            } catch (e: Exception) {
+                                // Fallback - some devices might not support this
+                            }
+                        }
+                    }
+                }
+        )
+
+        // Full screen long press detection for settings - lower priority
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput("long_press") {
+                    detectTapGestures(
+                        onLongPress = { _ ->
+                            onNavigateToSettings?.invoke()
+                        }
+                    )
+                }
+        )
 
         // Friction barrier dialog for distracting apps
         if (uiState.showFrictionDialog && uiState.selectedAppForFriction != null) {
