@@ -1,5 +1,6 @@
 package com.talauncher
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,10 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +31,8 @@ import com.talauncher.ui.theme.TALauncherTheme
 import com.talauncher.utils.UsageStatsHelper
 
 class MainActivity : ComponentActivity() {
+    private var shouldNavigateToHome by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -66,11 +66,22 @@ class MainActivity : ComponentActivity() {
                         TALauncherApp(
                             appRepository = appRepository,
                             settingsRepository = settingsRepository,
-                            usageStatsHelper = usageStatsHelper
+                            usageStatsHelper = usageStatsHelper,
+                            shouldNavigateToHome = shouldNavigateToHome,
+                            onNavigatedToHome = { shouldNavigateToHome = false }
                         )
                     }
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // When home button is pressed, navigate to home screen (page 1)
+        if (intent.action == Intent.ACTION_MAIN &&
+            intent.hasCategory(Intent.CATEGORY_HOME)) {
+            shouldNavigateToHome = true
         }
     }
 }
@@ -79,12 +90,16 @@ class MainActivity : ComponentActivity() {
 fun TALauncherApp(
     appRepository: AppRepository,
     settingsRepository: SettingsRepository,
-    usageStatsHelper: UsageStatsHelper
+    usageStatsHelper: UsageStatsHelper,
+    shouldNavigateToHome: Boolean = false,
+    onNavigatedToHome: () -> Unit = {}
 ) {
     NiagaraLauncherPager(
         appRepository = appRepository,
         settingsRepository = settingsRepository,
-        usageStatsHelper = usageStatsHelper
+        usageStatsHelper = usageStatsHelper,
+        shouldNavigateToHome = shouldNavigateToHome,
+        onNavigatedToHome = onNavigatedToHome
     )
 }
 
@@ -92,11 +107,21 @@ fun TALauncherApp(
 fun NiagaraLauncherPager(
     appRepository: AppRepository,
     settingsRepository: SettingsRepository,
-    usageStatsHelper: UsageStatsHelper
+    usageStatsHelper: UsageStatsHelper,
+    shouldNavigateToHome: Boolean = false,
+    onNavigatedToHome: () -> Unit = {}
 ) {
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
     val settingsState by settingsRepository.getSettings().collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
+
+    // Handle home button navigation
+    LaunchedEffect(shouldNavigateToHome) {
+        if (shouldNavigateToHome && pagerState.currentPage != 1) {
+            pagerState.animateScrollToPage(1) // Navigate to essential apps screen
+            onNavigatedToHome()
+        }
+    }
 
     // Function to launch app and navigate to rightmost screen unless focus mode is enabled
     val onLaunchApp: (String) -> Unit = { packageName ->

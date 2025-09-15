@@ -6,6 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,10 +41,12 @@ fun NewHomeScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            viewModel.refreshTime()
-            kotlinx.coroutines.delay(60000)
+    LaunchedEffect(uiState.showTime, uiState.showDate) {
+        if (uiState.showTime || uiState.showDate) {
+            while (true) {
+                viewModel.refreshTime()
+                kotlinx.coroutines.delay(60000) // Only refresh if time/date is shown
+            }
         }
     }
 
@@ -75,34 +80,38 @@ fun NewHomeScreen(
     Box(
         modifier = backgroundModifier
             .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    // Detect swipe down gesture - user swipes from top to bottom
-                    if (dragAmount.y > 50 && change.position.y < 200) {
-                        // Open notification shade
-                        try {
-                            @Suppress("DEPRECATION")
-                            val statusBarService = context.getSystemService("statusbar")
-                            val statusBarClass = Class.forName("android.app.StatusBarManager")
-                            val method = statusBarClass.getMethod("expandNotificationsPanel")
-                            method.invoke(statusBarService)
-                        } catch (e: Exception) {
-                            // Fallback - some devices might not support this
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    val up = waitForUpOrCancellation()
+
+                    if (up != null) {
+                        val dragAmount = up.position - down.position
+                        val longPress = up.uptimeMillis - down.uptimeMillis > 500 // 500ms for long press
+
+                        when {
+                            // Long press - navigate to settings
+                            longPress && abs(dragAmount.x) < 50 && abs(dragAmount.y) < 50 -> {
+                                onNavigateToSettings?.invoke()
+                            }
+                            // Swipe down from top - open notification shade
+                            dragAmount.y > 50 && down.position.y < 200 -> {
+                                try {
+                                    @Suppress("DEPRECATION")
+                                    val statusBarService = context.getSystemService("statusbar")
+                                    val statusBarClass = Class.forName("android.app.StatusBarManager")
+                                    val method = statusBarClass.getMethod("expandNotificationsPanel")
+                                    method.invoke(statusBarService)
+                                } catch (e: Exception) {
+                                    // Fallback - some devices might not support this
+                                }
+                            }
+                            // Swipe right - navigate to app drawer
+                            dragAmount.x > 100 && abs(dragAmount.y) < 50 -> {
+                                onNavigateToAppDrawer?.invoke()
+                            }
                         }
                     }
-                    // Detect swipe right gesture - user swipes from left to right
-                    else if (dragAmount.x > 100 && abs(dragAmount.y) < 50) {
-                        // Navigate to app drawer
-                        onNavigateToAppDrawer?.invoke()
-                    }
                 }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = {
-                        // Navigate to settings on long press
-                        onNavigateToSettings?.invoke()
-                    }
-                )
             }
     ) {
         Column(
