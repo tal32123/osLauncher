@@ -8,5 +8,6 @@ data class LauncherSettings(
     @PrimaryKey val id: Int = 1,
     val isFocusModeEnabled: Boolean = false,
     val showTimeOnHomeScreen: Boolean = true,
-    val showDateOnHomeScreen: Boolean = true
+    val showDateOnHomeScreen: Boolean = true,
+    val isOnboardingCompleted: Boolean = false
 )

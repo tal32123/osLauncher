@@ -22,7 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun AppDrawerScreen(
     onNavigateBack: () -> Unit,
-    viewModel: AppDrawerViewModel = viewModel()
+    viewModel: AppDrawerViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current

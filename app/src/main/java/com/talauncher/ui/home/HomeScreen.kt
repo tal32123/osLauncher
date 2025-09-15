@@ -19,7 +19,7 @@ fun HomeScreen(
     onNavigateToAppDrawer: () -> Unit,
     onNavigateToInsights: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

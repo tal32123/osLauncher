@@ -22,4 +22,13 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun updateSettings(settings: LauncherSettings) {
         settingsDao.updateSettings(settings)
     }
+
+    suspend fun completeOnboarding() {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(isOnboardingCompleted = true))
+    }
+
+    suspend fun isOnboardingCompleted(): Boolean {
+        return getSettingsSync().isOnboardingCompleted
+    }
 }

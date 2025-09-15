@@ -22,7 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun InsightsScreen(
     onNavigateBack: () -> Unit,
-    viewModel: InsightsViewModel = viewModel()
+    viewModel: InsightsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current

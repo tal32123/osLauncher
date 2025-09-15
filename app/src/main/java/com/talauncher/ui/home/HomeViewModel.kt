@@ -42,7 +42,7 @@ class HomeViewModel(
                     showTime = settings?.showTimeOnHomeScreen ?: true,
                     showDate = settings?.showDateOnHomeScreen ?: true
                 )
-            }
+            }.collect { /* Data collection handled in the combine block */ }
         }
     }
 

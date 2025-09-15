@@ -3,11 +3,15 @@ package com.talauncher
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -22,6 +26,9 @@ import com.talauncher.ui.home.HomeScreen
 import com.talauncher.ui.home.HomeViewModel
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
+import com.talauncher.ui.main.MainViewModel
+import com.talauncher.ui.onboarding.OnboardingScreen
+import com.talauncher.ui.onboarding.OnboardingViewModel
 import com.talauncher.ui.settings.SettingsScreen
 import com.talauncher.ui.settings.SettingsViewModel
 import com.talauncher.ui.theme.TALauncherTheme
@@ -42,11 +49,28 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    TALauncherApp(
-                        appRepository = appRepository,
-                        settingsRepository = settingsRepository,
-                        usageStatsHelper = usageStatsHelper
-                    )
+                    val mainViewModel: MainViewModel = viewModel {
+                        MainViewModel(settingsRepository)
+                    }
+                    val mainUiState by mainViewModel.uiState.collectAsState()
+
+                    if (mainUiState.isLoading) {
+                        LoadingScreen()
+                    } else if (!mainUiState.isOnboardingCompleted) {
+                        val onboardingViewModel: OnboardingViewModel = viewModel {
+                            OnboardingViewModel(this@MainActivity, settingsRepository)
+                        }
+                        OnboardingScreen(
+                            onOnboardingComplete = mainViewModel::onOnboardingCompleted,
+                            viewModel = onboardingViewModel
+                        )
+                    } else {
+                        TALauncherApp(
+                            appRepository = appRepository,
+                            settingsRepository = settingsRepository,
+                            usageStatsHelper = usageStatsHelper
+                        )
+                    }
                 }
             }
         }
@@ -105,5 +129,25 @@ fun TALauncherApp(
                 viewModel = viewModel
             )
         }
+    }
+}
+
+@Composable
+fun LoadingScreen() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "ZenLauncher",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        CircularProgressIndicator(
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
