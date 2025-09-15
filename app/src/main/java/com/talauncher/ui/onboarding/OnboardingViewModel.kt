@@ -42,7 +42,7 @@ class OnboardingViewModel(
         _uiState.value = _uiState.value.copy(
             hasUsageStatsPermission = hasUsageStats,
             isDefaultLauncher = isDefaultLauncher,
-            allPermissionsGranted = hasUsageStats
+            allPermissionsGranted = hasUsageStats && isDefaultLauncher
         )
     }
 
