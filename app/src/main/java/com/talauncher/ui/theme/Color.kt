@@ -37,11 +37,6 @@ val PrimerRedDark = Color(0xFFf85149)      // Danger dark
 val PrimerYellow = Color(0xFFbf8700)       // Warning
 val PrimerYellowDark = Color(0xFFd29922)   // Warning dark
 
-// Focus mode - using GitHub's accent colors
-val FocusModeActive = Color(0xFF0969da)     // GitHub blue
-val FocusModeActiveDark = Color(0xFF58a6ff) // GitHub blue dark
-val FocusModeBackground = Color(0xFFddf4ff) // Light blue tint
-val FocusModeBackgroundDark = Color(0xFF0c2d6b) // Dark blue tint
 
 // Legacy colors for backward compatibility
 val ZenPrimary = PrimerGray900
@@ -61,4 +56,3 @@ val BackgroundDark = PrimerGray50Dark
 val Surface = Color(0xFFFFFFFF)
 val SurfaceDark = PrimerGray100Dark
 
-val FocusModeBorder = PrimerGray300

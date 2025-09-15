@@ -42,7 +42,6 @@ class HomeViewModel(
             ) { pinnedApps, settings ->
                 _uiState.value = _uiState.value.copy(
                     pinnedApps = pinnedApps,
-                    isFocusModeEnabled = settings?.isFocusModeEnabled ?: false,
                     showTime = settings?.showTimeOnHomeScreen ?: true,
                     showDate = settings?.showDateOnHomeScreen ?: true,
                     showWallpaper = settings?.showWallpaper ?: true,
@@ -144,12 +143,6 @@ class HomeViewModel(
         }
     }
 
-    fun toggleFocusMode() {
-        viewModelScope.launch {
-            val newState = !_uiState.value.isFocusModeEnabled
-            settingsRepository.updateFocusMode(newState)
-        }
-    }
 
     fun refreshTime() {
         updateTime()
@@ -205,7 +198,6 @@ data class HomeUiState(
     val pinnedApps: List<AppInfo> = emptyList(),
     val currentTime: String = "",
     val currentDate: String = "",
-    val isFocusModeEnabled: Boolean = false,
     val showTime: Boolean = true,
     val showDate: Boolean = true,
     val showWallpaper: Boolean = true,

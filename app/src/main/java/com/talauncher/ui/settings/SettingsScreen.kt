@@ -56,8 +56,6 @@ fun SettingsScreen(
 
         when (selectedTab) {
             0 -> GeneralSettings(
-                isFocusModeEnabled = uiState.isFocusModeEnabled,
-                onToggleFocusMode = viewModel::toggleFocusMode,
                 enableTimeLimitPrompt = uiState.enableTimeLimitPrompt,
                 onToggleTimeLimitPrompt = viewModel::toggleTimeLimitPrompt,
                 enableMathChallenge = uiState.enableMathChallenge,
@@ -77,7 +75,7 @@ fun SettingsScreen(
             )
             2 -> AppSelectionTab(
                 title = "Distracting Apps",
-                subtitle = "Apps that will be hidden in Focus Mode",
+                subtitle = "Apps that require friction barriers and prompts",
                 apps = viewModel.getFilteredApps(),
                 selectedApps = uiState.distractingApps.map { it.packageName }.toSet(),
                 onToggleApp = viewModel::toggleDistractingApp,
@@ -100,8 +98,6 @@ fun SettingsScreen(
 
 @Composable
 fun GeneralSettings(
-    isFocusModeEnabled: Boolean,
-    onToggleFocusMode: () -> Unit,
     enableTimeLimitPrompt: Boolean,
     onToggleTimeLimitPrompt: () -> Unit,
     enableMathChallenge: Boolean,
@@ -130,12 +126,6 @@ fun GeneralSettings(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    SettingItem(
-                        title = "Focus Mode",
-                        subtitle = "Hide distracting apps",
-                        checked = isFocusModeEnabled,
-                        onCheckedChange = { onToggleFocusMode() }
-                    )
 
                     SettingItem(
                         title = "Time Limit Prompts",

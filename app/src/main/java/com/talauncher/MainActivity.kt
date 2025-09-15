@@ -162,14 +162,12 @@ fun NiagaraLauncherPager(
         }
     }
 
-    // Function to launch app and navigate to rightmost screen unless focus mode is enabled
+    // Function to launch app and navigate to rightmost screen
     val onLaunchApp: (String, Int?) -> Unit = { packageName, plannedDuration ->
         coroutineScope.launch {
             appRepository.launchApp(packageName, plannedDuration = plannedDuration)
-            // Navigate to rightmost screen unless focus mode is enabled
-            if (settingsState?.isFocusModeEnabled != true) {
-                pagerState.animateScrollToPage(2)
-            }
+            // Navigate to rightmost screen after launching app
+            pagerState.animateScrollToPage(2)
         }
     }
 

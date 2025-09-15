@@ -14,10 +14,6 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         }
     }
 
-    suspend fun updateFocusMode(enabled: Boolean) {
-        val settings = getSettingsSync()
-        settingsDao.updateSettings(settings.copy(isFocusModeEnabled = enabled))
-    }
 
     suspend fun updateSettings(settings: LauncherSettings) {
         settingsDao.updateSettings(settings)

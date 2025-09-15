@@ -24,7 +24,7 @@ private val PrimerDarkColorScheme = darkColorScheme(
     onSurface = PrimerGray900Dark,
     onSurfaceVariant = PrimerGray700Dark,
 
-    primaryContainer = FocusModeBackgroundDark,
+    primaryContainer = PrimerGray200Dark,
     onPrimaryContainer = PrimerGray900Dark,
     secondaryContainer = PrimerGray300Dark,
     onSecondaryContainer = PrimerGray900Dark,
@@ -56,7 +56,7 @@ private val PrimerLightColorScheme = lightColorScheme(
     onSurface = PrimerGray900,
     onSurfaceVariant = PrimerGray700,
 
-    primaryContainer = FocusModeBackground,
+    primaryContainer = PrimerGray100,
     onPrimaryContainer = PrimerBlue,
     secondaryContainer = PrimerGray100,
     onSecondaryContainer = PrimerGray900,

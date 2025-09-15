@@ -38,8 +38,7 @@ class AppDrawerViewModel(
             ) { visibleApps, hiddenApps, settings ->
                 _uiState.value = _uiState.value.copy(
                     allApps = visibleApps,
-                    hiddenApps = hiddenApps,
-                    isFocusModeEnabled = settings?.isFocusModeEnabled ?: false
+                    hiddenApps = hiddenApps
                 )
             }.collect { /* Data collection handled in the combine block */ }
         }
@@ -185,7 +184,6 @@ class AppDrawerViewModel(
 data class AppDrawerUiState(
     val allApps: List<AppInfo> = emptyList(),
     val hiddenApps: List<AppInfo> = emptyList(),
-    val isFocusModeEnabled: Boolean = false,
     val isLoading: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val showFrictionDialog: Boolean = false,

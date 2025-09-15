@@ -94,11 +94,11 @@ class AppRepository(
     }
 
     suspend fun launchApp(packageName: String, bypassFriction: Boolean = false, plannedDuration: Int? = null): Boolean {
-        // Check if app is distracting and focus mode is enabled
+        // Check if app is distracting and should show friction barrier
         val app = getApp(packageName)
         val settings = settingsRepository.getSettingsSync()
 
-        if (!bypassFriction && app?.isDistracting == true && settings.isFocusModeEnabled) {
+        if (!bypassFriction && app?.isDistracting == true) {
             // Return false to indicate friction barrier should be shown
             return false
         }

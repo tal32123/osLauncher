@@ -304,7 +304,7 @@ fun FrictionDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Focus Mode Active",
+                text = "Mindful Usage",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )

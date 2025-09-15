@@ -42,7 +42,6 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(
                     pinnedApps = pinnedApps,
                     distractingApps = distractingApps,
-                    isFocusModeEnabled = settings?.isFocusModeEnabled ?: false,
                     enableTimeLimitPrompt = settings?.enableTimeLimitPrompt ?: false,
                     enableMathChallenge = settings?.enableMathChallenge ?: false,
                     mathDifficulty = settings?.mathDifficulty ?: "easy",
@@ -106,11 +105,6 @@ class SettingsViewModel(
         }
     }
 
-    fun toggleFocusMode() {
-        viewModelScope.launch {
-            settingsRepository.updateFocusMode(!_uiState.value.isFocusModeEnabled)
-        }
-    }
 
     fun toggleTimeLimitPrompt() {
         viewModelScope.launch {
@@ -158,7 +152,6 @@ data class SettingsUiState(
     val pinnedApps: List<AppInfo> = emptyList(),
     val distractingApps: List<AppInfo> = emptyList(),
     val availableApps: List<InstalledApp> = emptyList(),
-    val isFocusModeEnabled: Boolean = false,
     val enableTimeLimitPrompt: Boolean = false,
     val enableMathChallenge: Boolean = false,
     val mathDifficulty: String = "easy",

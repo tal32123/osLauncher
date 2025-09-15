@@ -43,10 +43,9 @@ fun NewAppDrawerScreen(
     var showHiddenApps by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    val filteredApps = remember(uiState.allApps, searchQuery, uiState.isFocusModeEnabled) {
+    val filteredApps = remember(uiState.allApps, searchQuery) {
         uiState.allApps.filter { app ->
             !app.isHidden &&
-            (!uiState.isFocusModeEnabled || !app.isDistracting) &&
             app.appName.contains(searchQuery, ignoreCase = true)
         }
     }
@@ -222,26 +221,6 @@ fun NewAppDrawerScreen(
             }
         }
 
-        // Swipe indicator - GitHub style
-        PrimerCard(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = PrimerSpacing.sm),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-            ),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        ) {
-            Text(
-                text = "←",
-                modifier = Modifier.padding(
-                    horizontal = PrimerSpacing.sm,
-                    vertical = PrimerSpacing.xs
-                ),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
 
         // App Action Dialog
         AppActionDialog(

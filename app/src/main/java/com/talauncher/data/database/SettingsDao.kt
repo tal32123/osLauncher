@@ -18,6 +18,4 @@ interface SettingsDao {
     @Update
     suspend fun updateSettings(settings: LauncherSettings)
 
-    @Query("UPDATE launcher_settings SET isFocusModeEnabled = :enabled WHERE id = 1")
-    suspend fun updateFocusMode(enabled: Boolean)
 }
