@@ -28,8 +28,8 @@ fun OnboardingScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(uiState.allPermissionsGranted && uiState.isDefaultLauncher) {
-        if (uiState.allPermissionsGranted && uiState.isDefaultLauncher) {
+    LaunchedEffect(uiState.allPermissionsGranted) {
+        if (uiState.allPermissionsGranted) {
             viewModel.completeOnboarding()
             onOnboardingComplete()
         }
@@ -102,7 +102,7 @@ fun OnboardingScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        if (uiState.allPermissionsGranted && uiState.isDefaultLauncher) {
+        if (uiState.allPermissionsGranted) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
