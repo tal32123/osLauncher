@@ -1,5 +1,6 @@
 package com.talauncher.ui.appdrawer
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
@@ -26,6 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.TimeLimitDialog
+import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.theme.*
 
 @Composable
@@ -45,6 +48,28 @@ fun NewAppDrawerScreen(
             !app.isHidden &&
             (!uiState.isFocusModeEnabled || !app.isDistracting) &&
             app.appName.contains(searchQuery, ignoreCase = true)
+        }
+    }
+
+    // Handle back button for dialogs
+    BackHandler(
+        enabled = uiState.showFrictionDialog || uiState.showTimeLimitDialog || uiState.showMathChallengeDialog || uiState.selectedAppForAction != null
+    ) {
+        when {
+            uiState.showMathChallengeDialog -> {
+                // Math challenge cannot be dismissed with back button - force completion
+            }
+            uiState.showTimeLimitDialog -> {
+                // Time limit dialog cannot be dismissed with back button - force choice
+            }
+            uiState.showFrictionDialog -> {
+                // Friction dialog can be dismissed to respect user choice
+                viewModel.dismissFrictionDialog()
+            }
+            uiState.selectedAppForAction != null -> {
+                // App action dialog can be dismissed
+                viewModel.dismissAppActionDialog()
+            }
         }
     }
 
@@ -241,6 +266,38 @@ fun NewAppDrawerScreen(
                 onProceed = { reason ->
                     viewModel.launchAppWithReason(uiState.selectedAppForFriction!!, reason)
                 }
+            )
+        }
+
+        // Time limit dialog for distracting apps
+        if (uiState.showTimeLimitDialog && uiState.selectedAppForTimeLimit != null) {
+            val appName = remember(uiState.selectedAppForTimeLimit) {
+                try {
+                    val packageManager = context.packageManager
+                    val appInfo = packageManager.getApplicationInfo(uiState.selectedAppForTimeLimit!!, 0)
+                    packageManager.getApplicationLabel(appInfo).toString()
+                } catch (e: Exception) {
+                    uiState.selectedAppForTimeLimit!!
+                }
+            }
+
+            TimeLimitDialog(
+                appName = appName,
+                onConfirm = { durationMinutes ->
+                    viewModel.launchAppWithTimeLimit(uiState.selectedAppForTimeLimit!!, durationMinutes)
+                },
+                onDismiss = { viewModel.dismissTimeLimitDialog() }
+            )
+        }
+
+        // Math challenge dialog for closing apps
+        if (uiState.showMathChallengeDialog && uiState.selectedAppForMathChallenge != null) {
+            MathChallengeDialog(
+                difficulty = "medium", // Could be made configurable
+                onCorrect = {
+                    viewModel.onMathChallengeCompleted(uiState.selectedAppForMathChallenge!!)
+                },
+                onDismiss = { viewModel.dismissMathChallengeDialog() }
             )
         }
     }

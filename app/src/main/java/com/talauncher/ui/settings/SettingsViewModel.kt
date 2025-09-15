@@ -43,6 +43,9 @@ class SettingsViewModel(
                     pinnedApps = pinnedApps,
                     distractingApps = distractingApps,
                     isFocusModeEnabled = settings?.isFocusModeEnabled ?: false,
+                    enableTimeLimitPrompt = settings?.enableTimeLimitPrompt ?: false,
+                    enableMathChallenge = settings?.enableMathChallenge ?: false,
+                    mathDifficulty = settings?.mathDifficulty ?: "easy",
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -109,6 +112,24 @@ class SettingsViewModel(
         }
     }
 
+    fun toggleTimeLimitPrompt() {
+        viewModelScope.launch {
+            settingsRepository.updateTimeLimitPrompt(!_uiState.value.enableTimeLimitPrompt)
+        }
+    }
+
+    fun toggleMathChallenge() {
+        viewModelScope.launch {
+            settingsRepository.updateMathChallenge(!_uiState.value.enableMathChallenge)
+        }
+    }
+
+    fun updateMathDifficulty(difficulty: String) {
+        viewModelScope.launch {
+            settingsRepository.updateMathDifficulty(difficulty)
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
@@ -138,6 +159,9 @@ data class SettingsUiState(
     val distractingApps: List<AppInfo> = emptyList(),
     val availableApps: List<InstalledApp> = emptyList(),
     val isFocusModeEnabled: Boolean = false,
+    val enableTimeLimitPrompt: Boolean = false,
+    val enableMathChallenge: Boolean = false,
+    val mathDifficulty: String = "easy",
     val isLoading: Boolean = false,
     val searchQuery: String = ""
 )

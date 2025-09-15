@@ -31,4 +31,19 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun isOnboardingCompleted(): Boolean {
         return getSettingsSync().isOnboardingCompleted
     }
+
+    suspend fun updateTimeLimitPrompt(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(enableTimeLimitPrompt = enabled))
+    }
+
+    suspend fun updateMathChallenge(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(enableMathChallenge = enabled))
+    }
+
+    suspend fun updateMathDifficulty(difficulty: String) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(mathDifficulty = difficulty))
+    }
 }

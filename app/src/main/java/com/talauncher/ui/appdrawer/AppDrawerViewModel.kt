@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 class AppDrawerViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
-    private val onLaunchApp: ((String) -> Unit)? = null
+    private val onLaunchApp: ((String, Int?) -> Unit)? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AppDrawerUiState())
@@ -46,18 +46,27 @@ class AppDrawerViewModel(
     }
 
     fun launchApp(packageName: String) {
-        if (onLaunchApp != null) {
-            onLaunchApp(packageName)
-        } else {
-            viewModelScope.launch {
-                val launched = appRepository.launchApp(packageName)
-                if (!launched) {
-                    // Show friction barrier for distracting app
-                    _uiState.value = _uiState.value.copy(
-                        showFrictionDialog = true,
-                        selectedAppForFriction = packageName
-                    )
-                }
+        viewModelScope.launch {
+            // Check if we should show time limit prompt first
+            if (appRepository.shouldShowTimeLimitPrompt(packageName)) {
+                _uiState.value = _uiState.value.copy(
+                    showTimeLimitDialog = true,
+                    selectedAppForTimeLimit = packageName
+                )
+                return@launch
+            }
+
+            // Try to launch the app through repository (handles friction checks)
+            val launched = appRepository.launchApp(packageName)
+            if (launched) {
+                // App was launched successfully, use callback if available
+                onLaunchApp?.invoke(packageName, null)
+            } else {
+                // Show friction barrier for distracting app
+                _uiState.value = _uiState.value.copy(
+                    showFrictionDialog = true,
+                    selectedAppForFriction = packageName
+                )
             }
         }
     }
@@ -73,7 +82,48 @@ class AppDrawerViewModel(
         viewModelScope.launch {
             // Log the reason for analytics/insights if needed
             appRepository.launchApp(packageName, bypassFriction = true)
+            onLaunchApp?.invoke(packageName, null)
             dismissFrictionDialog()
+        }
+    }
+
+    fun dismissTimeLimitDialog() {
+        _uiState.value = _uiState.value.copy(
+            showTimeLimitDialog = false,
+            selectedAppForTimeLimit = null
+        )
+    }
+
+    fun launchAppWithTimeLimit(packageName: String, durationMinutes: Int) {
+        viewModelScope.launch {
+            appRepository.launchApp(packageName, plannedDuration = durationMinutes)
+            onLaunchApp?.invoke(packageName, durationMinutes)
+            dismissTimeLimitDialog()
+        }
+    }
+
+    fun dismissMathChallengeDialog() {
+        _uiState.value = _uiState.value.copy(
+            showMathChallengeDialog = false,
+            selectedAppForMathChallenge = null
+        )
+    }
+
+    fun showMathChallengeForApp(packageName: String) {
+        viewModelScope.launch {
+            if (appRepository.shouldShowMathChallenge(packageName)) {
+                _uiState.value = _uiState.value.copy(
+                    showMathChallengeDialog = true,
+                    selectedAppForMathChallenge = packageName
+                )
+            }
+        }
+    }
+
+    fun onMathChallengeCompleted(packageName: String) {
+        viewModelScope.launch {
+            appRepository.endSessionForApp(packageName)
+            dismissMathChallengeDialog()
         }
     }
 
@@ -139,5 +189,9 @@ data class AppDrawerUiState(
     val isLoading: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val showFrictionDialog: Boolean = false,
-    val selectedAppForFriction: String? = null
+    val selectedAppForFriction: String? = null,
+    val showTimeLimitDialog: Boolean = false,
+    val selectedAppForTimeLimit: String? = null,
+    val showMathChallengeDialog: Boolean = false,
+    val selectedAppForMathChallenge: String? = null
 )

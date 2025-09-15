@@ -57,7 +57,13 @@ fun SettingsScreen(
         when (selectedTab) {
             0 -> GeneralSettings(
                 isFocusModeEnabled = uiState.isFocusModeEnabled,
-                onToggleFocusMode = viewModel::toggleFocusMode
+                onToggleFocusMode = viewModel::toggleFocusMode,
+                enableTimeLimitPrompt = uiState.enableTimeLimitPrompt,
+                onToggleTimeLimitPrompt = viewModel::toggleTimeLimitPrompt,
+                enableMathChallenge = uiState.enableMathChallenge,
+                onToggleMathChallenge = viewModel::toggleMathChallenge,
+                mathDifficulty = uiState.mathDifficulty,
+                onUpdateMathDifficulty = viewModel::updateMathDifficulty
             )
             1 -> AppSelectionTab(
                 title = "Pinned Apps",
@@ -95,38 +101,140 @@ fun SettingsScreen(
 @Composable
 fun GeneralSettings(
     isFocusModeEnabled: Boolean,
-    onToggleFocusMode: () -> Unit
+    onToggleFocusMode: () -> Unit,
+    enableTimeLimitPrompt: Boolean,
+    onToggleTimeLimitPrompt: () -> Unit,
+    enableMathChallenge: Boolean,
+    onToggleMathChallenge: () -> Unit,
+    mathDifficulty: String,
+    onUpdateMathDifficulty: (String) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
+        item {
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
                     Text(
-                        text = "Focus Mode",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium
+                        text = "Focus & Productivity",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Text(
-                        text = "Hide distracting apps",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+
+                    SettingItem(
+                        title = "Focus Mode",
+                        subtitle = "Hide distracting apps",
+                        checked = isFocusModeEnabled,
+                        onCheckedChange = { onToggleFocusMode() }
+                    )
+
+                    SettingItem(
+                        title = "Time Limit Prompts",
+                        subtitle = "Ask how long you'll use distracting apps",
+                        checked = enableTimeLimitPrompt,
+                        onCheckedChange = { onToggleTimeLimitPrompt() }
+                    )
+
+                    SettingItem(
+                        title = "Math Challenge to Close",
+                        subtitle = "Solve math problems to close distracting apps",
+                        checked = enableMathChallenge,
+                        onCheckedChange = { onToggleMathChallenge() }
                     )
                 }
-                Switch(
-                    checked = isFocusModeEnabled,
-                    onCheckedChange = { onToggleFocusMode() }
-                )
             }
         }
+
+        if (enableMathChallenge) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "Math Challenge Settings",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Text(
+                            text = "Difficulty Level",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("easy", "medium", "hard").forEach { difficulty ->
+                                FilterChip(
+                                    selected = mathDifficulty == difficulty,
+                                    onClick = { onUpdateMathDifficulty(difficulty) },
+                                    label = {
+                                        Text(difficulty.replaceFirstChar { it.uppercase() })
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingItem(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
     }
 }
 

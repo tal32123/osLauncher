@@ -7,16 +7,18 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
 import com.talauncher.data.model.AppInfo
+import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.LauncherSettings
 
 @Database(
-    entities = [AppInfo::class, LauncherSettings::class],
-    version = 4,
+    entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
+    version = 5,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun appSessionDao(): AppSessionDao
 
     companion object {
         @Volatile
@@ -67,13 +69,34 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add new fields to launcher_settings
+                database.execSQL("ALTER TABLE launcher_settings ADD COLUMN enableTimeLimitPrompt INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE launcher_settings ADD COLUMN enableMathChallenge INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE launcher_settings ADD COLUMN mathDifficulty TEXT NOT NULL DEFAULT 'easy'")
+
+                // Create app_sessions table
+                database.execSQL("""
+                    CREATE TABLE app_sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        packageName TEXT NOT NULL,
+                        plannedDurationMinutes INTEGER NOT NULL,
+                        startTime INTEGER NOT NULL,
+                        endTime INTEGER,
+                        isActive INTEGER NOT NULL DEFAULT 1
+                    )
+                """)
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     LauncherDatabase::class.java,
                     "launcher_database"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
                 INSTANCE = instance
                 instance
             }

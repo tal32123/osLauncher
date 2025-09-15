@@ -1,5 +1,6 @@
 package com.talauncher.ui.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -25,6 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.TimeLimitDialog
+import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.theme.*
 import kotlin.math.abs
 
@@ -38,6 +41,24 @@ fun NewHomeScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
 
+    // Handle back button for dialogs - prioritize dialogs over navigation
+    BackHandler(
+        enabled = uiState.showFrictionDialog || uiState.showTimeLimitDialog || uiState.showMathChallengeDialog
+    ) {
+        when {
+            uiState.showMathChallengeDialog -> {
+                // Math challenge cannot be dismissed with back button - force completion
+            }
+            uiState.showTimeLimitDialog -> {
+                // Time limit dialog cannot be dismissed with back button - force choice
+            }
+            uiState.showFrictionDialog -> {
+                // Friction dialog can be dismissed to respect user choice
+                viewModel.dismissFrictionDialog()
+            }
+        }
+    }
+
     LaunchedEffect(uiState.showTime, uiState.showDate) {
         if (uiState.showTime || uiState.showDate) {
             while (true) {
@@ -45,6 +66,11 @@ fun NewHomeScreen(
                 kotlinx.coroutines.delay(60000) // Only refresh if time/date is shown
             }
         }
+    }
+
+    // Check for expired sessions when home screen is displayed
+    LaunchedEffect(Unit) {
+        viewModel.checkExpiredSessionsManually()
     }
 
     // Determine background modifier based on settings
@@ -109,60 +135,6 @@ fun NewHomeScreen(
 
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
 
-            // Focus Mode Card - GitHub Primer style
-            PrimerCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = PrimerSpacing.sm),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (uiState.isFocusModeEnabled) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surface
-                    }
-                ),
-                border = BorderStroke(
-                    1.dp,
-                    if (uiState.isFocusModeEnabled) PrimerBlue else MaterialTheme.colorScheme.outline
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(PrimerSpacing.md),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Focus Mode",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = if (uiState.isFocusModeEnabled) "Distracting apps are hidden" else "All apps are visible",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = uiState.isFocusModeEnabled,
-                        onCheckedChange = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            viewModel.toggleFocusMode()
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = PrimerBlue,
-                            checkedTrackColor = PrimerBlue.copy(alpha = 0.3f),
-                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(PrimerSpacing.xl))
-
             // Pinned Apps Section
             if (uiState.pinnedApps.isNotEmpty()) {
                 LazyColumn(
@@ -219,26 +191,6 @@ fun NewHomeScreen(
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
         }
 
-        // Swipe indicator - GitHub subtle style
-        PrimerCard(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = PrimerSpacing.sm),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-            ),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        ) {
-            Text(
-                text = "→",
-                modifier = Modifier.padding(
-                    horizontal = PrimerSpacing.sm,
-                    vertical = PrimerSpacing.xs
-                ),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
 
         // Gesture Detection Overlays - Invisible areas for reliable gesture capture
 
@@ -282,18 +234,6 @@ fun NewHomeScreen(
                 }
         )
 
-        // Full screen long press detection for settings - lower priority
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput("long_press") {
-                    detectTapGestures(
-                        onLongPress = { _ ->
-                            onNavigateToSettings?.invoke()
-                        }
-                    )
-                }
-        )
 
         // Friction barrier dialog for distracting apps
         if (uiState.showFrictionDialog && uiState.selectedAppForFriction != null) {
@@ -303,6 +243,38 @@ fun NewHomeScreen(
                 onProceed = { reason ->
                     viewModel.launchAppWithReason(uiState.selectedAppForFriction!!, reason)
                 }
+            )
+        }
+
+        // Time limit dialog for distracting apps
+        if (uiState.showTimeLimitDialog && uiState.selectedAppForTimeLimit != null) {
+            val appName = remember(uiState.selectedAppForTimeLimit) {
+                try {
+                    val packageManager = context.packageManager
+                    val appInfo = packageManager.getApplicationInfo(uiState.selectedAppForTimeLimit!!, 0)
+                    packageManager.getApplicationLabel(appInfo).toString()
+                } catch (e: Exception) {
+                    uiState.selectedAppForTimeLimit!!
+                }
+            }
+
+            TimeLimitDialog(
+                appName = appName,
+                onConfirm = { durationMinutes ->
+                    viewModel.launchAppWithTimeLimit(uiState.selectedAppForTimeLimit!!, durationMinutes)
+                },
+                onDismiss = { viewModel.dismissTimeLimitDialog() }
+            )
+        }
+
+        // Math challenge dialog for closing apps
+        if (uiState.showMathChallengeDialog && uiState.selectedAppForMathChallenge != null) {
+            MathChallengeDialog(
+                difficulty = "medium", // Could be made configurable
+                onCorrect = {
+                    viewModel.onMathChallengeCompleted(uiState.selectedAppForMathChallenge!!)
+                },
+                onDismiss = { viewModel.dismissMathChallengeDialog() }
             )
         }
     }

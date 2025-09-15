@@ -3,6 +3,7 @@ package com.talauncher
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.data.database.LauncherDatabase
 import com.talauncher.data.repository.AppRepository
+import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.ui.appdrawer.AppDrawerViewModel
 import com.talauncher.ui.appdrawer.NewAppDrawerScreen
@@ -38,7 +40,8 @@ class MainActivity : ComponentActivity() {
 
         val database = LauncherDatabase.getDatabase(this)
         val settingsRepository = SettingsRepository(database.settingsDao())
-        val appRepository = AppRepository(database.appDao(), this, settingsRepository)
+        val sessionRepository = SessionRepository(database.appSessionDao())
+        val appRepository = AppRepository(database.appDao(), this, settingsRepository, sessionRepository)
         val usageStatsHelper = UsageStatsHelper(this)
 
         setContent {
@@ -67,6 +70,7 @@ class MainActivity : ComponentActivity() {
                             appRepository = appRepository,
                             settingsRepository = settingsRepository,
                             usageStatsHelper = usageStatsHelper,
+                            sessionRepository = sessionRepository,
                             shouldNavigateToHome = shouldNavigateToHome,
                             onNavigatedToHome = { shouldNavigateToHome = false }
                         )
@@ -87,6 +91,20 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        // Check for expired sessions when returning to launcher
+        checkExpiredSessions()
+    }
+
+    private fun checkExpiredSessions() {
+        val database = LauncherDatabase.getDatabase(this)
+        val sessionRepository = SessionRepository(database.appSessionDao())
+
+        // This will be handled by the ViewModels to show math challenges
+        // The actual checking is done in the UI layer to have access to the dialogs
+    }
 }
 
 @Composable
@@ -94,6 +112,7 @@ fun TALauncherApp(
     appRepository: AppRepository,
     settingsRepository: SettingsRepository,
     usageStatsHelper: UsageStatsHelper,
+    sessionRepository: SessionRepository,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
 ) {
@@ -101,6 +120,7 @@ fun TALauncherApp(
         appRepository = appRepository,
         settingsRepository = settingsRepository,
         usageStatsHelper = usageStatsHelper,
+        sessionRepository = sessionRepository,
         shouldNavigateToHome = shouldNavigateToHome,
         onNavigatedToHome = onNavigatedToHome
     )
@@ -111,6 +131,7 @@ fun NiagaraLauncherPager(
     appRepository: AppRepository,
     settingsRepository: SettingsRepository,
     usageStatsHelper: UsageStatsHelper,
+    sessionRepository: SessionRepository,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
 ) {
@@ -130,10 +151,21 @@ fun NiagaraLauncherPager(
         }
     }
 
-    // Function to launch app and navigate to rightmost screen unless focus mode is enabled
-    val onLaunchApp: (String) -> Unit = { packageName ->
+    // Handle back button - navigate to home screen or stay there
+    BackHandler {
         coroutineScope.launch {
-            appRepository.launchApp(packageName)
+            if (pagerState.currentPage != 1) {
+                // If not on home screen, go to home screen
+                pagerState.animateScrollToPage(1)
+            }
+            // If already on home screen, do nothing (stay in launcher)
+        }
+    }
+
+    // Function to launch app and navigate to rightmost screen unless focus mode is enabled
+    val onLaunchApp: (String, Int?) -> Unit = { packageName, plannedDuration ->
+        coroutineScope.launch {
+            appRepository.launchApp(packageName, plannedDuration = plannedDuration)
             // Navigate to rightmost screen unless focus mode is enabled
             if (settingsState?.isFocusModeEnabled != true) {
                 pagerState.animateScrollToPage(2)
@@ -159,7 +191,7 @@ fun NiagaraLauncherPager(
             1 -> {
                 // Main/Home Screen with pinned apps
                 val homeViewModel: HomeViewModel = viewModel {
-                    HomeViewModel(appRepository, settingsRepository, onLaunchApp)
+                    HomeViewModel(appRepository, settingsRepository, onLaunchApp, sessionRepository)
                 }
                 NewHomeScreen(
                     viewModel = homeViewModel,

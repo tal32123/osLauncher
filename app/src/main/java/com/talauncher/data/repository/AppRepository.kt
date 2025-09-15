@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.Flow
 class AppRepository(
     private val appDao: AppDao,
     private val context: Context,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val sessionRepository: SessionRepository? = null
 ) {
     fun getAllApps(): Flow<List<AppInfo>> = appDao.getAllApps()
 
@@ -92,7 +93,7 @@ class AppRepository(
             .sortedBy { it.appName }
     }
 
-    suspend fun launchApp(packageName: String, bypassFriction: Boolean = false): Boolean {
+    suspend fun launchApp(packageName: String, bypassFriction: Boolean = false, plannedDuration: Int? = null): Boolean {
         // Check if app is distracting and focus mode is enabled
         val app = getApp(packageName)
         val settings = settingsRepository.getSettingsSync()
@@ -100,6 +101,11 @@ class AppRepository(
         if (!bypassFriction && app?.isDistracting == true && settings.isFocusModeEnabled) {
             // Return false to indicate friction barrier should be shown
             return false
+        }
+
+        // Start session if time limit prompt is enabled and duration is provided
+        if (settings.enableTimeLimitPrompt && plannedDuration != null && sessionRepository != null) {
+            sessionRepository.startSession(packageName, plannedDuration)
         }
 
         if (packageName == "android.settings") {
@@ -117,6 +123,22 @@ class AppRepository(
         }
         return true
     }
+
+    suspend fun shouldShowTimeLimitPrompt(packageName: String): Boolean {
+        val settings = settingsRepository.getSettingsSync()
+        val app = getApp(packageName)
+        return settings.enableTimeLimitPrompt && app?.isDistracting == true
+    }
+
+    suspend fun shouldShowMathChallenge(packageName: String): Boolean {
+        val settings = settingsRepository.getSettingsSync()
+        val app = getApp(packageName)
+        return settings.enableMathChallenge && app?.isDistracting == true
+    }
+
+    suspend fun getActiveSessionForApp(packageName: String) = sessionRepository?.getActiveSessionForApp(packageName)
+
+    suspend fun endSessionForApp(packageName: String) = sessionRepository?.endSessionForApp(packageName)
 
     suspend fun getAllAppsSync(): List<AppInfo> = appDao.getAllAppsSync()
 
