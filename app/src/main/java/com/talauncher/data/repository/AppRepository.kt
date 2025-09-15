@@ -138,6 +138,15 @@ class AppRepository(
 
     suspend fun getActiveSessionForApp(packageName: String) = sessionRepository?.getActiveSessionForApp(packageName)
 
+    fun closeCurrentApp() {
+        // Move the current app to background by launching the home screen
+        val intent = Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_HOME)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
+    }
+
     suspend fun endSessionForApp(packageName: String) = sessionRepository?.endSessionForApp(packageName)
 
     suspend fun getAllAppsSync(): List<AppInfo> = appDao.getAllAppsSync()

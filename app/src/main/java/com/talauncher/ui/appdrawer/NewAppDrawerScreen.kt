@@ -276,7 +276,8 @@ fun NewAppDrawerScreen(
                 onCorrect = {
                     viewModel.onMathChallengeCompleted(uiState.selectedAppForMathChallenge!!)
                 },
-                onDismiss = { viewModel.dismissMathChallengeDialog() }
+                onDismiss = { viewModel.dismissMathChallengeDialog() },
+                isTimeExpired = false  // App drawer challenges are not for expired sessions
             )
         }
     }

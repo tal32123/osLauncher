@@ -119,10 +119,23 @@ class HomeViewModel(
     }
 
     fun dismissMathChallengeDialog() {
-        _uiState.value = _uiState.value.copy(
-            showMathChallengeDialog = false,
-            selectedAppForMathChallenge = null
-        )
+        viewModelScope.launch {
+            // If this was a math challenge for an expired session and it's being dismissed,
+            // we should close the current app
+            if (_uiState.value.isMathChallengeForExpiredSession) {
+                appRepository.closeCurrentApp()
+                // Also end the session since the user didn't complete the challenge
+                _uiState.value.selectedAppForMathChallenge?.let { packageName ->
+                    appRepository.endSessionForApp(packageName)
+                }
+            }
+
+            _uiState.value = _uiState.value.copy(
+                showMathChallengeDialog = false,
+                selectedAppForMathChallenge = null,
+                isMathChallengeForExpiredSession = false
+            )
+        }
     }
 
     fun showMathChallengeForApp(packageName: String) {
@@ -130,7 +143,8 @@ class HomeViewModel(
             if (appRepository.shouldShowMathChallenge(packageName)) {
                 _uiState.value = _uiState.value.copy(
                     showMathChallengeDialog = true,
-                    selectedAppForMathChallenge = packageName
+                    selectedAppForMathChallenge = packageName,
+                    isMathChallengeForExpiredSession = false  // This is not for an expired session
                 )
             }
         }
@@ -139,7 +153,12 @@ class HomeViewModel(
     fun onMathChallengeCompleted(packageName: String) {
         viewModelScope.launch {
             appRepository.endSessionForApp(packageName)
-            dismissMathChallengeDialog()
+            // Reset the dialog state
+            _uiState.value = _uiState.value.copy(
+                showMathChallengeDialog = false,
+                selectedAppForMathChallenge = null,
+                isMathChallengeForExpiredSession = false
+            )
         }
     }
 
@@ -175,7 +194,8 @@ class HomeViewModel(
                             if (!_uiState.value.showMathChallengeDialog) {
                                 _uiState.value = _uiState.value.copy(
                                     showMathChallengeDialog = true,
-                                    selectedAppForMathChallenge = session.packageName
+                                    selectedAppForMathChallenge = session.packageName,
+                                    isMathChallengeForExpiredSession = true
                                 )
                                 return@forEach // Exit after showing first challenge
                             }
@@ -208,5 +228,6 @@ data class HomeUiState(
     val selectedAppForTimeLimit: String? = null,
     val showMathChallengeDialog: Boolean = false,
     val selectedAppForMathChallenge: String? = null,
+    val isMathChallengeForExpiredSession: Boolean = false,  // Track if challenge is for expired session
     val isLoading: Boolean = false
 )

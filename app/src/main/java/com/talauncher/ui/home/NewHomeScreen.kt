@@ -274,7 +274,8 @@ fun NewHomeScreen(
                 onCorrect = {
                     viewModel.onMathChallengeCompleted(uiState.selectedAppForMathChallenge!!)
                 },
-                onDismiss = { viewModel.dismissMathChallengeDialog() }
+                onDismiss = { viewModel.dismissMathChallengeDialog() },
+                isTimeExpired = uiState.isMathChallengeForExpiredSession
             )
         }
     }

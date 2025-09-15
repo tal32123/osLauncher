@@ -100,12 +100,26 @@ object MathGenerator {
 fun MathChallengeDialog(
     difficulty: String = "easy",
     onCorrect: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isTimeExpired: Boolean = false  // If true, this is a mandatory challenge due to time expiration
 ) {
     val problem = remember { MathGenerator.generateProblem(difficulty) }
     var answerText by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var timeLeft by remember { mutableStateOf(if (isTimeExpired) 30 else 0) }  // 30 seconds countdown for expired sessions
+
+    // Auto-dismiss timer for expired sessions
+    LaunchedEffect(isTimeExpired) {
+        if (isTimeExpired) {
+            while (timeLeft > 0) {
+                kotlinx.coroutines.delay(1000) // Wait 1 second
+                timeLeft--
+            }
+            // Time's up - automatically dismiss
+            onDismiss()
+        }
+    }
 
     // Prevent back button from dismissing the dialog
     BackHandler {
@@ -130,19 +144,33 @@ fun MathChallengeDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Solve to continue",
+                    text = if (isTimeExpired) "Time's up!" else "Solve to continue",
                     style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 Text(
-                    text = "Complete this math problem to close the app",
+                    text = if (isTimeExpired)
+                        "Your time limit has expired. Solve this math problem to continue using the app, or it will close automatically."
+                    else
+                        "Complete this math problem to close the app",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = if (isTimeExpired) 12.dp else 24.dp)
                 )
+
+                // Show countdown timer for expired sessions
+                if (isTimeExpired && timeLeft > 0) {
+                    Text(
+                        text = "Auto-close in: ${timeLeft}s",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 24.dp)
+                    )
+                }
 
                 Card(
                     modifier = Modifier
@@ -179,17 +207,8 @@ fun MathChallengeDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Cancel")
-                    }
-
+                if (isTimeExpired) {
+                    // For expired sessions, only show submit button (no cancel option)
                     Button(
                         onClick = {
                             val userAnswer = answerText.toIntOrNull()
@@ -203,9 +222,40 @@ fun MathChallengeDialog(
                                 errorMessage = "Incorrect answer, try again"
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Submit")
+                    }
+                } else {
+                    // For non-expired sessions, show both cancel and submit
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Cancel")
+                        }
+
+                        Button(
+                            onClick = {
+                                val userAnswer = answerText.toIntOrNull()
+                                if (userAnswer == null) {
+                                    isError = true
+                                    errorMessage = "Please enter a valid number"
+                                } else if (userAnswer == problem.answer) {
+                                    onCorrect()
+                                } else {
+                                    isError = true
+                                    errorMessage = "Incorrect answer, try again"
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Submit")
+                        }
                     }
                 }
             }
