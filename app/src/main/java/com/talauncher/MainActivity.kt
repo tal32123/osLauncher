@@ -81,7 +81,10 @@ class MainActivity : ComponentActivity() {
         // When home button is pressed, navigate to home screen (page 1)
         if (intent.action == Intent.ACTION_MAIN &&
             intent.hasCategory(Intent.CATEGORY_HOME)) {
-            shouldNavigateToHome = true
+            // Only set flag if we're not already processing a home navigation
+            if (!shouldNavigateToHome) {
+                shouldNavigateToHome = true
+            }
         }
     }
 }
@@ -117,8 +120,12 @@ fun NiagaraLauncherPager(
 
     // Handle home button navigation
     LaunchedEffect(shouldNavigateToHome) {
-        if (shouldNavigateToHome && pagerState.currentPage != 1) {
-            pagerState.animateScrollToPage(1) // Navigate to essential apps screen
+        if (shouldNavigateToHome) {
+            if (pagerState.currentPage != 1) {
+                // Only animate if we're not already on the home page
+                pagerState.animateScrollToPage(1) // Navigate to essential apps screen
+            }
+            // Always reset the flag, even if we didn't need to navigate
             onNavigatedToHome()
         }
     }
