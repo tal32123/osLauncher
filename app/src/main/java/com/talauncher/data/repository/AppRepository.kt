@@ -106,7 +106,8 @@ class AppRepository(
         val app = getApp(packageName)
         val settings = settingsRepository.getSettingsSync()
 
-        if (!bypassFriction && app?.isDistracting == true) {
+        val requiresFriction = !bypassFriction && plannedDuration == null && app?.isDistracting == true
+        if (requiresFriction) {
             // Return false to indicate friction barrier should be shown
             return false
         }
