@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class OnboardingViewModel(
@@ -26,9 +28,16 @@ class OnboardingViewModel(
 
     private fun startPermissionChecking() {
         viewModelScope.launch {
-            while (true) {
-                checkPermissions()
+            checkPermissions()
+
+            while (!uiState.value.allPermissionsGranted && isActive) {
                 delay(2000) // Check every 2 seconds
+                checkPermissions()
+            }
+
+            if (uiState.value.allPermissionsGranted) {
+                cancel()
+                return@launch
             }
         }
     }
