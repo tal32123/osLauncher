@@ -85,7 +85,7 @@ fun SettingsScreen(
             )
             3 -> {
                 val insightsViewModel: InsightsViewModel = viewModel {
-                    InsightsViewModel(viewModel.usageStatsHelper)
+                    InsightsViewModel(viewModel.usageStatsHelper, viewModel.permissionsHelper)
                 }
                 InsightsScreen(
                     onNavigateBack = onNavigateBack,

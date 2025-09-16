@@ -1,37 +1,19 @@
 package com.talauncher.utils
 
-import android.app.AppOpsManager
-import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Process
 import com.talauncher.data.model.AppUsage
 import java.util.*
 
-class UsageStatsHelper(private val context: Context) {
-
-    fun hasUsageStatsPermission(): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(),
-                context.packageName
-            )
-        } else {
-            appOps.checkOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(),
-                context.packageName
-            )
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
+class UsageStatsHelper(
+    private val context: Context,
+    private val permissionsHelper: PermissionsHelper
+) {
 
     fun getTodayUsageStats(): List<AppUsage> {
-        if (!hasUsageStatsPermission()) {
+        if (!permissionsHelper.hasUsageStatsPermission()) {
             return emptyList()
         }
 
@@ -62,7 +44,7 @@ class UsageStatsHelper(private val context: Context) {
     }
 
     fun getPast48HoursUsageStats(): List<AppUsage> {
-        if (!hasUsageStatsPermission()) {
+        if (!permissionsHelper.hasUsageStatsPermission()) {
             return emptyList()
         }
 
@@ -99,6 +81,21 @@ class UsageStatsHelper(private val context: Context) {
             .sortedByDescending { it.timeInForeground }
             .take(limit)
             .filter { it.timeInForeground > 0 }
+    }
+
+    fun isDefaultLauncher(): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+            }
+            val resolveInfo = context.packageManager.resolveActivity(
+                intent,
+                PackageManager.MATCH_DEFAULT_ONLY
+            )
+            resolveInfo?.activityInfo?.packageName == context.packageName
+        } catch (e: Exception) {
+            false
+        }
     }
 
     fun getAppName(packageName: String): String? {

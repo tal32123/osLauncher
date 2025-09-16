@@ -3,6 +3,7 @@ package com.talauncher.ui.insights
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppUsage
+import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +12,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class InsightsViewModel(
-    private val usageStatsHelper: UsageStatsHelper
+    private val usageStatsHelper: UsageStatsHelper,
+    private val permissionsHelper: PermissionsHelper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InsightsUiState())
@@ -25,7 +27,7 @@ class InsightsViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            if (!usageStatsHelper.hasUsageStatsPermission()) {
+            if (!permissionsHelper.hasUsageStatsPermission()) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     hasPermission = false

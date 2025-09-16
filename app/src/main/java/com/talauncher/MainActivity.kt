@@ -30,6 +30,7 @@ import com.talauncher.ui.onboarding.OnboardingViewModel
 import com.talauncher.ui.settings.SettingsScreen
 import com.talauncher.ui.settings.SettingsViewModel
 import com.talauncher.ui.theme.TALauncherTheme
+import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 
 class MainActivity : ComponentActivity() {
@@ -42,7 +43,8 @@ class MainActivity : ComponentActivity() {
         val settingsRepository = SettingsRepository(database.settingsDao())
         val sessionRepository = SessionRepository(database.appSessionDao())
         val appRepository = AppRepository(database.appDao(), this, settingsRepository, sessionRepository)
-        val usageStatsHelper = UsageStatsHelper(this)
+        val permissionsHelper = PermissionsHelper(applicationContext)
+        val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
 
         setContent {
             TALauncherTheme {
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity() {
                         LoadingScreen()
                     } else if (!mainUiState.isOnboardingCompleted) {
                         val onboardingViewModel: OnboardingViewModel = viewModel {
-                            OnboardingViewModel(this@MainActivity, settingsRepository)
+                            OnboardingViewModel(permissionsHelper, usageStatsHelper, settingsRepository)
                         }
                         OnboardingScreen(
                             onOnboardingComplete = mainViewModel::onOnboardingCompleted,
@@ -69,6 +71,7 @@ class MainActivity : ComponentActivity() {
                         TALauncherApp(
                             appRepository = appRepository,
                             settingsRepository = settingsRepository,
+                            permissionsHelper = permissionsHelper,
                             usageStatsHelper = usageStatsHelper,
                             sessionRepository = sessionRepository,
                             shouldNavigateToHome = shouldNavigateToHome,
@@ -111,6 +114,7 @@ class MainActivity : ComponentActivity() {
 fun TALauncherApp(
     appRepository: AppRepository,
     settingsRepository: SettingsRepository,
+    permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
     shouldNavigateToHome: Boolean = false,
@@ -119,6 +123,7 @@ fun TALauncherApp(
     NiagaraLauncherPager(
         appRepository = appRepository,
         settingsRepository = settingsRepository,
+        permissionsHelper = permissionsHelper,
         usageStatsHelper = usageStatsHelper,
         sessionRepository = sessionRepository,
         shouldNavigateToHome = shouldNavigateToHome,
@@ -130,6 +135,7 @@ fun TALauncherApp(
 fun NiagaraLauncherPager(
     appRepository: AppRepository,
     settingsRepository: SettingsRepository,
+    permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
     shouldNavigateToHome: Boolean = false,
@@ -179,7 +185,7 @@ fun NiagaraLauncherPager(
             0 -> {
                 // Settings/Insights Screen
                 val settingsViewModel: SettingsViewModel = viewModel {
-                    SettingsViewModel(appRepository, settingsRepository, usageStatsHelper)
+                    SettingsViewModel(appRepository, settingsRepository, usageStatsHelper, permissionsHelper)
                 }
                 SettingsScreen(
                     onNavigateBack = {},
