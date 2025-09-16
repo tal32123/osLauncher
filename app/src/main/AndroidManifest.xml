@@ -38,7 +38,8 @@
         <service
             android:name=".service.OverlayService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
 
     </application>
 
