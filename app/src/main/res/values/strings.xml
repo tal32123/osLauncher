@@ -13,6 +13,11 @@
     <string name="why_open_app">Why do you want to open this app?</string>
     <string name="continue_to_app">Continue to App</string>
     <string name="uninstall_permission_required">Enable &quot;Uninstall other apps&quot; access so %1$s can remove apps.</string>
+    <string name="overlay_notification_channel_name">Focus session alerts</string>
+    <string name="overlay_notification_channel_description">Keeps the focus session overlay visible when time runs out.</string>
+    <string name="overlay_notification_title">Stay focused</string>
+    <string name="overlay_notification_countdown">Time remaining for %1$s: %2$ds</string>
+    <string name="overlay_notification_decision">%1$s reached its limit</string>
     <string-array name="motivational_quotes">
         <item>Every tap is a choice—make it count.</item>
         <item>Stay focused on what truly matters right now.</item>

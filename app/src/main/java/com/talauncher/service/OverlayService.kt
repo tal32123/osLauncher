@@ -1,5 +1,8 @@
 package com.talauncher.service
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -7,21 +10,12 @@ import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.ProgressBar
-import android.widget.TextView
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.talauncher.R
 import com.talauncher.ui.components.SessionExpiryActionDialog
 import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.theme.TALauncherTheme
@@ -30,6 +24,7 @@ class OverlayService : Service() {
 
     private var windowManager: WindowManager? = null
     private var overlayView: View? = null
+    private var isForeground = false
 
     companion object {
         const val ACTION_SHOW_COUNTDOWN = "show_countdown"
@@ -40,6 +35,8 @@ class OverlayService : Service() {
         const val EXTRA_REMAINING_SECONDS = "remaining_seconds"
         const val EXTRA_TOTAL_SECONDS = "total_seconds"
         const val EXTRA_SHOW_MATH_OPTION = "show_math_option"
+        private const val NOTIFICATION_ID = 1001
+        private const val NOTIFICATION_CHANNEL_ID = "session_expiry_overlay"
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -47,6 +44,7 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -65,6 +63,7 @@ class OverlayService : Service() {
             }
             ACTION_HIDE_OVERLAY -> {
                 hideOverlay()
+                stopServiceAfterHiding()
             }
         }
         return START_NOT_STICKY
@@ -72,10 +71,13 @@ class OverlayService : Service() {
 
     private fun showCountdownOverlay(appName: String, remainingSeconds: Int, totalSeconds: Int) {
         if (!Settings.canDrawOverlays(this)) {
+            hideOverlay()
+            stopServiceAfterHiding()
             return
         }
 
         hideOverlay()
+        updateForegroundNotification(appName, remainingSeconds)
 
         val composeView = ComposeView(this)
         composeView.setContent {
@@ -111,15 +113,20 @@ class OverlayService : Service() {
             windowManager?.addView(overlayView, layoutParams)
         } catch (e: Exception) {
             e.printStackTrace()
+            overlayView = null
+            stopServiceAfterHiding()
         }
     }
 
     private fun showDecisionOverlay(appName: String, packageName: String, showMathOption: Boolean) {
         if (!Settings.canDrawOverlays(this)) {
+            hideOverlay()
+            stopServiceAfterHiding()
             return
         }
 
         hideOverlay()
+        updateForegroundNotification(appName, null)
 
         val composeView = ComposeView(this)
         composeView.setContent {
@@ -128,26 +135,29 @@ class OverlayService : Service() {
                     appName = appName,
                     showMathChallengeOption = showMathOption,
                     onExtend = {
-                        // Send broadcast to notify HomeViewModel
-                        val intent = Intent("com.talauncher.SESSION_EXPIRY_EXTEND")
-                        intent.putExtra("package_name", packageName)
-                        sendBroadcast(intent)
+                        val extendIntent = Intent("com.talauncher.SESSION_EXPIRY_EXTEND").apply {
+                            putExtra("package_name", packageName)
+                        }
+                        sendBroadcast(extendIntent)
                         hideOverlay()
+                        stopServiceAfterHiding()
                     },
                     onClose = {
-                        // Send broadcast to notify HomeViewModel
-                        val intent = Intent("com.talauncher.SESSION_EXPIRY_CLOSE")
-                        intent.putExtra("package_name", packageName)
-                        sendBroadcast(intent)
+                        val closeIntent = Intent("com.talauncher.SESSION_EXPIRY_CLOSE").apply {
+                            putExtra("package_name", packageName)
+                        }
+                        sendBroadcast(closeIntent)
                         hideOverlay()
+                        stopServiceAfterHiding()
                     },
                     onMathChallenge = if (showMathOption) {
                         {
-                            // Send broadcast to notify HomeViewModel
-                            val intent = Intent("com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE")
-                            intent.putExtra("package_name", packageName)
-                            sendBroadcast(intent)
+                            val mathIntent = Intent("com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE").apply {
+                                putExtra("package_name", packageName)
+                            }
+                            sendBroadcast(mathIntent)
                             hideOverlay()
+                            stopServiceAfterHiding()
                         }
                     } else {
                         null
@@ -179,6 +189,8 @@ class OverlayService : Service() {
             windowManager?.addView(overlayView, layoutParams)
         } catch (e: Exception) {
             e.printStackTrace()
+            overlayView = null
+            stopServiceAfterHiding()
         }
     }
 
@@ -193,8 +205,69 @@ class OverlayService : Service() {
         overlayView = null
     }
 
+    private fun stopServiceAfterHiding() {
+        stopForegroundIfNeeded()
+        stopSelf()
+    }
+
+    private fun stopForegroundIfNeeded() {
+        if (isForeground) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            isForeground = false
+        }
+    }
+
+    private fun updateForegroundNotification(appName: String, remainingSeconds: Int?) {
+        val notification = buildNotification(appName, remainingSeconds)
+        if (!isForeground) {
+            startForeground(NOTIFICATION_ID, notification)
+            isForeground = true
+        } else {
+            NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun buildNotification(appName: String, remainingSeconds: Int?): Notification {
+        val contentText = if (remainingSeconds != null) {
+            getString(
+                R.string.overlay_notification_countdown,
+                appName,
+                remainingSeconds.coerceAtLeast(0)
+            )
+        } else {
+            getString(R.string.overlay_notification_decision, appName)
+        }
+
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle(getString(R.string.overlay_notification_title))
+            .setContentText(contentText)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .build()
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                getString(R.string.overlay_notification_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.overlay_notification_channel_description)
+                setShowBadge(false)
+                enableLights(false)
+                enableVibration(false)
+            }
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
+    }
+
     override fun onDestroy() {
         hideOverlay()
+        stopForegroundIfNeeded()
         super.onDestroy()
     }
 }

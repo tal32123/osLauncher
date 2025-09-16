@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +33,10 @@ class HomeViewModel(
     private val sessionRepository: SessionRepository? = null,
     private val context: Context? = null
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "HomeViewModel"
+    }
 
     private enum class TimeLimitRequestSource { STANDARD, SESSION_EXTENSION }
 
@@ -438,7 +443,7 @@ class HomeViewModel(
                 putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
                 putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
             }
-            ctx.startService(intent)
+            startOverlayService(ctx, intent)
         }
     }
 
@@ -450,16 +455,27 @@ class HomeViewModel(
                 putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
                 putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
             }
-            ctx.startService(intent)
+            startOverlayService(ctx, intent)
         }
     }
 
     private fun hideOverlay() {
         context?.let { ctx ->
-            val intent = Intent(ctx, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_HIDE_OVERLAY
+            try {
+                ctx.stopService(Intent(ctx, OverlayService::class.java))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error stopping overlay service", e)
             }
-            ctx.startService(intent)
+        }
+    }
+
+    private fun startOverlayService(ctx: Context, intent: Intent) {
+        try {
+            ContextCompat.startForegroundService(ctx, intent)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Unable to start overlay service for action ${intent.action}", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error starting overlay service for action ${intent.action}", e)
         }
     }
 
