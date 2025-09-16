@@ -43,6 +43,28 @@ class PermissionsHelper(private val context: Context) {
         }
     }
 
+    fun hasPostNotificationsPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    fun hasForegroundServiceSpecialUsePermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.FOREGROUND_SERVICE_SPECIAL_USE
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
     fun requestSystemAlertWindowPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
             val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
@@ -57,14 +79,21 @@ class PermissionsHelper(private val context: Context) {
     }
 
     fun hasForegroundServicePermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            ContextCompat.checkSelfPermission(
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val hasStandardPermission = ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.FOREGROUND_SERVICE
             ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true // Permission not required for API < 28
+            if (!hasStandardPermission) {
+                return false
+            }
         }
+
+        if (!hasForegroundServiceSpecialUsePermission()) {
+            return false
+        }
+
+        return true
     }
 
     fun openUninstallPermissionSettings() {

@@ -46,17 +46,23 @@ class OnboardingViewModel(
         val hasUsageStats = permissionsHelper.hasUsageStatsPermission()
         val isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
         val hasSystemAlertWindow = permissionsHelper.hasSystemAlertWindowPermission()
+        val hasPostNotifications = permissionsHelper.hasPostNotificationsPermission()
 
         _uiState.value = _uiState.value.copy(
             hasUsageStatsPermission = hasUsageStats,
             isDefaultLauncher = isDefaultLauncher,
             hasSystemAlertWindowPermission = hasSystemAlertWindow,
-            allPermissionsGranted = hasUsageStats && isDefaultLauncher && hasSystemAlertWindow
+            hasPostNotificationsPermission = hasPostNotifications,
+            allPermissionsGranted = hasUsageStats && isDefaultLauncher && hasSystemAlertWindow && hasPostNotifications
         )
     }
 
     fun requestSystemAlertWindowPermission() {
         permissionsHelper.requestSystemAlertWindowPermission()
+    }
+
+    fun refreshPermissions() {
+        checkPermissions()
     }
 
     fun completeOnboarding() {
@@ -70,6 +76,7 @@ data class OnboardingUiState(
     val hasUsageStatsPermission: Boolean = false,
     val isDefaultLauncher: Boolean = false,
     val hasSystemAlertWindowPermission: Boolean = false,
+    val hasPostNotificationsPermission: Boolean = false,
     val allPermissionsGranted: Boolean = false,
     val isOnboardingCompleted: Boolean = false
 )

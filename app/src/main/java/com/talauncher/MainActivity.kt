@@ -59,6 +59,14 @@ class MainActivity : ComponentActivity() {
             Log.w(TAG, "Foreground service permission not granted. Overlay service may fail to start on API 28+.")
         }
 
+        if (!permissionsHelper.hasForegroundServiceSpecialUsePermission()) {
+            Log.w(TAG, "Special use foreground service permission not granted. Overlay service may fail on Android 14+.")
+        }
+
+        if (!permissionsHelper.hasPostNotificationsPermission()) {
+            Log.w(TAG, "Notification permission not granted. Foreground overlay notifications cannot be shown.")
+        }
+
         if (!permissionsHelper.hasSystemAlertWindowPermission()) {
             Log.w(TAG, "System alert window permission not granted. App overlays will not work.")
         }
