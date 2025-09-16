@@ -253,7 +253,13 @@ fun LauncherNavigationPager(
             2 -> {
                 // All Apps Screen
                 val appDrawerViewModel: AppDrawerViewModel = viewModel {
-                    AppDrawerViewModel(appRepository, settingsRepository, usageStatsHelper, onLaunchApp)
+                    AppDrawerViewModel(
+                        appRepository,
+                        settingsRepository,
+                        usageStatsHelper,
+                        permissionsHelper,
+                        onLaunchApp
+                    )
                 }
                 AppDrawerScreen(
                     viewModel = appDrawerViewModel
