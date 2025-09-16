@@ -236,47 +236,56 @@ fun NewHomeScreen(
 
 
         // Friction barrier dialog for distracting apps
-        if (uiState.showFrictionDialog && uiState.selectedAppForFriction != null) {
-            FrictionDialog(
-                appPackageName = uiState.selectedAppForFriction!!,
-                onDismiss = { viewModel.dismissFrictionDialog() },
-                onProceed = { reason ->
-                    viewModel.launchAppWithReason(uiState.selectedAppForFriction!!, reason)
-                }
-            )
+        if (uiState.showFrictionDialog) {
+            run {
+                val selectedPackage = uiState.selectedAppForFriction ?: return@run
+                FrictionDialog(
+                    appPackageName = selectedPackage,
+                    onDismiss = { viewModel.dismissFrictionDialog() },
+                    onProceed = { reason ->
+                        viewModel.launchAppWithReason(selectedPackage, reason)
+                    }
+                )
+            }
         }
 
         // Time limit dialog for distracting apps
-        if (uiState.showTimeLimitDialog && uiState.selectedAppForTimeLimit != null) {
-            val appName = remember(uiState.selectedAppForTimeLimit) {
-                try {
-                    val packageManager = context.packageManager
-                    val appInfo = packageManager.getApplicationInfo(uiState.selectedAppForTimeLimit!!, 0)
-                    packageManager.getApplicationLabel(appInfo).toString()
-                } catch (e: Exception) {
-                    uiState.selectedAppForTimeLimit!!
+        if (uiState.showTimeLimitDialog) {
+            run {
+                val selectedPackage = uiState.selectedAppForTimeLimit ?: return@run
+                val appName = remember(selectedPackage) {
+                    try {
+                        val packageManager = context.packageManager
+                        val appInfo = packageManager.getApplicationInfo(selectedPackage, 0)
+                        packageManager.getApplicationLabel(appInfo).toString()
+                    } catch (e: Exception) {
+                        selectedPackage
+                    }
                 }
-            }
 
-            TimeLimitDialog(
-                appName = appName,
-                onConfirm = { durationMinutes ->
-                    viewModel.launchAppWithTimeLimit(uiState.selectedAppForTimeLimit!!, durationMinutes)
-                },
-                onDismiss = { viewModel.dismissTimeLimitDialog() }
-            )
+                TimeLimitDialog(
+                    appName = appName,
+                    onConfirm = { durationMinutes ->
+                        viewModel.launchAppWithTimeLimit(selectedPackage, durationMinutes)
+                    },
+                    onDismiss = { viewModel.dismissTimeLimitDialog() }
+                )
+            }
         }
 
         // Math challenge dialog for closing apps
-        if (uiState.showMathChallengeDialog && uiState.selectedAppForMathChallenge != null) {
-            MathChallengeDialog(
-                difficulty = "medium", // Could be made configurable
-                onCorrect = {
-                    viewModel.onMathChallengeCompleted(uiState.selectedAppForMathChallenge!!)
-                },
-                onDismiss = { viewModel.dismissMathChallengeDialog() },
-                isTimeExpired = uiState.isMathChallengeForExpiredSession
-            )
+        if (uiState.showMathChallengeDialog) {
+            run {
+                val selectedPackage = uiState.selectedAppForMathChallenge ?: return@run
+                MathChallengeDialog(
+                    difficulty = "medium", // Could be made configurable
+                    onCorrect = {
+                        viewModel.onMathChallengeCompleted(selectedPackage)
+                    },
+                    onDismiss = { viewModel.dismissMathChallengeDialog() },
+                    isTimeExpired = uiState.isMathChallengeForExpiredSession
+                )
+            }
         }
     }
 }
