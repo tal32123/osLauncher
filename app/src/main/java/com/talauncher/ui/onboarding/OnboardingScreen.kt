@@ -80,7 +80,9 @@ fun OnboardingScreen(
             isCompleted = uiState.isDefaultLauncher,
             buttonText = if (uiState.isDefaultLauncher) "Completed" else "Set as Default",
             onButtonClick = {
-                val intent = Intent(Settings.ACTION_HOME_SETTINGS)
+                val intent = Intent(Settings.ACTION_HOME_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
                 context.startActivity(intent)
             }
         )
@@ -95,7 +97,9 @@ fun OnboardingScreen(
             isCompleted = uiState.hasUsageStatsPermission,
             buttonText = if (uiState.hasUsageStatsPermission) "Completed" else "Grant Permission",
             onButtonClick = {
-                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
                 context.startActivity(intent)
             }
         )

@@ -51,6 +51,10 @@ class AppDrawerViewModel(
     }
 
     private suspend fun getRecentApps(allApps: List<AppInfo>): List<AppInfo> {
+        if (!usageStatsHelper.hasUsageStatsPermission()) {
+            return emptyList()
+        }
+
         val topUsedApps = usageStatsHelper.getTopUsedApps(5)
         val appMap = allApps.associateBy { it.packageName }
 
