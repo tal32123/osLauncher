@@ -7,9 +7,9 @@ import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppInfo
-import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
+import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +21,7 @@ class AppDrawerViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
     private val usageStatsHelper: UsageStatsHelper,
+    private val permissionsHelper: PermissionsHelper,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null
 ) : ViewModel() {
 
@@ -190,9 +191,17 @@ class AppDrawerViewModel(
 
     fun uninstallApp(context: Context, packageName: String) {
         try {
-            val intent = Intent(Intent.ACTION_DELETE)
-            intent.data = Uri.parse("package:$packageName")
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            val intent = if (permissionsHelper.canUninstallOtherApps()) {
+                Intent(Intent.ACTION_DELETE).apply {
+                    data = Uri.parse("package:$packageName")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            } else {
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            }
             context.startActivity(intent)
         } catch (e: Exception) {
             // Handle error - could show a toast or log
