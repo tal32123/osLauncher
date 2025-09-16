@@ -332,6 +332,10 @@ fun FrictionDialog(
 ) {
     var reason by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val quotesProvider = remember(context) { MotivationalQuotesProvider(context) }
+    val motivationalQuote = remember(appPackageName, quotesProvider) {
+        quotesProvider.getRandomQuote()
+    }
 
     // Get app name for display
     val appName = remember(appPackageName) {
@@ -386,6 +390,17 @@ fun FrictionDialog(
                         unfocusedBorderColor = PrimerGray300
                     )
                 )
+
+                if (motivationalQuote.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = motivationalQuote,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         },
         confirmButton = {
