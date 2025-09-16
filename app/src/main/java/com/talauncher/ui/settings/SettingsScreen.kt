@@ -19,6 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
 import com.talauncher.utils.UsageStatsHelper
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +62,9 @@ fun SettingsScreen(
                 enableMathChallenge = uiState.enableMathChallenge,
                 onToggleMathChallenge = viewModel::toggleMathChallenge,
                 mathDifficulty = uiState.mathDifficulty,
-                onUpdateMathDifficulty = viewModel::updateMathDifficulty
+                onUpdateMathDifficulty = viewModel::updateMathDifficulty,
+                sessionExpiryCountdownSeconds = uiState.sessionExpiryCountdownSeconds,
+                onUpdateSessionExpiryCountdown = viewModel::updateSessionExpiryCountdown
             )
             1 -> AppSelectionTab(
                 title = "Essential Apps",
@@ -103,7 +106,9 @@ fun GeneralSettings(
     enableMathChallenge: Boolean,
     onToggleMathChallenge: () -> Unit,
     mathDifficulty: String,
-    onUpdateMathDifficulty: (String) -> Unit
+    onUpdateMathDifficulty: (String) -> Unit,
+    sessionExpiryCountdownSeconds: Int,
+    onUpdateSessionExpiryCountdown: (Int) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -133,6 +138,35 @@ fun GeneralSettings(
                         checked = enableTimeLimitPrompt,
                         onCheckedChange = { onToggleTimeLimitPrompt() }
                     )
+
+                    var sliderValue by remember(sessionExpiryCountdownSeconds) {
+                        mutableStateOf(sessionExpiryCountdownSeconds.toFloat())
+                    }
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Countdown after timer",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Slider(
+                            value = sliderValue,
+                            onValueChange = { sliderValue = it },
+                            valueRange = 0f..15f,
+                            steps = 14,
+                            onValueChangeFinished = {
+                                onUpdateSessionExpiryCountdown(sliderValue.roundToInt())
+                            },
+                            enabled = enableTimeLimitPrompt
+                        )
+                        Text(
+                            text = "${sliderValue.roundToInt()} second${if (sliderValue.roundToInt() == 1) "" else "s"}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
                     SettingItem(
                         title = "Math Challenge to Close",

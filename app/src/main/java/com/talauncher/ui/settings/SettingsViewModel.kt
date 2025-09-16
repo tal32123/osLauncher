@@ -51,6 +51,7 @@ class SettingsViewModel(
                     enableTimeLimitPrompt = settings?.enableTimeLimitPrompt ?: false,
                     enableMathChallenge = settings?.enableMathChallenge ?: false,
                     mathDifficulty = settings?.mathDifficulty ?: "easy",
+                    sessionExpiryCountdownSeconds = settings?.sessionExpiryCountdownSeconds ?: 5,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -109,6 +110,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateSessionExpiryCountdown(seconds: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateSessionExpiryCountdown(seconds)
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
@@ -140,6 +147,7 @@ data class SettingsUiState(
     val enableTimeLimitPrompt: Boolean = false,
     val enableMathChallenge: Boolean = false,
     val mathDifficulty: String = "easy",
+    val sessionExpiryCountdownSeconds: Int = 5,
     val isLoading: Boolean = false,
     val searchQuery: String = ""
 )

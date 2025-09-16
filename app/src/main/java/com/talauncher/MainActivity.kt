@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.talauncher.data.database.LauncherDatabase
 import com.talauncher.data.repository.AppRepository
@@ -61,6 +62,17 @@ class MainActivity : ComponentActivity() {
             )
             val permissionsHelper = PermissionsHelper(applicationContext)
             val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
+
+            lifecycleScope.launch {
+                sessionRepository.initialize()
+                sessionRepository.emitExpiredSessions()
+            }
+
+            lifecycleScope.launch {
+                sessionRepository.observeSessionExpirations().collect {
+                    shouldNavigateToHome = true
+                }
+            }
 
             setContent {
                 TALauncherTheme {
@@ -122,30 +134,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkExpiredSessions() {
-        if (!::sessionRepository.isInitialized || !::appRepository.isInitialized) {
+        if (!::sessionRepository.isInitialized) {
             return
         }
 
         lifecycleScope.launch {
-            val expiredSessions = sessionRepository.getExpiredSessions()
-            if (expiredSessions.isEmpty()) {
-                return@launch
-            }
-
-            var requiresHomeNavigation = false
-
-            expiredSessions.forEach { session ->
-                val shouldShowMathChallenge = appRepository.shouldShowMathChallenge(session.packageName)
-                if (shouldShowMathChallenge) {
-                    requiresHomeNavigation = true
-                } else {
-                    sessionRepository.endSessionForApp(session.packageName)
-                }
-            }
-
-            if (requiresHomeNavigation) {
-                shouldNavigateToHome = true
-            }
+            sessionRepository.emitExpiredSessions()
         }
     }
 }

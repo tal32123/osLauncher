@@ -26,8 +26,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.data.model.AppInfo
-import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.MathChallengeDialog
+import com.talauncher.ui.components.SessionExpiryActionDialog
+import com.talauncher.ui.components.SessionExpiryCountdownDialog
+import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.theme.*
 import kotlin.math.abs
 
@@ -43,9 +45,19 @@ fun HomeScreen(
 
     // Handle back button for dialogs - prioritize dialogs over navigation
     BackHandler(
-        enabled = uiState.showFrictionDialog || uiState.showTimeLimitDialog || uiState.showMathChallengeDialog
+        enabled = uiState.showFrictionDialog ||
+            uiState.showTimeLimitDialog ||
+            uiState.showMathChallengeDialog ||
+            uiState.showSessionExpiryCountdown ||
+            uiState.showSessionExpiryDecisionDialog
     ) {
         when {
+            uiState.showSessionExpiryCountdown -> {
+                // Countdown cannot be dismissed
+            }
+            uiState.showSessionExpiryDecisionDialog -> {
+                // Force the user to make a decision
+            }
             uiState.showMathChallengeDialog -> {
                 // Math challenge cannot be dismissed with back button - force completion
             }
@@ -271,6 +283,28 @@ fun HomeScreen(
                     onDismiss = { viewModel.dismissTimeLimitDialog() }
                 )
             }
+        }
+
+        if (uiState.showSessionExpiryCountdown) {
+            val appName = uiState.sessionExpiryAppName ?: "this app"
+            SessionExpiryCountdownDialog(
+                appName = appName,
+                remainingSeconds = uiState.sessionExpiryCountdownRemaining,
+                totalSeconds = uiState.sessionExpiryCountdownTotal
+            )
+        }
+
+        if (uiState.showSessionExpiryDecisionDialog) {
+            val appName = uiState.sessionExpiryAppName ?: "this app"
+            SessionExpiryActionDialog(
+                appName = appName,
+                showMathChallengeOption = uiState.sessionExpiryShowMathOption,
+                onExtend = { viewModel.onSessionExpiryDecisionExtend() },
+                onClose = { viewModel.onSessionExpiryDecisionClose() },
+                onMathChallenge = if (uiState.sessionExpiryShowMathOption) {
+                    { viewModel.onSessionExpiryDecisionMathChallenge() }
+                } else null
+            )
         }
 
         // Math challenge dialog for closing apps
