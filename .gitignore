@@ -93,3 +93,5 @@ crashlytics-build.properties
 
 # Kotlin temporary files
 .kotlin/
+
+node_modules/
