@@ -3,6 +3,7 @@ package com.talauncher.data.repository
 import com.talauncher.data.database.AppSessionDao
 import com.talauncher.data.model.AppSession
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class SessionRepository(private val appSessionDao: AppSessionDao) {
 
@@ -10,6 +11,11 @@ class SessionRepository(private val appSessionDao: AppSessionDao) {
 
     suspend fun getActiveSessionForApp(packageName: String): AppSession? =
         appSessionDao.getActiveSessionForApp(packageName)
+
+    suspend fun getExpiredSessions(): List<AppSession> {
+        val activeSessions = appSessionDao.getActiveSessions().first()
+        return activeSessions.filter { isSessionExpired(it) }
+    }
 
     suspend fun startSession(packageName: String, plannedDurationMinutes: Int): Long {
         val session = AppSession(

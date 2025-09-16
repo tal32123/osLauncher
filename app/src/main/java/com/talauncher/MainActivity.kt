@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import com.talauncher.data.database.LauncherDatabase
@@ -41,6 +42,8 @@ import java.io.StringWriter
 
 class MainActivity : ComponentActivity() {
     private var shouldNavigateToHome by mutableStateOf(false)
+    private lateinit var sessionRepository: SessionRepository
+    private lateinit var appRepository: AppRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,11 +114,31 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkExpiredSessions() {
-        val database = LauncherDatabase.getDatabase(this)
-        val sessionRepository = SessionRepository(database.appSessionDao())
+        if (!::sessionRepository.isInitialized || !::appRepository.isInitialized) {
+            return
+        }
 
-        // This will be handled by the ViewModels to show math challenges
-        // The actual checking is done in the UI layer to have access to the dialogs
+        lifecycleScope.launch {
+            val expiredSessions = sessionRepository.getExpiredSessions()
+            if (expiredSessions.isEmpty()) {
+                return@launch
+            }
+
+            var requiresHomeNavigation = false
+
+            expiredSessions.forEach { session ->
+                val shouldShowMathChallenge = appRepository.shouldShowMathChallenge(session.packageName)
+                if (shouldShowMathChallenge) {
+                    requiresHomeNavigation = true
+                } else {
+                    sessionRepository.endSessionForApp(session.packageName)
+                }
+            }
+
+            if (requiresHomeNavigation) {
+                shouldNavigateToHome = true
+            }
+        }
     }
 }
 
