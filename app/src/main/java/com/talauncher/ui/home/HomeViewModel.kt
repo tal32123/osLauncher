@@ -33,7 +33,8 @@ class HomeViewModel(
     private val settingsRepository: SettingsRepository,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
     private val sessionRepository: SessionRepository? = null,
-    private val context: Context? = null
+    private val context: Context? = null,
+    private val permissionsHelper: PermissionsHelper? = null
 ) : ViewModel() {
 
     companion object {
@@ -51,6 +52,7 @@ class HomeViewModel(
     private var currentExpiredSession: AppSession? = null
     private var countdownJob: Job? = null
     private var timeLimitRequestSource = TimeLimitRequestSource.STANDARD
+    private var overlayPermissionPrompted = false
 
     private val sessionExpiryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -419,6 +421,7 @@ class HomeViewModel(
         )
         currentExpiredSession = null
         timeLimitRequestSource = TimeLimitRequestSource.STANDARD
+        overlayPermissionPrompted = false
 
         if (pendingExpiredSessions.isNotEmpty()) {
             val nextSession = pendingExpiredSessions.removeFirst()
@@ -438,6 +441,10 @@ class HomeViewModel(
     }
 
     private fun showOverlayCountdown(appName: String, remainingSeconds: Int, totalSeconds: Int) {
+        if (!ensureOverlayPermission(appName)) {
+            return
+        }
+
         context?.let { ctx ->
             val intent = Intent(ctx, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_SHOW_COUNTDOWN
@@ -450,6 +457,10 @@ class HomeViewModel(
     }
 
     private fun showOverlayDecision(appName: String, packageName: String, showMathOption: Boolean) {
+        if (!ensureOverlayPermission(appName)) {
+            return
+        }
+
         context?.let { ctx ->
             val intent = Intent(ctx, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_SHOW_DECISION
@@ -502,6 +513,39 @@ class HomeViewModel(
         }
     }
 
+    private fun ensureOverlayPermission(appName: String?): Boolean {
+        val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
+        val hasPermission = helper?.hasSystemAlertWindowPermission()
+
+        if (hasPermission == true) {
+            overlayPermissionPrompted = false
+            if (_uiState.value.showOverlayPermissionDialog) {
+                _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = false)
+            }
+            return true
+        }
+
+        if (!overlayPermissionPrompted) {
+            overlayPermissionPrompted = true
+            _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = true)
+            helper?.requestSystemAlertWindowPermission()
+            viewModelScope.launch {
+                appRepository.closeCurrentApp()
+            }
+        }
+
+        return false
+    }
+
+    fun dismissOverlayPermissionDialog() {
+        _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = false)
+    }
+
+    fun openOverlayPermissionSettings() {
+        val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
+        helper?.requestSystemAlertWindowPermission()
+    }
+
     override fun onCleared() {
         super.onCleared()
         try {
@@ -537,5 +581,6 @@ data class HomeUiState(
     val sessionExpiryCountdownTotal: Int = 0,
     val sessionExpiryCountdownRemaining: Int = 0,
     val sessionExpiryShowMathOption: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val showOverlayPermissionDialog: Boolean = false
 )
