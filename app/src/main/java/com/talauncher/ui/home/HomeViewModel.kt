@@ -246,6 +246,7 @@ class HomeViewModel(
     fun onSessionExpiryDecisionClose() {
         viewModelScope.launch {
             currentExpiredSession?.let { session ->
+                appRepository.closeCurrentApp()
                 appRepository.endSessionForApp(session.packageName)
             }
             finalizeExpiredSession()
@@ -302,8 +303,6 @@ class HomeViewModel(
             val settings = settingsRepository.getSettingsSync()
             val countdownSeconds = settings.sessionExpiryCountdownSeconds.coerceAtLeast(0)
             val appName = appRepository.getAppDisplayName(session.packageName)
-
-            appRepository.closeCurrentApp()
 
             _uiState.value = _uiState.value.copy(
                 sessionExpiryAppName = appName,
