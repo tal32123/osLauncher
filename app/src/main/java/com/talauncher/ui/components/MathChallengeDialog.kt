@@ -103,10 +103,15 @@ fun MathChallengeDialog(
     onDismiss: () -> Unit,
     isTimeExpired: Boolean = false  // If true, this is a mandatory challenge due to time expiration
 ) {
-    val problem = remember { MathGenerator.generateProblem(difficulty) }
+    val problem = remember(difficulty) { MathGenerator.generateProblem(difficulty) }
     var answerText by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    LaunchedEffect(problem, difficulty) {
+        answerText = ""
+        isError = false
+        errorMessage = ""
+    }
     var timeLeft by remember { mutableStateOf(if (isTimeExpired) 30 else 0) }  // 30 seconds countdown for expired sessions
 
     // Auto-dismiss timer for expired sessions
