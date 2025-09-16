@@ -13,6 +13,14 @@
     <string name="why_open_app">Why do you want to open this app?</string>
     <string name="continue_to_app">Continue to App</string>
     <string name="uninstall_permission_required">Enable &quot;Uninstall other apps&quot; access so %1$s can remove apps.</string>
+    <string name="rename_app_action_label">Rename app</string>
+    <string name="rename_app_action_description">Change how this app is displayed in TALauncher.</string>
+    <string name="rename_app_dialog_title">Rename %1$s</string>
+    <string name="rename_app_dialog_description">Pick a name that feels right. This only changes how the app appears inside TALauncher.</string>
+    <string name="rename_app_dialog_field_label">New name</string>
+    <string name="rename_app_dialog_placeholder">Enter a new name</string>
+    <string name="rename_app_dialog_supporting_text">You can reset the name anytime from this menu.</string>
+    <string name="rename_app_dialog_confirm">Save</string>
     <string-array name="motivational_quotes">
         <item>Every tap is a choice—make it count.</item>
         <item>Stay focused on what truly matters right now.</item>
