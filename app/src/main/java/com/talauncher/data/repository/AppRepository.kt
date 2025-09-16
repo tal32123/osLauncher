@@ -64,16 +64,17 @@ class AppRepository(
         appDao.updateDistractingStatus(packageName, isDistracting)
     }
 
-    private suspend fun getAppInfoFromPackage(packageName: String): AppInfo? {
-        val packageManager = context.packageManager
-        return try {
-            val appInfo = packageManager.getApplicationInfo(packageName, 0)
-            val appName = packageManager.getApplicationLabel(appInfo).toString()
-            AppInfo(packageName = packageName, appName = appName)
-        } catch (e: Exception) {
-            null
+    private suspend fun getAppInfoFromPackage(packageName: String): AppInfo? =
+        withContext(Dispatchers.IO) {
+            val packageManager = context.packageManager
+            try {
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                val appName = packageManager.getApplicationLabel(appInfo).toString()
+                AppInfo(packageName = packageName, appName = appName)
+            } catch (e: Exception) {
+                null
+            }
         }
-    }
 
     suspend fun getInstalledApps(): List<InstalledApp> = withContext(Dispatchers.IO) {
         val packageManager = context.packageManager
