@@ -13,6 +13,11 @@
     <string name="why_open_app">Why do you want to open this app?</string>
     <string name="continue_to_app">Continue to App</string>
     <string name="uninstall_permission_required">Enable &quot;Uninstall other apps&quot; access so %1$s can remove apps.</string>
+    <string name="overlay_permission_required">Enable &quot;Display over other apps&quot; access so %1$s can gently end sessions when time is up.</string>
+    <string name="session_overlay_notification_channel_name">Session reminders</string>
+    <string name="session_overlay_notification_channel_description">Allows %1$s to keep session limit prompts visible while other apps are open.</string>
+    <string name="session_overlay_notification_title">Mindful session running</string>
+    <string name="session_overlay_notification_text">%1$s is guiding your time while you use %2$s.</string>
     <string name="rename_app_action_label">Rename app</string>
     <string name="rename_app_action_description">Change how this app is displayed in TALauncher.</string>
     <string name="rename_app_dialog_title">Rename %1$s</string>

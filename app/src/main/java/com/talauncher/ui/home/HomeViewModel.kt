@@ -4,15 +4,18 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.service.OverlayService
+import com.talauncher.utils.PermissionsHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +33,8 @@ class HomeViewModel(
     private val settingsRepository: SettingsRepository,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
     private val sessionRepository: SessionRepository? = null,
-    private val context: Context? = null
+    private val context: Context? = null,
+    private val permissionsHelper: PermissionsHelper
 ) : ViewModel() {
 
     private enum class TimeLimitRequestSource { STANDARD, SESSION_EXTENSION }
@@ -44,6 +48,7 @@ class HomeViewModel(
     private var currentExpiredSession: AppSession? = null
     private var countdownJob: Job? = null
     private var timeLimitRequestSource = TimeLimitRequestSource.STANDARD
+    private var overlayPermissionPrompted = false
 
     private val sessionExpiryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -338,6 +343,7 @@ class HomeViewModel(
         if (sessionRepository == null) return
         currentExpiredSession = session
         countdownJob?.cancel()
+        overlayPermissionPrompted = false
 
         viewModelScope.launch {
             val settings = settingsRepository.getSettingsSync()
@@ -401,6 +407,7 @@ class HomeViewModel(
         countdownJob = null
         // Hide overlay
         hideOverlay()
+        overlayPermissionPrompted = false
         _uiState.value = _uiState.value.copy(
             sessionExpiryAppName = null,
             sessionExpiryPackageName = null,
@@ -431,27 +438,51 @@ class HomeViewModel(
     }
 
     private fun showOverlayCountdown(appName: String, remainingSeconds: Int, totalSeconds: Int) {
-        context?.let { ctx ->
-            val intent = Intent(ctx, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_SHOW_COUNTDOWN
-                putExtra(OverlayService.EXTRA_APP_NAME, appName)
-                putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
-                putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
-            }
-            ctx.startService(intent)
+        if (!ensureOverlayPermission()) {
+            return
         }
+        val ctx = context ?: return
+        val intent = Intent(ctx, OverlayService::class.java).apply {
+            action = OverlayService.ACTION_SHOW_COUNTDOWN
+            putExtra(OverlayService.EXTRA_APP_NAME, appName)
+            putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
+            putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
+        }
+        ContextCompat.startForegroundService(ctx, intent)
     }
 
     private fun showOverlayDecision(appName: String, packageName: String, showMathOption: Boolean) {
-        context?.let { ctx ->
-            val intent = Intent(ctx, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_SHOW_DECISION
-                putExtra(OverlayService.EXTRA_APP_NAME, appName)
-                putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
-                putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
-            }
-            ctx.startService(intent)
+        if (!ensureOverlayPermission()) {
+            return
         }
+        val ctx = context ?: return
+        val intent = Intent(ctx, OverlayService::class.java).apply {
+            action = OverlayService.ACTION_SHOW_DECISION
+            putExtra(OverlayService.EXTRA_APP_NAME, appName)
+            putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
+            putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
+        }
+        ContextCompat.startForegroundService(ctx, intent)
+    }
+
+    private fun ensureOverlayPermission(): Boolean {
+        if (permissionsHelper.hasSystemAlertWindowPermission()) {
+            overlayPermissionPrompted = false
+            return true
+        }
+
+        if (!overlayPermissionPrompted) {
+            overlayPermissionPrompted = true
+            context?.let { ctx ->
+                val appName = ctx.getString(R.string.app_name)
+                val message = ctx.getString(R.string.overlay_permission_required, appName)
+                Toast.makeText(ctx, message, Toast.LENGTH_LONG).show()
+            }
+            permissionsHelper.requestSystemAlertWindowPermission()
+        }
+
+        appRepository.closeCurrentApp()
+        return false
     }
 
     private fun hideOverlay() {
