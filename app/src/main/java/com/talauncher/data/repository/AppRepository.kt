@@ -2,6 +2,8 @@ package com.talauncher.data.repository
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.os.Build
 import android.provider.Settings
 import com.talauncher.data.database.AppDao
 import com.talauncher.data.model.AppInfo
@@ -22,6 +24,16 @@ class AppRepository(
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository? = null
 ) {
+    companion object {
+        private val DISTRACTING_CATEGORIES = setOf(
+            ApplicationInfo.CATEGORY_GAME,
+            ApplicationInfo.CATEGORY_NEWS,
+            ApplicationInfo.CATEGORY_VIDEO,
+            ApplicationInfo.CATEGORY_AUDIO,
+            ApplicationInfo.CATEGORY_IMAGE,
+            ApplicationInfo.CATEGORY_SOCIAL
+        )
+    }
     fun getAllApps(): Flow<List<AppInfo>> = appDao.getAllApps()
 
     fun getAllVisibleApps(): Flow<List<AppInfo>> = appDao.getAllVisibleApps()
@@ -68,6 +80,14 @@ class AppRepository(
 
     suspend fun updateDistractingStatus(packageName: String, isDistracting: Boolean) {
         appDao.updateDistractingStatus(packageName, isDistracting)
+    }
+
+    suspend fun getAppDisplayName(packageName: String): String {
+        val storedName = getApp(packageName)?.appName
+        if (storedName != null) {
+            return storedName
+        }
+        return getAppInfoFromPackage(packageName)?.appName ?: packageName
     }
 
     private suspend fun getAppInfoFromPackage(packageName: String): AppInfo? =
@@ -134,8 +154,16 @@ class AppRepository(
 
     suspend fun shouldShowTimeLimitPrompt(packageName: String): Boolean {
         val settings = settingsRepository.getSettingsSync()
+        if (!settings.enableTimeLimitPrompt) {
+            return false
+        }
+
         val app = getApp(packageName)
-        return settings.enableTimeLimitPrompt && app?.isDistracting == true
+        if (app?.isDistracting == true || app?.isHidden == true) {
+            return true
+        }
+
+        return isDistractingCategory(packageName)
     }
 
     suspend fun shouldShowMathChallenge(packageName: String): Boolean {
@@ -185,6 +213,20 @@ class AppRepository(
                 appName = "Device Settings"
             )
             insertApp(deviceSettingsApp)
+        }
+    }
+
+    private fun isDistractingCategory(packageName: String): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return false
+        }
+
+        return try {
+            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
+            val category = appInfo.category
+            category != ApplicationInfo.CATEGORY_UNDEFINED && DISTRACTING_CATEGORIES.contains(category)
+        } catch (e: Exception) {
+            false
         }
     }
 }

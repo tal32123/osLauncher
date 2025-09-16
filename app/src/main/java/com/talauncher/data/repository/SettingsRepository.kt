@@ -42,4 +42,9 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(mathDifficulty = difficulty))
     }
+
+    suspend fun updateSessionExpiryCountdown(seconds: Int) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(sessionExpiryCountdownSeconds = seconds.coerceIn(0, 30)))
+    }
 }

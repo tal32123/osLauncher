@@ -114,8 +114,14 @@ class AppDrawerViewModel(
 
     fun launchAppWithTimeLimit(packageName: String, durationMinutes: Int) {
         viewModelScope.launch {
-            appRepository.launchApp(packageName, plannedDuration = durationMinutes)
-            onLaunchApp?.invoke(packageName, durationMinutes)
+            val launched = appRepository.launchApp(
+                packageName,
+                bypassFriction = true,
+                plannedDuration = durationMinutes
+            )
+            if (launched) {
+                onLaunchApp?.invoke(packageName, durationMinutes)
+            }
             dismissTimeLimitDialog()
         }
     }
