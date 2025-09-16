@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -107,6 +108,20 @@ fun OnboardingScreen(
             }
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // System Alert Window Permission
+        OnboardingStepCard(
+            icon = Icons.Default.Notifications,
+            title = "Overlay Permission",
+            description = "Allows timer notifications to appear over other apps when time limits expire",
+            isCompleted = uiState.hasSystemAlertWindowPermission,
+            buttonText = if (uiState.hasSystemAlertWindowPermission) "Completed" else "Grant Permission",
+            onButtonClick = {
+                viewModel.requestSystemAlertWindowPermission()
+            }
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
 
         if (uiState.allPermissionsGranted) {
@@ -144,7 +159,7 @@ fun OnboardingScreen(
             }
         } else {
             Text(
-                text = "Complete both steps above to continue",
+                text = "Complete all steps above to continue",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center

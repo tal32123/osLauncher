@@ -1,5 +1,10 @@
 package com.talauncher.ui.home
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppInfo
@@ -7,6 +12,7 @@ import com.talauncher.data.model.AppSession
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
+import com.talauncher.service.OverlayService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +29,8 @@ class HomeViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
-    private val sessionRepository: SessionRepository? = null
+    private val sessionRepository: SessionRepository? = null,
+    private val context: Context? = null
 ) : ViewModel() {
 
     private enum class TimeLimitRequestSource { STANDARD, SESSION_EXTENSION }
@@ -38,11 +45,44 @@ class HomeViewModel(
     private var countdownJob: Job? = null
     private var timeLimitRequestSource = TimeLimitRequestSource.STANDARD
 
+    private val sessionExpiryReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                "com.talauncher.SESSION_EXPIRY_EXTEND" -> {
+                    onSessionExpiryDecisionExtend()
+                }
+                "com.talauncher.SESSION_EXPIRY_CLOSE" -> {
+                    onSessionExpiryDecisionClose()
+                }
+                "com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE" -> {
+                    onSessionExpiryDecisionMathChallenge()
+                }
+            }
+        }
+    }
+
     init {
         observeData()
         updateTime()
         observeSessionExpirations()
         checkExpiredSessions()
+        setupBroadcastReceiver()
+    }
+
+    private fun setupBroadcastReceiver() {
+        context?.let { ctx ->
+            val filter = IntentFilter().apply {
+                addAction("com.talauncher.SESSION_EXPIRY_EXTEND")
+                addAction("com.talauncher.SESSION_EXPIRY_CLOSE")
+                addAction("com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE")
+            }
+            ContextCompat.registerReceiver(
+                ctx,
+                sessionExpiryReceiver,
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        }
     }
 
     private fun observeData() {
@@ -316,6 +356,11 @@ class HomeViewModel(
 
             if (countdownSeconds > 0) {
                 startCountdown(countdownSeconds)
+                // Show system overlay countdown
+                showOverlayCountdown(appName, countdownSeconds, countdownSeconds)
+            } else {
+                // Show decision dialog immediately
+                showOverlayDecision(appName, session.packageName, settings.enableMathChallenge)
             }
         }
     }
@@ -328,6 +373,9 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     sessionExpiryCountdownRemaining = remaining
                 )
+                // Update overlay countdown
+                val appName = _uiState.value.sessionExpiryAppName ?: "this app"
+                showOverlayCountdown(appName, remaining, totalSeconds)
                 delay(1000)
                 remaining--
             }
@@ -341,11 +389,18 @@ class HomeViewModel(
             showSessionExpiryCountdown = false,
             showSessionExpiryDecisionDialog = true
         )
+        // Show overlay decision dialog
+        val appName = _uiState.value.sessionExpiryAppName ?: "this app"
+        val packageName = _uiState.value.sessionExpiryPackageName ?: ""
+        val showMathOption = _uiState.value.sessionExpiryShowMathOption
+        showOverlayDecision(appName, packageName, showMathOption)
     }
 
     private fun finalizeExpiredSession() {
         countdownJob?.cancel()
         countdownJob = null
+        // Hide overlay
+        hideOverlay()
         _uiState.value = _uiState.value.copy(
             sessionExpiryAppName = null,
             sessionExpiryPackageName = null,
@@ -373,6 +428,50 @@ class HomeViewModel(
 
     fun checkExpiredSessionsManually() {
         checkExpiredSessions()
+    }
+
+    private fun showOverlayCountdown(appName: String, remainingSeconds: Int, totalSeconds: Int) {
+        context?.let { ctx ->
+            val intent = Intent(ctx, OverlayService::class.java).apply {
+                action = OverlayService.ACTION_SHOW_COUNTDOWN
+                putExtra(OverlayService.EXTRA_APP_NAME, appName)
+                putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
+                putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
+            }
+            ctx.startService(intent)
+        }
+    }
+
+    private fun showOverlayDecision(appName: String, packageName: String, showMathOption: Boolean) {
+        context?.let { ctx ->
+            val intent = Intent(ctx, OverlayService::class.java).apply {
+                action = OverlayService.ACTION_SHOW_DECISION
+                putExtra(OverlayService.EXTRA_APP_NAME, appName)
+                putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
+                putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
+            }
+            ctx.startService(intent)
+        }
+    }
+
+    private fun hideOverlay() {
+        context?.let { ctx ->
+            val intent = Intent(ctx, OverlayService::class.java).apply {
+                action = OverlayService.ACTION_HIDE_OVERLAY
+            }
+            ctx.startService(intent)
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            context?.unregisterReceiver(sessionExpiryReceiver)
+        } catch (e: Exception) {
+            // Receiver may not be registered
+        }
+        hideOverlay()
+        countdownJob?.cancel()
     }
 }
 

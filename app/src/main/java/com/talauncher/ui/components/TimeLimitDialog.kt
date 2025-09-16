@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import com.talauncher.ui.home.MotivationalQuotesProvider
 
 @Composable
@@ -23,10 +24,15 @@ fun TimeLimitDialog(
     var durationText by remember { mutableStateOf("30") }
     var isError by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     val quotesProvider = remember(context) { MotivationalQuotesProvider(context) }
     val motivationalQuote = remember(appName, quotesProvider) {
         quotesProvider.getRandomQuote()
     }
+
+    // Responsive sizing based on screen width
+    val dialogPadding = if (configuration.screenWidthDp > 600) 32.dp else 16.dp
+    val cardPadding = if (configuration.screenWidthDp > 600) 24.dp else 16.dp
 
     // Prevent back button from dismissing the dialog
     BackHandler {
@@ -41,28 +47,50 @@ fun TimeLimitDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(dialogPadding),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(cardPadding),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "How long will you use $appName?",
                     style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
+
+                if (motivationalQuote.isNotBlank()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                        ),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            text = motivationalQuote,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(cardPadding)
+                        )
+                    }
+                }
 
                 Text(
                     text = "Set a time limit to help manage your usage",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 OutlinedTextField(
@@ -79,17 +107,6 @@ fun TimeLimitDialog(
                     } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                if (motivationalQuote.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = motivationalQuote,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 

@@ -33,6 +33,27 @@ class PermissionsHelper(private val context: Context) {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
     }
 
+    fun hasSystemAlertWindowPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(context)
+        } else {
+            true // Permission not required for API < 23
+        }
+    }
+
+    fun requestSystemAlertWindowPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                data = Uri.parse("package:${context.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+
+            if (intent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(intent)
+            }
+        }
+    }
+
     fun openUninstallPermissionSettings() {
         val packageName = context.packageName
 

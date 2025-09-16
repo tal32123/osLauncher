@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import com.talauncher.ui.home.MotivationalQuotesProvider
 
 @Composable
@@ -34,10 +35,15 @@ fun SessionExpiryCountdownDialog(
         if (totalSeconds <= 0) 1f else 1f - (remainingSeconds.coerceAtLeast(0) / totalSeconds.toFloat())
     }
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     val quotesProvider = remember(context) { MotivationalQuotesProvider(context) }
     val motivationalQuote = remember(appName, quotesProvider) {
         quotesProvider.getRandomQuote()
     }
+
+    // Responsive sizing based on screen width
+    val dialogPadding = if (configuration.screenWidthDp > 600) 32.dp else 16.dp
+    val cardPadding = if (configuration.screenWidthDp > 600) 24.dp else 16.dp
 
     Dialog(
         onDismissRequest = {},
@@ -46,7 +52,7 @@ fun SessionExpiryCountdownDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(dialogPadding),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             )
@@ -54,7 +60,7 @@ fun SessionExpiryCountdownDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(cardPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -64,6 +70,27 @@ fun SessionExpiryCountdownDialog(
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )
+
+                if (motivationalQuote.isNotBlank()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
+                        ),
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text(
+                            text = motivationalQuote,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(cardPadding)
+                        )
+                    }
+                }
+
                 Text(
                     text = "${appName} will close soon.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -78,15 +105,6 @@ fun SessionExpiryCountdownDialog(
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center
                 )
-                if (motivationalQuote.isNotBlank()) {
-                    Text(
-                        text = motivationalQuote,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
             }
         }
     }

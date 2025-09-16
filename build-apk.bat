@@ -41,12 +41,12 @@ if "%BUILD_TYPE%"=="" (
 
 echo.
 echo 🧹 Cleaning the project...
-call "%~dp0gradlew.bat" clean
+call "%~dp0gradlew.bat" clean --continue
 if %errorlevel% neq 0 (
-    echo ❌ Error: Project cleaning failed.
-    REM Only pause if not running with arguments (interactive mode)
-    if "%1"=="" pause
-    exit /b 1
+    echo ⚠️  Warning: Project cleaning failed. Attempting to continue with build...
+    echo 🔄 Trying to kill any lingering Gradle daemons...
+    call "%~dp0gradlew.bat" --stop
+    ping 127.0.0.1 -n 3 >nul
 )
 echo.
 

@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -257,8 +258,9 @@ fun LauncherNavigationPager(
             }
             1 -> {
                 // Main/Home Screen with pinned apps
+                val context = LocalContext.current
                 val homeViewModel: HomeViewModel = viewModel {
-                    HomeViewModel(appRepository, settingsRepository, onLaunchApp, sessionRepository)
+                    HomeViewModel(appRepository, settingsRepository, onLaunchApp, sessionRepository, context)
                 }
                 HomeScreen(
                     viewModel = homeViewModel,
