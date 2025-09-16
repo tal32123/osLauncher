@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+cd /d "%~dp0"
 title TALauncher APK Builder
 echo.
 echo 🚀 TALauncher APK Builder
@@ -7,7 +8,7 @@ echo ========================
 echo.
 
 REM Check if gradlew.bat exists
-if not exist "gradlew.bat" (
+if not exist "%~dp0gradlew.bat" (
     echo ❌ Error: gradlew.bat not found in current directory
     echo Make sure you're running this from the project root directory
     pause
@@ -36,7 +37,7 @@ if "%BUILD_TYPE%"=="" (
 
 echo.
 echo 🧹 Cleaning the project...
-call gradlew.bat clean
+call "%~dp0gradlew.bat" clean
 if %errorlevel% neq 0 (
     echo ❌ Error: Project cleaning failed.
     pause
@@ -55,24 +56,24 @@ if "%BUILD_TYPE%"=="both" goto build_both
 
 :build_debug
 echo 📦 Building Debug APK...
-call gradlew.bat assembleDebug
+call "%~dp0gradlew.bat" assembleDebug
 if %errorlevel% neq 0 goto build_failed
 goto check_files
 
 :build_release
 echo 📦 Building Release APK...
-call gradlew.bat assembleRelease
+call "%~dp0gradlew.bat" assembleRelease
 if %errorlevel% neq 0 goto build_failed
 goto check_files
 
 :build_both
 echo 📦 Building Debug APK...
-call gradlew.bat assembleDebug
+call "%~dp0gradlew.bat" assembleDebug
 if %errorlevel% neq 0 goto build_failed
 
 echo.
 echo 📦 Building Release APK...
-call gradlew.bat assembleRelease
+call "%~dp0gradlew.bat" assembleRelease
 if %errorlevel% neq 0 goto build_failed
 goto check_files
 

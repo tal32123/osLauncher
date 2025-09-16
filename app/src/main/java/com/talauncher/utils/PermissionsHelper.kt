@@ -36,25 +36,16 @@ class PermissionsHelper(private val context: Context) {
     fun openUninstallPermissionSettings() {
         val packageName = context.packageName
 
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Intent(Settings.ACTION_MANAGE_APP_PERMISSION).apply {
-                data = Uri.fromParts("package", packageName, null)
-                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                putExtra(Settings.EXTRA_PERMISSION_NAME, Manifest.permission.REQUEST_DELETE_PACKAGES)
-            }
-        } else {
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", packageName, null)
-            }
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         if (intent.resolveActivity(context.packageManager) != null) {
             context.startActivity(intent)
         } else {
-            val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", packageName, null)
+            // Fallback - open general settings
+            val fallbackIntent = Intent(Settings.ACTION_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(fallbackIntent)
