@@ -53,6 +53,29 @@ class MainActivity : ComponentActivity() {
     private lateinit var appRepository: AppRepository
     private lateinit var errorHandler: MainErrorHandler
 
+    private fun checkRequiredPermissions(permissionsHelper: PermissionsHelper) {
+        // Log permissions status for debugging
+        if (!permissionsHelper.hasForegroundServicePermission()) {
+            Log.w(TAG, "Foreground service permission not granted. Overlay service may fail to start on API 28+.")
+        }
+
+        if (!permissionsHelper.hasForegroundServiceSpecialUsePermission()) {
+            Log.w(TAG, "Special use foreground service permission not granted. Overlay service may fail on Android 14+.")
+        }
+
+        if (!permissionsHelper.hasPostNotificationsPermission()) {
+            Log.w(TAG, "Notification permission not granted. Foreground overlay notifications cannot be shown.")
+        }
+
+        if (!permissionsHelper.hasSystemAlertWindowPermission()) {
+            Log.w(TAG, "System alert window permission not granted. App overlays will not work.")
+        }
+
+        if (!permissionsHelper.hasUsageStatsPermission()) {
+            Log.w(TAG, "Usage stats permission not granted. App usage tracking will not work.")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -70,6 +93,9 @@ class MainActivity : ComponentActivity() {
             )
             val permissionsHelper = PermissionsHelper(applicationContext)
             val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
+
+            // Check for required permissions on startup
+            checkRequiredPermissions(permissionsHelper)
 
             lifecycleScope.launch {
                 sessionRepository.initialize()
@@ -101,7 +127,8 @@ class MainActivity : ComponentActivity() {
                                 message = errorState.message,
                                 stackTrace = errorState.stackTrace,
                                 onDismiss = { errorHandler.dismissError() },
-                                onRetry = errorState.onRetry
+                                onRetry = errorState.onRetry,
+                                retryButtonText = errorState.retryButtonText
                             )
                         }
 

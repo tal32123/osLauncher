@@ -19,7 +19,8 @@ fun ErrorDialog(
     message: String,
     stackTrace: String? = null,
     onDismiss: () -> Unit,
-    onRetry: (() -> Unit)? = null
+    onRetry: (() -> Unit)? = null,
+    retryButtonText: String = "Retry"
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -93,7 +94,7 @@ fun ErrorDialog(
                                 onRetry()
                             }
                         ) {
-                            Text("Retry")
+                            Text(retryButtonText)
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                     }

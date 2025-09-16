@@ -1,9 +1,11 @@
 package com.talauncher.ui.home
 
+import android.app.ForegroundServiceStartNotAllowedException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,6 +36,10 @@ class HomeViewModel(
     private val context: Context? = null,
     private val permissionsHelper: PermissionsHelper? = null
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "HomeViewModel"
+    }
 
     private enum class TimeLimitRequestSource { STANDARD, SESSION_EXTENSION }
 
@@ -446,7 +452,7 @@ class HomeViewModel(
                 putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
                 putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
             }
-            ctx.startService(intent)
+            startOverlayService(ctx, intent)
         }
     }
 
@@ -462,16 +468,48 @@ class HomeViewModel(
                 putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
                 putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
             }
-            ctx.startService(intent)
+            startOverlayService(ctx, intent)
         }
     }
 
     private fun hideOverlay() {
         context?.let { ctx ->
-            val intent = Intent(ctx, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_HIDE_OVERLAY
+            try {
+                ctx.stopService(Intent(ctx, OverlayService::class.java))
+            } catch (e: Exception) {
+                Log.e(TAG, "Error stopping overlay service", e)
             }
-            ctx.startService(intent)
+        }
+    }
+
+    private fun startOverlayService(ctx: Context, intent: Intent) {
+        val permissionsHelper = PermissionsHelper(ctx)
+
+        if (!permissionsHelper.hasSystemAlertWindowPermission()) {
+            Log.w(TAG, "System alert window permission not granted, cannot start overlay service")
+            return
+        }
+
+        if (!permissionsHelper.hasForegroundServicePermission()) {
+            Log.w(TAG, "Foreground service permission not granted, cannot start overlay service")
+            return
+        }
+
+        if (!permissionsHelper.hasPostNotificationsPermission()) {
+            Log.w(TAG, "Notification permission not granted, cannot start overlay service")
+            return
+        }
+
+        try {
+            ContextCompat.startForegroundService(ctx, intent)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "SecurityException starting overlay service for action ${intent.action}. Check manifest permissions.", e)
+        } catch (e: ForegroundServiceStartNotAllowedException) {
+            Log.e(TAG, "ForegroundServiceStartNotAllowedException for action ${intent.action}. Consider bringing the app to the foreground before starting the overlay service.", e)
+        } catch (e: IllegalStateException) {
+            Log.e(TAG, "Unable to start overlay service for action ${intent.action}", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error starting overlay service for action ${intent.action}", e)
         }
     }
 

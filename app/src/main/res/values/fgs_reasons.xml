@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="overlay_special_use_fgs_reasons">
+        <item>critical_app_functionality</item>
+    </string-array>
+</resources>
