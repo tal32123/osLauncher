@@ -1,13 +1,18 @@
 package com.talauncher.data.repository
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import com.talauncher.data.database.AppDao
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
+import com.talauncher.utils.ErrorHandler
+import com.talauncher.utils.ErrorUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -22,9 +27,11 @@ class AppRepository(
     private val appDao: AppDao,
     private val context: Context,
     private val settingsRepository: SettingsRepository,
-    private val sessionRepository: SessionRepository? = null
+    private val sessionRepository: SessionRepository? = null,
+    private val errorHandler: ErrorHandler? = null
 ) {
     companion object {
+        private const val TAG = "AppRepository"
         private val DISTRACTING_CATEGORIES = setOf(
             ApplicationInfo.CATEGORY_GAME,
             ApplicationInfo.CATEGORY_NEWS,
@@ -49,45 +56,109 @@ class AppRepository(
     suspend fun insertApp(app: AppInfo) = appDao.insertApp(app)
 
     suspend fun pinApp(packageName: String) {
-        // Get current app or create new one
-        val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
-        if (app != null) {
-            val maxOrder = appDao.getMaxPinnedOrder() ?: 0
-            appDao.updatePinnedStatus(packageName, true, maxOrder + 1)
-            if (getApp(packageName) == null) {
-                insertApp(app.copy(isPinned = true, pinnedOrder = maxOrder + 1))
+        try {
+            // Get current app or create new one
+            val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
+            if (app != null) {
+                val maxOrder = appDao.getMaxPinnedOrder() ?: 0
+                appDao.updatePinnedStatus(packageName, true, maxOrder + 1)
+                if (getApp(packageName) == null) {
+                    insertApp(app.copy(isPinned = true, pinnedOrder = maxOrder + 1))
+                }
             }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception pinning app: $packageName", e)
+            errorHandler?.showError(
+                "Permission Error",
+                "Unable to access app information for $packageName. Permission may be required.",
+                e
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error pinning app: $packageName", e)
+            errorHandler?.showError(
+                "Pin App Error",
+                "Failed to pin app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
         }
     }
 
     suspend fun unpinApp(packageName: String) {
-        appDao.updatePinnedStatus(packageName, false)
+        try {
+            appDao.updatePinnedStatus(packageName, false)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unpinning app: $packageName", e)
+            errorHandler?.showError(
+                "Unpin App Error",
+                "Failed to unpin app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
+        }
     }
 
     suspend fun hideApp(packageName: String) {
-        val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
-        if (app != null) {
-            appDao.updateHiddenStatus(packageName, true)
-            if (getApp(packageName) == null) {
-                insertApp(app.copy(isHidden = true))
+        try {
+            val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
+            if (app != null) {
+                appDao.updateHiddenStatus(packageName, true)
+                if (getApp(packageName) == null) {
+                    insertApp(app.copy(isHidden = true))
+                }
             }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception hiding app: $packageName", e)
+            errorHandler?.showError(
+                "Permission Error",
+                "Unable to access app information for $packageName. Permission may be required.",
+                e
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error hiding app: $packageName", e)
+            errorHandler?.showError(
+                "Hide App Error",
+                "Failed to hide app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
         }
     }
 
     suspend fun unhideApp(packageName: String) {
-        appDao.updateHiddenStatus(packageName, false)
+        try {
+            appDao.updateHiddenStatus(packageName, false)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unhiding app: $packageName", e)
+            errorHandler?.showError(
+                "Unhide App Error",
+                "Failed to unhide app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
+        }
     }
 
     suspend fun updateDistractingStatus(packageName: String, isDistracting: Boolean) {
-        appDao.updateDistractingStatus(packageName, isDistracting)
+        try {
+            appDao.updateDistractingStatus(packageName, isDistracting)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating distracting status for app: $packageName", e)
+            errorHandler?.showError(
+                "Update Status Error",
+                "Failed to update distracting status: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
+        }
     }
 
     suspend fun getAppDisplayName(packageName: String): String {
-        val storedName = getApp(packageName)?.appName
-        if (storedName != null) {
-            return storedName
+        try {
+            val storedName = getApp(packageName)?.appName
+            if (storedName != null) {
+                return storedName
+            }
+            return getAppInfoFromPackage(packageName)?.appName ?: packageName
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting display name for app: $packageName", e)
+            return packageName // Fallback to package name
         }
-        return getAppInfoFromPackage(packageName)?.appName ?: packageName
     }
 
     private suspend fun getAppInfoFromPackage(packageName: String): AppInfo? =
@@ -97,60 +168,124 @@ class AppRepository(
                 val appInfo = packageManager.getApplicationInfo(packageName, 0)
                 val appName = packageManager.getApplicationLabel(appInfo).toString()
                 AppInfo(packageName = packageName, appName = appName)
+            } catch (e: PackageManager.NameNotFoundException) {
+                Log.w(TAG, "Package not found: $packageName")
+                null
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Security exception getting app info: $packageName", e)
+                null
             } catch (e: Exception) {
+                Log.e(TAG, "Unexpected error getting app info: $packageName", e)
+                errorHandler?.showError(
+                    "App Info Error",
+                    "Failed to get information for $packageName: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                    e
+                )
                 null
             }
         }
 
     suspend fun getInstalledApps(): List<InstalledApp> = withContext(Dispatchers.IO) {
-        val packageManager = context.packageManager
-        val intent = Intent(Intent.ACTION_MAIN, null).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
+        try {
+            val packageManager = context.packageManager
+            val intent = Intent(Intent.ACTION_MAIN, null).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+
+            val activities = packageManager.queryIntentActivities(intent, 0)
+
+            activities.map { resolveInfo ->
+                val packageName = resolveInfo.activityInfo.packageName
+                val appName = resolveInfo.loadLabel(packageManager).toString()
+                val isSystemApp = (resolveInfo.activityInfo.applicationInfo.flags and
+                    android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+
+                InstalledApp(packageName, appName, isSystemApp)
+            }.distinctBy { it.packageName }
+                .sortedBy { it.appName }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception getting installed apps", e)
+            errorHandler?.showError(
+                "Permission Error",
+                "Unable to access installed apps. This may require permission to query package information.",
+                e
+            )
+            emptyList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting installed apps", e)
+            errorHandler?.showError(
+                "Apps List Error",
+                "Failed to get installed apps: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
+            emptyList()
         }
-
-        val activities = packageManager.queryIntentActivities(intent, 0)
-
-        activities.map { resolveInfo ->
-            val packageName = resolveInfo.activityInfo.packageName
-            val appName = resolveInfo.loadLabel(packageManager).toString()
-            val isSystemApp = (resolveInfo.activityInfo.applicationInfo.flags and
-                android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
-
-            InstalledApp(packageName, appName, isSystemApp)
-        }.distinctBy { it.packageName }
-            .sortedBy { it.appName }
     }
 
     suspend fun launchApp(packageName: String, bypassFriction: Boolean = false, plannedDuration: Int? = null): Boolean {
-        // Check if app is distracting and should show friction barrier
-        val app = getApp(packageName)
-        val settings = settingsRepository.getSettingsSync()
+        try {
+            // Check if app is distracting and should show friction barrier
+            val app = getApp(packageName)
+            val settings = settingsRepository.getSettingsSync()
 
-        val requiresFriction = !bypassFriction && plannedDuration == null && app?.isDistracting == true
-        if (requiresFriction) {
-            // Return false to indicate friction barrier should be shown
+            val requiresFriction = !bypassFriction && plannedDuration == null && app?.isDistracting == true
+            if (requiresFriction) {
+                // Return false to indicate friction barrier should be shown
+                return false
+            }
+
+            // Start session if time limit prompt is enabled and duration is provided
+            if (settings.enableTimeLimitPrompt && plannedDuration != null && sessionRepository != null) {
+                sessionRepository.startSession(packageName, plannedDuration)
+            }
+
+            if (packageName == "android.settings") {
+                // Special case for Device Settings
+                val intent = Intent(Settings.ACTION_SETTINGS).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            } else {
+                val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+                if (intent != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                } else {
+                    Log.w(TAG, "No launch intent found for package: $packageName")
+                    errorHandler?.showError(
+                        "Launch Error",
+                        "Unable to launch $packageName. The app may not be installed or may not have a launch activity.",
+                        null
+                    )
+                    return false
+                }
+            }
+            return true
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "Activity not found for package: $packageName", e)
+            errorHandler?.showError(
+                "App Not Found",
+                "The app $packageName could not be launched. It may have been uninstalled.",
+                e
+            )
+            return false
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception launching app: $packageName", e)
+            errorHandler?.showError(
+                "Permission Error",
+                "Unable to launch $packageName due to permission restrictions.",
+                e
+            )
+            return false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error launching app: $packageName", e)
+            errorHandler?.showError(
+                "Launch Error",
+                "Failed to launch $packageName: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
             return false
         }
-
-        // Start session if time limit prompt is enabled and duration is provided
-        if (settings.enableTimeLimitPrompt && plannedDuration != null && sessionRepository != null) {
-            sessionRepository.startSession(packageName, plannedDuration)
-        }
-
-        if (packageName == "android.settings") {
-            // Special case for Device Settings
-            val intent = Intent(Settings.ACTION_SETTINGS).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        } else {
-            val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-            intent?.let {
-                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(it)
-            }
-        }
-        return true
     }
 
     suspend fun shouldShowTimeLimitPrompt(packageName: String): Boolean {
@@ -176,12 +311,35 @@ class AppRepository(
     suspend fun getActiveSessionForApp(packageName: String) = sessionRepository?.getActiveSessionForApp(packageName)
 
     fun closeCurrentApp() {
-        // Move the current app to background by launching the home screen
-        val intent = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_HOME)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        try {
+            // Move the current app to background by launching the home screen
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "No home app available to close current app", e)
+            errorHandler?.showError(
+                "Close App Error",
+                "Unable to close the current app. No home screen app is available.",
+                e
+            )
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception closing current app", e)
+            errorHandler?.showError(
+                "Permission Error",
+                "Unable to close the current app due to permission restrictions.",
+                e
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error closing current app", e)
+            errorHandler?.showError(
+                "Close App Error",
+                "Failed to close current app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
         }
-        context.startActivity(intent)
     }
 
     suspend fun endSessionForApp(packageName: String) = sessionRepository?.endSessionForApp(packageName)
@@ -189,31 +347,48 @@ class AppRepository(
     suspend fun getAllAppsSync(): List<AppInfo> = appDao.getAllAppsSync()
 
     suspend fun syncInstalledApps() = withContext(Dispatchers.IO) {
-        val installedApps = getInstalledApps()
-        val existingApps = getAllAppsSync()
+        try {
+            val installedApps = getInstalledApps()
+            val existingApps = getAllAppsSync()
 
-        // Create a map of existing apps for quick lookup
-        val existingAppMap = existingApps.associateBy { it.packageName }
+            // Create a map of existing apps for quick lookup
+            val existingAppMap = existingApps.associateBy { it.packageName }
 
-        // Add new apps that don't exist in database
-        installedApps.forEach { installedApp ->
-            if (!existingAppMap.containsKey(installedApp.packageName)) {
-                val appInfo = AppInfo(
-                    packageName = installedApp.packageName,
-                    appName = installedApp.appName
-                )
-                insertApp(appInfo)
+            // Add new apps that don't exist in database
+            installedApps.forEach { installedApp ->
+                try {
+                    if (!existingAppMap.containsKey(installedApp.packageName)) {
+                        val appInfo = AppInfo(
+                            packageName = installedApp.packageName,
+                            appName = installedApp.appName
+                        )
+                        insertApp(appInfo)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error inserting app: ${installedApp.packageName}", e)
+                }
             }
-        }
 
-        // Add Device Settings entry if it doesn't exist
-        val deviceSettingsPackage = "android.settings"
-        if (!existingAppMap.containsKey(deviceSettingsPackage)) {
-            val deviceSettingsApp = AppInfo(
-                packageName = deviceSettingsPackage,
-                appName = "Device Settings"
+            // Add Device Settings entry if it doesn't exist
+            val deviceSettingsPackage = "android.settings"
+            if (!existingAppMap.containsKey(deviceSettingsPackage)) {
+                try {
+                    val deviceSettingsApp = AppInfo(
+                        packageName = deviceSettingsPackage,
+                        appName = "Device Settings"
+                    )
+                    insertApp(deviceSettingsApp)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error inserting device settings app", e)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error syncing installed apps", e)
+            errorHandler?.showError(
+                "Sync Apps Error",
+                "Failed to sync installed apps: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
             )
-            insertApp(deviceSettingsApp)
         }
     }
 
@@ -226,7 +401,14 @@ class AppRepository(
             val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
             val category = appInfo.category
             category != ApplicationInfo.CATEGORY_UNDEFINED && DISTRACTING_CATEGORIES.contains(category)
+        } catch (e: PackageManager.NameNotFoundException) {
+            Log.w(TAG, "Package not found when checking distracting category: $packageName")
+            false
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Security exception checking distracting category: $packageName", e)
+            false
         } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error checking distracting category: $packageName", e)
             false
         }
     }

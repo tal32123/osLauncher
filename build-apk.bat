@@ -2,6 +2,10 @@
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
 title TALauncher APK Builder
+
+REM Set default timeout for commands to avoid hanging
+set GRADLE_OPTS=-Dorg.gradle.daemon=false
+
 echo.
 echo 🚀 TALauncher APK Builder
 echo ========================
@@ -25,9 +29,9 @@ if "%BUILD_TYPE%"=="" (
     echo.
     set /p choice="Enter your choice (1-3): "
 
-    if "%choice%"=="1" set BUILD_TYPE=debug
-    if "%choice%"=="2" set BUILD_TYPE=release
-    if "%choice%"=="3" set BUILD_TYPE=both
+    if "!choice!"=="1" set BUILD_TYPE=debug
+    if "!choice!"=="2" set BUILD_TYPE=release
+    if "!choice!"=="3" set BUILD_TYPE=both
 
     if "%BUILD_TYPE%"=="" (
         echo Invalid choice. Using debug build.
@@ -40,7 +44,8 @@ echo 🧹 Cleaning the project...
 call "%~dp0gradlew.bat" clean
 if %errorlevel% neq 0 (
     echo ❌ Error: Project cleaning failed.
-    pause
+    REM Only pause if not running with arguments (interactive mode)
+    if "%1"=="" pause
     exit /b 1
 )
 echo.
@@ -118,9 +123,11 @@ goto end
 echo.
 echo 💥 Build failed! Check the errors above.
 echo.
-pause
+REM Only pause if not running with arguments (interactive mode)
+if "%1"=="" pause
 exit /b 1
 
 :end
 echo.
-pause
+REM Only pause if not running with arguments (interactive mode)
+if "%1"=="" pause

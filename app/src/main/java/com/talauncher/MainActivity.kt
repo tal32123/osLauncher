@@ -41,6 +41,8 @@ import com.talauncher.ui.settings.SettingsViewModel
 import com.talauncher.ui.theme.TALauncherTheme
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+import com.talauncher.utils.MainErrorHandler
+import com.talauncher.ui.components.ErrorDialog
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -48,6 +50,7 @@ class MainActivity : ComponentActivity() {
     private var shouldNavigateToHome by mutableStateOf(false)
     private lateinit var sessionRepository: SessionRepository
     private lateinit var appRepository: AppRepository
+    private lateinit var errorHandler: MainErrorHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,11 +59,13 @@ class MainActivity : ComponentActivity() {
             val database = LauncherDatabase.getDatabase(this)
             val settingsRepository = SettingsRepository(database.settingsDao())
             this.sessionRepository = SessionRepository(database.appSessionDao())
+            this.errorHandler = MainErrorHandler(this)
             this.appRepository = AppRepository(
                 database.appDao(),
                 this,
                 settingsRepository,
-                this.sessionRepository
+                this.sessionRepository,
+                this.errorHandler
             )
             val permissionsHelper = PermissionsHelper(applicationContext)
             val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
@@ -86,6 +91,18 @@ class MainActivity : ComponentActivity() {
                             MainViewModel(settingsRepository, appRepository)
                         }
                         val mainUiState by mainViewModel.uiState.collectAsState()
+                        val errorState by errorHandler.errorState.collectAsState()
+
+                        // Show error dialog if there's an error
+                        if (errorState.isVisible) {
+                            ErrorDialog(
+                                title = errorState.title,
+                                message = errorState.message,
+                                stackTrace = errorState.stackTrace,
+                                onDismiss = { errorHandler.dismissError() },
+                                onRetry = errorState.onRetry
+                            )
+                        }
 
                         if (mainUiState.isLoading) {
                             LoadingScreen()
@@ -133,6 +150,17 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Check for expired sessions when returning to launcher
         checkExpiredSessions()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (::errorHandler.isInitialized) {
+            errorHandler.onPermissionResult(requestCode, permissions, grantResults)
+        }
     }
 
     private fun checkExpiredSessions() {

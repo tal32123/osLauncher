@@ -253,14 +253,27 @@ class HomeViewModel(
     }
 
     fun onSessionExpiryDecisionMathChallenge() {
-        val packageName = currentExpiredSession?.packageName ?: return
-        _uiState.value = _uiState.value.copy(
-            showSessionExpiryDecisionDialog = false,
-            showMathChallengeDialog = true,
-            selectedAppForMathChallenge = packageName,
-            isMathChallengeForSessionExtension = true,
-            isMathChallengeForExpiredSession = false
-        )
+        viewModelScope.launch {
+            val packageName = currentExpiredSession?.packageName ?: return@launch
+            val settings = settingsRepository.getSettingsSync()
+
+            // Only show math challenge if it's enabled in settings
+            if (settings.enableMathChallenge) {
+                _uiState.value = _uiState.value.copy(
+                    showSessionExpiryDecisionDialog = false,
+                    showMathChallengeDialog = true,
+                    selectedAppForMathChallenge = packageName,
+                    isMathChallengeForSessionExtension = true,
+                    isMathChallengeForExpiredSession = false
+                )
+            } else {
+                // If math challenge is disabled, fallback to close the app
+                currentExpiredSession?.let { session ->
+                    appRepository.endSessionForApp(session.packageName)
+                }
+                finalizeExpiredSession()
+            }
+        }
     }
 
     private fun observeSessionExpirations() {

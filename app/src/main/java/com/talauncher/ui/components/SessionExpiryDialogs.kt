@@ -112,11 +112,13 @@ fun SessionExpiryActionDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Button(
-                    onClick = onExtend,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Set a new timer")
+                if (!showMathChallengeOption) {
+                    Button(
+                        onClick = onExtend,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Set a new timer")
+                    }
                 }
                 if (showMathChallengeOption && onMathChallenge != null) {
                     Button(
