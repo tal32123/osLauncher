@@ -30,6 +30,9 @@ interface AppDao {
     @Delete
     suspend fun deleteApp(app: AppInfo)
 
+    @Query("UPDATE app_info SET appName = :appName WHERE packageName = :packageName")
+    suspend fun updateAppName(packageName: String, appName: String)
+
     @Query("UPDATE app_info SET isPinned = :isPinned, pinnedOrder = :order WHERE packageName = :packageName")
     suspend fun updatePinnedStatus(packageName: String, isPinned: Boolean, order: Int = 0)
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
@@ -46,8 +47,7 @@ import java.io.StringWriter
 
 class MainActivity : ComponentActivity() {
     private var shouldNavigateToHome by mutableStateOf(false)
-    private lateinit var sessionRepository: SessionRepository
-    private lateinit var appRepository: AppRepository
+    private lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,19 +55,26 @@ class MainActivity : ComponentActivity() {
         try {
             val database = LauncherDatabase.getDatabase(this)
             val settingsRepository = SettingsRepository(database.settingsDao())
-            this.sessionRepository = SessionRepository(database.appSessionDao())
-            this.appRepository = AppRepository(
+            val sessionRepository = SessionRepository(database.appSessionDao())
+            val appRepository = AppRepository(
                 database.appDao(),
                 this,
                 settingsRepository,
-                this.sessionRepository
+                sessionRepository
             )
             val permissionsHelper = PermissionsHelper(applicationContext)
             val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
 
+            val mainViewModelFactory = MainViewModel.Factory(
+                settingsRepository,
+                appRepository,
+                sessionRepository
+            )
+            mainViewModel = ViewModelProvider(this, mainViewModelFactory)[MainViewModel::class.java]
+
             lifecycleScope.launch {
                 sessionRepository.initialize()
-                sessionRepository.emitExpiredSessions()
+                mainViewModel.emitExpiredSessions()
             }
 
             lifecycleScope.launch {
@@ -77,14 +84,12 @@ class MainActivity : ComponentActivity() {
             }
 
             setContent {
+                val mainViewModel = this@MainActivity.mainViewModel
                 TALauncherTheme {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        val mainViewModel: MainViewModel = viewModel {
-                            MainViewModel(settingsRepository, appRepository)
-                        }
                         val mainUiState by mainViewModel.uiState.collectAsState()
 
                         if (mainUiState.isLoading) {
@@ -131,17 +136,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Check for expired sessions when returning to launcher
-        checkExpiredSessions()
-    }
-
-    private fun checkExpiredSessions() {
-        if (!::sessionRepository.isInitialized) {
-            return
-        }
-
-        lifecycleScope.launch {
-            sessionRepository.emitExpiredSessions()
+        if (::mainViewModel.isInitialized) {
+            mainViewModel.emitExpiredSessions()
+            mainViewModel.refreshInstalledApps()
         }
     }
 }

@@ -194,20 +194,33 @@ class AppRepository(
 
         // Create a map of existing apps for quick lookup
         val existingAppMap = existingApps.associateBy { it.packageName }
+        val installedPackages = installedApps.map { it.packageName }.toSet()
+        val deviceSettingsPackage = "android.settings"
 
         // Add new apps that don't exist in database
         installedApps.forEach { installedApp ->
-            if (!existingAppMap.containsKey(installedApp.packageName)) {
+            val existingApp = existingAppMap[installedApp.packageName]
+            if (existingApp == null) {
                 val appInfo = AppInfo(
                     packageName = installedApp.packageName,
                     appName = installedApp.appName
                 )
                 insertApp(appInfo)
+            } else if (existingApp.appName != installedApp.appName) {
+                // Keep existing metadata (pinned, hidden, etc.) while refreshing the display name
+                appDao.updateAppName(installedApp.packageName, installedApp.appName)
+            }
+        }
+
+        // Remove apps that are no longer installed
+        existingApps.forEach { existingApp ->
+            val packageName = existingApp.packageName
+            if (packageName != deviceSettingsPackage && packageName !in installedPackages) {
+                appDao.deleteApp(existingApp)
             }
         }
 
         // Add Device Settings entry if it doesn't exist
-        val deviceSettingsPackage = "android.settings"
         if (!existingAppMap.containsKey(deviceSettingsPackage)) {
             val deviceSettingsApp = AppInfo(
                 packageName = deviceSettingsPackage,
