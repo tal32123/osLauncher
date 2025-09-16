@@ -14,6 +14,7 @@ import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.service.OverlayService
+import com.talauncher.utils.PermissionsHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -470,8 +471,22 @@ class HomeViewModel(
     }
 
     private fun startOverlayService(ctx: Context, intent: Intent) {
+        val permissionsHelper = PermissionsHelper(ctx)
+
+        if (!permissionsHelper.hasSystemAlertWindowPermission()) {
+            Log.w(TAG, "System alert window permission not granted, cannot start overlay service")
+            return
+        }
+
+        if (!permissionsHelper.hasForegroundServicePermission()) {
+            Log.w(TAG, "Foreground service permission not granted, cannot start overlay service")
+            return
+        }
+
         try {
             ContextCompat.startForegroundService(ctx, intent)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "SecurityException starting overlay service for action ${intent.action}. Check manifest permissions.", e)
         } catch (e: IllegalStateException) {
             Log.e(TAG, "Unable to start overlay service for action ${intent.action}", e)
         } catch (e: Exception) {
