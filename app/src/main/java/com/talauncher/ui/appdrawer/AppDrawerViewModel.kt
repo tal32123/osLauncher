@@ -220,7 +220,9 @@ class AppDrawerViewModel(
     }
 
     private fun notifyPermissionRequired(context: Context) {
-        Toast.makeText(context, R.string.uninstall_permission_required, Toast.LENGTH_LONG).show()
+        val appName = context.getString(R.string.app_name)
+        val message = context.getString(R.string.uninstall_permission_required, appName)
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         permissionsHelper.openUninstallPermissionSettings()
     }
 }

@@ -16,11 +16,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.talauncher.R
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.talauncher.data.database.LauncherDatabase
@@ -110,7 +112,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } catch (error: Throwable) {
-            Log.e(TAG, "Error starting TALauncher", error)
+            Log.e(TAG, "Error starting ${getString(R.string.app_name)}", error)
             reportStartupError(error)
         }
     }
@@ -265,13 +267,14 @@ fun LauncherNavigationPager(
 
 @Composable
 fun LoadingScreen() {
+    val appName = stringResource(R.string.app_name)
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "TALauncher",
+            text = appName,
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
@@ -308,6 +311,7 @@ private fun StartupErrorScreen(error: Throwable) {
         error.localizedMessage?.takeIf { it.isNotBlank() }
             ?: "${error::class.qualifiedName ?: error::class.simpleName}"
     }
+    val appName = stringResource(R.string.app_name)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -321,7 +325,7 @@ private fun StartupErrorScreen(error: Throwable) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "TALauncher ran into a problem",
+                text = "$appName ran into a problem",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.error
             )

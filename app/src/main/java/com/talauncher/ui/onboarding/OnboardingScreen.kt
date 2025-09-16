@@ -15,10 +15,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.talauncher.R
 
 @Composable
 fun OnboardingScreen(
@@ -27,6 +29,7 @@ fun OnboardingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val appName = stringResource(R.string.app_name)
 
     LaunchedEffect(uiState.allPermissionsGranted) {
         if (uiState.allPermissionsGranted) {
@@ -45,7 +48,7 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Welcome to TALauncher",
+            text = "Welcome to $appName",
             style = MaterialTheme.typography.displayMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.primary,
@@ -76,7 +79,7 @@ fun OnboardingScreen(
         OnboardingStepCard(
             icon = Icons.Default.Home,
             title = "Set as Default Launcher",
-            description = "Make TALauncher your default home screen",
+            description = "Make $appName your default home screen",
             isCompleted = uiState.isDefaultLauncher,
             buttonText = if (uiState.isDefaultLauncher) "Completed" else "Set as Default",
             onButtonClick = {
@@ -132,7 +135,7 @@ fun OnboardingScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "TALauncher is ready to help you focus",
+                        text = "$appName is ready to help you focus",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         textAlign = TextAlign.Center
