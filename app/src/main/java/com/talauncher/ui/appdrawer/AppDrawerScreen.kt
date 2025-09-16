@@ -31,7 +31,7 @@ import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.theme.*
 
 @Composable
-fun NewAppDrawerScreen(
+fun AppDrawerScreen(
     viewModel: AppDrawerViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
