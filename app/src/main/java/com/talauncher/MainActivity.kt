@@ -119,7 +119,8 @@ class MainActivity : ComponentActivity() {
                                 message = errorState.message,
                                 stackTrace = errorState.stackTrace,
                                 onDismiss = { errorHandler.dismissError() },
-                                onRetry = errorState.onRetry
+                                onRetry = errorState.onRetry,
+                                retryButtonText = errorState.retryButtonText
                             )
                         }
 

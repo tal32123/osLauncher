@@ -4,7 +4,13 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 interface ErrorHandler {
-    fun showError(title: String, message: String, throwable: Throwable? = null, onRetry: (() -> Unit)? = null)
+    fun showError(
+        title: String,
+        message: String,
+        throwable: Throwable? = null,
+        onRetry: (() -> Unit)? = null,
+        retryButtonText: String = "Retry"
+    )
     fun requestPermission(permission: String, rationale: String, onResult: (Boolean) -> Unit)
 }
 
