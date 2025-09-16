@@ -21,6 +21,10 @@
     <string name="rename_app_dialog_placeholder">Enter a new name</string>
     <string name="rename_app_dialog_supporting_text">You can reset the name anytime from this menu.</string>
     <string name="rename_app_dialog_confirm">Save</string>
+    <string name="overlay_notification_channel_name">Session expiry overlay</string>
+    <string name="overlay_notification_channel_description">Keeps TALauncher available while session expiry dialogs are on screen.</string>
+    <string name="overlay_notification_title">Session limit dialog</string>
+    <string name="overlay_notification_text">TALauncher is showing a session expiry dialog.</string>
     <string-array name="motivational_quotes">
         <item>Every tap is a choice—make it count.</item>
         <item>Stay focused on what truly matters right now.</item>

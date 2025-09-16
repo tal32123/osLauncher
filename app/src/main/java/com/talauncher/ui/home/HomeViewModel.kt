@@ -438,7 +438,7 @@ class HomeViewModel(
                 putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
                 putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
             }
-            ctx.startService(intent)
+            ContextCompat.startForegroundService(ctx, intent)
         }
     }
 
@@ -450,7 +450,7 @@ class HomeViewModel(
                 putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
                 putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
             }
-            ctx.startService(intent)
+            ContextCompat.startForegroundService(ctx, intent)
         }
     }
 
@@ -459,7 +459,7 @@ class HomeViewModel(
             val intent = Intent(ctx, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_HIDE_OVERLAY
             }
-            ctx.startService(intent)
+            ContextCompat.startForegroundService(ctx, intent)
         }
     }
 
