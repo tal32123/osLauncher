@@ -52,12 +52,12 @@ class MainActivity : ComponentActivity() {
         try {
             val database = LauncherDatabase.getDatabase(this)
             val settingsRepository = SettingsRepository(database.settingsDao())
-            val sessionRepository = SessionRepository(database.appSessionDao())
-            val appRepository = AppRepository(
+            this.sessionRepository = SessionRepository(database.appSessionDao())
+            this.appRepository = AppRepository(
                 database.appDao(),
-                applicationContext,
+                this,
                 settingsRepository,
-                sessionRepository
+                this.sessionRepository
             )
             val permissionsHelper = PermissionsHelper(applicationContext)
             val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
