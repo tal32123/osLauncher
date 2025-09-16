@@ -1,16 +1,15 @@
 package com.talauncher.ui.appdrawer
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -103,24 +102,31 @@ fun NewAppDrawerScreen(
                         )
                     },
                     leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = PrimerGray600
+                        Text(
+                            text = "Search",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = PrimerGray600,
+                            modifier = Modifier.padding(start = PrimerSpacing.xs)
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
-                            IconButton(
+                            TextButton(
                                 onClick = {
                                     searchQuery = ""
                                     keyboardController?.hide()
-                                }
+                                },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = PrimerGray600
+                                ),
+                                contentPadding = PaddingValues(
+                                    horizontal = PrimerSpacing.xs,
+                                    vertical = 0.dp
+                                )
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear search",
-                                    tint = PrimerGray600
+                                Text(
+                                    text = "Clear",
+                                    style = MaterialTheme.typography.labelMedium
                                 )
                             }
                         }
@@ -477,15 +483,18 @@ fun AppActionDialog(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Icon-based action buttons
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
                     ) {
-                        // Pin/Unpin button
-                        IconActionButton(
-                            icon = if (app.isPinned) Icons.Filled.Star else Icons.Filled.Add,
-                            label = if (app.isPinned) "Unpin" else "Pin",
+                        ActionTextButton(
+                            label = if (app.isPinned) "Unpin from essentials" else "Pin to essentials",
+                            description = if (app.isPinned) {
+                                "Remove this app from your quick access list."
+                            } else {
+                                "Add this app to your essentials list for quick access."
+                            },
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 if (app.isPinned) {
                                     onUnpin(app.packageName)
@@ -496,30 +505,30 @@ fun AppActionDialog(
                             }
                         )
 
-                        // Hide button (eye icon)
-                        IconActionButton(
-                            icon = Icons.Filled.Close,
-                            label = "Hide",
+                        ActionTextButton(
+                            label = "Hide app",
+                            description = "Move this app to the hidden list.",
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 onHide(app.packageName)
                                 onDismiss()
                             }
                         )
 
-                        // App Info button
-                        IconActionButton(
-                            icon = Icons.Filled.Info,
-                            label = "Info",
+                        ActionTextButton(
+                            label = "View app info",
+                            description = "Open the system settings page for this app.",
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 onAppInfo(app.packageName)
                                 onDismiss()
                             }
                         )
 
-                        // Uninstall button
-                        IconActionButton(
-                            icon = Icons.Filled.Delete,
-                            label = "Uninstall",
+                        ActionTextButton(
+                            label = "Uninstall app",
+                            description = "Remove this app from your device.",
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 onUninstall(app.packageName)
                                 onDismiss()
@@ -540,47 +549,46 @@ fun AppActionDialog(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun IconActionButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+fun ActionTextButton(
     label: String,
-    onClick: () -> Unit
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(64.dp)
+    PrimerCard(
+        modifier = modifier.clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
     ) {
-        Card(
+        Column(
             modifier = Modifier
-                .size(48.dp)
-                .combinedClickable(onClick = onClick),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            ),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                .fillMaxWidth()
+                .padding(
+                    horizontal = PrimerSpacing.md,
+                    vertical = PrimerSpacing.sm
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(PrimerSpacing.xs))
+
+            Text(
+                text = description,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
     }
 }
 
