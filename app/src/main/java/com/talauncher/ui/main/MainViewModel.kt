@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +34,7 @@ class MainViewModel(
     }
 
     private fun syncApps() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             appRepository.syncInstalledApps()
         }
     }
