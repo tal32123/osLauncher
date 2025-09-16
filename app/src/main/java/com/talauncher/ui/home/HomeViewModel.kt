@@ -1,5 +1,6 @@
 package com.talauncher.ui.home
 
+import android.app.ForegroundServiceStartNotAllowedException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -483,10 +484,17 @@ class HomeViewModel(
             return
         }
 
+        if (!permissionsHelper.hasPostNotificationsPermission()) {
+            Log.w(TAG, "Notification permission not granted, cannot start overlay service")
+            return
+        }
+
         try {
             ContextCompat.startForegroundService(ctx, intent)
         } catch (e: SecurityException) {
             Log.e(TAG, "SecurityException starting overlay service for action ${intent.action}. Check manifest permissions.", e)
+        } catch (e: ForegroundServiceStartNotAllowedException) {
+            Log.e(TAG, "ForegroundServiceStartNotAllowedException for action ${intent.action}. Consider bringing the app to the foreground before starting the overlay service.", e)
         } catch (e: IllegalStateException) {
             Log.e(TAG, "Unable to start overlay service for action ${intent.action}", e)
         } catch (e: Exception) {

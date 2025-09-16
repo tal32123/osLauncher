@@ -1,7 +1,11 @@
 package com.talauncher.ui.onboarding
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -31,6 +35,12 @@ fun OnboardingScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val appName = stringResource(R.string.app_name)
+    val shouldShowNotificationPermissionStep = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        viewModel.refreshPermissions()
+    }
 
     LaunchedEffect(uiState.allPermissionsGranted) {
         if (uiState.allPermissionsGranted) {
@@ -110,9 +120,26 @@ fun OnboardingScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (shouldShowNotificationPermissionStep) {
+            OnboardingStepCard(
+                icon = Icons.Default.Notifications,
+                title = "Notification Permission",
+                description = "Required so $appName can show foreground countdown alerts when time limits expire",
+                isCompleted = uiState.hasPostNotificationsPermission,
+                buttonText = if (uiState.hasPostNotificationsPermission) "Completed" else "Grant Permission",
+                onButtonClick = {
+                    if (!uiState.hasPostNotificationsPermission) {
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // System Alert Window Permission
         OnboardingStepCard(
-            icon = Icons.Default.Notifications,
+            icon = Icons.Default.Settings,
             title = "Overlay Permission",
             description = "Allows timer notifications to appear over other apps when time limits expire",
             isCompleted = uiState.hasSystemAlertWindowPermission,
