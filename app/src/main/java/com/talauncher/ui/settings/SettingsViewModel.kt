@@ -54,34 +54,13 @@ class SettingsViewModel(
         }
     }
 
-    fun togglePinnedApp(packageName: String) {
+    fun toggleEssentialApp(packageName: String) {
         viewModelScope.launch {
             val currentApp = appRepository.getApp(packageName)
             if (currentApp?.isPinned == true) {
                 appRepository.unpinApp(packageName)
             } else {
                 appRepository.pinApp(packageName)
-            }
-        }
-    }
-
-    fun toggleEssentialApp(packageName: String) {
-        viewModelScope.launch {
-            val currentApp = appRepository.getApp(packageName)
-            val installedApp = allInstalledApps.find { it.packageName == packageName }
-
-            if (currentApp != null) {
-                appRepository.updateDistractingStatus(packageName, !currentApp.isDistracting)
-            } else if (installedApp != null) {
-                appRepository.insertApp(
-                    AppInfo(
-                        packageName = packageName,
-                        appName = installedApp.appName,
-                        isPinned = false,
-                        isHidden = false,
-                        isDistracting = false
-                    )
-                )
             }
         }
     }

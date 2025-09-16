@@ -2,20 +2,26 @@ package com.talauncher
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.talauncher.data.database.LauncherDatabase
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SessionRepository
@@ -32,54 +38,63 @@ import com.talauncher.ui.settings.SettingsViewModel
 import com.talauncher.ui.theme.TALauncherTheme
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+import java.io.PrintWriter
+import java.io.StringWriter
 
 class MainActivity : ComponentActivity() {
     private var shouldNavigateToHome by mutableStateOf(false)
+    private lateinit var sessionRepository: SessionRepository
+    private lateinit var appRepository: AppRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val database = LauncherDatabase.getDatabase(this)
-        val settingsRepository = SettingsRepository(database.settingsDao())
-        val sessionRepository = SessionRepository(database.appSessionDao())
-        val appRepository = AppRepository(database.appDao(), this, settingsRepository, sessionRepository)
-        val permissionsHelper = PermissionsHelper(applicationContext)
-        val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
+        try {
+            val database = LauncherDatabase.getDatabase(this)
+            val settingsRepository = SettingsRepository(database.settingsDao())
+            val sessionRepository = SessionRepository(database.appSessionDao())
+            val appRepository = AppRepository(database.appDao(), this, settingsRepository, sessionRepository)
+            val permissionsHelper = PermissionsHelper(applicationContext)
+            val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
 
-        setContent {
-            TALauncherTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val mainViewModel: MainViewModel = viewModel {
-                        MainViewModel(settingsRepository, appRepository)
-                    }
-                    val mainUiState by mainViewModel.uiState.collectAsState()
-
-                    if (mainUiState.isLoading) {
-                        LoadingScreen()
-                    } else if (!mainUiState.isOnboardingCompleted) {
-                        val onboardingViewModel: OnboardingViewModel = viewModel {
-                            OnboardingViewModel(permissionsHelper, usageStatsHelper, settingsRepository)
+            setContent {
+                TALauncherTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        val mainViewModel: MainViewModel = viewModel {
+                            MainViewModel(settingsRepository, appRepository)
                         }
-                        OnboardingScreen(
-                            onOnboardingComplete = mainViewModel::onOnboardingCompleted,
-                            viewModel = onboardingViewModel
-                        )
-                    } else {
-                        TALauncherApp(
-                            appRepository = appRepository,
-                            settingsRepository = settingsRepository,
-                            permissionsHelper = permissionsHelper,
-                            usageStatsHelper = usageStatsHelper,
-                            sessionRepository = sessionRepository,
-                            shouldNavigateToHome = shouldNavigateToHome,
-                            onNavigatedToHome = { shouldNavigateToHome = false }
-                        )
+                        val mainUiState by mainViewModel.uiState.collectAsState()
+
+                        if (mainUiState.isLoading) {
+                            LoadingScreen()
+                        } else if (!mainUiState.isOnboardingCompleted) {
+                            val onboardingViewModel: OnboardingViewModel = viewModel {
+                                OnboardingViewModel(permissionsHelper, usageStatsHelper, settingsRepository)
+                            }
+                            OnboardingScreen(
+                                onOnboardingComplete = mainViewModel::onOnboardingCompleted,
+                                viewModel = onboardingViewModel
+                            )
+                        } else {
+                            TALauncherApp(
+                                appRepository = appRepository,
+                                settingsRepository = settingsRepository,
+                                permissionsHelper = permissionsHelper,
+                                usageStatsHelper = usageStatsHelper,
+                                sessionRepository = sessionRepository,
+                                shouldNavigateToHome = shouldNavigateToHome,
+                                onNavigatedToHome = { shouldNavigateToHome = false }
+                            )
+                        }
                     }
                 }
             }
+        } catch (error: Throwable) {
+            Log.e(TAG, "Error starting TALauncher", error)
+            reportStartupError(error)
         }
     }
 
@@ -102,11 +117,31 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkExpiredSessions() {
-        val database = LauncherDatabase.getDatabase(this)
-        val sessionRepository = SessionRepository(database.appSessionDao())
+        if (!::sessionRepository.isInitialized || !::appRepository.isInitialized) {
+            return
+        }
 
-        // This will be handled by the ViewModels to show math challenges
-        // The actual checking is done in the UI layer to have access to the dialogs
+        lifecycleScope.launch {
+            val expiredSessions = sessionRepository.getExpiredSessions()
+            if (expiredSessions.isEmpty()) {
+                return@launch
+            }
+
+            var requiresHomeNavigation = false
+
+            expiredSessions.forEach { session ->
+                val shouldShowMathChallenge = appRepository.shouldShowMathChallenge(session.packageName)
+                if (shouldShowMathChallenge) {
+                    requiresHomeNavigation = true
+                } else {
+                    sessionRepository.endSessionForApp(session.packageName)
+                }
+            }
+
+            if (requiresHomeNavigation) {
+                shouldNavigateToHome = true
+            }
+        }
     }
 }
 
@@ -243,3 +278,65 @@ fun LoadingScreen() {
         )
     }
 }
+
+private fun Throwable.asStackTraceString(): String {
+    val stringWriter = StringWriter()
+    PrintWriter(stringWriter).use { printWriter ->
+        printStackTrace(printWriter)
+        printWriter.flush()
+    }
+    return stringWriter.toString()
+}
+
+private fun ComponentActivity.reportStartupError(error: Throwable) {
+    setContent {
+        TALauncherTheme {
+            StartupErrorScreen(error)
+        }
+    }
+}
+
+@Composable
+private fun StartupErrorScreen(error: Throwable) {
+    val stackTrace = remember(error) { error.asStackTraceString() }
+    val scrollState = rememberScrollState()
+    val message = remember(error) {
+        error.localizedMessage?.takeIf { it.isNotBlank() }
+            ?: "${error::class.qualifiedName ?: error::class.simpleName}"
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "TALauncher ran into a problem",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                text = "Copy the stack trace below and share it with the team:",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            SelectionContainer {
+                Text(
+                    text = stackTrace,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
+                )
+            }
+        }
+    }
+}
+
+private const val TAG = "MainActivity"

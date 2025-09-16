@@ -64,11 +64,11 @@ fun SettingsScreen(
                 onUpdateMathDifficulty = viewModel::updateMathDifficulty
             )
             1 -> AppSelectionTab(
-                title = "Pinned Apps",
+                title = "Essential Apps",
                 subtitle = "Apps that will appear on your home screen",
                 apps = viewModel.getFilteredApps(),
                 selectedApps = uiState.pinnedApps.map { it.packageName }.toSet(),
-                onToggleApp = viewModel::togglePinnedApp,
+                onToggleApp = viewModel::toggleEssentialApp,
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 isLoading = uiState.isLoading

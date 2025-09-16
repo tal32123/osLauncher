@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppUsage
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 class InsightsViewModel(
@@ -35,20 +37,24 @@ class InsightsViewModel(
                 return@launch
             }
 
-            val usageStats = usageStatsHelper.getTodayUsageStats()
+            val usageStats = withContext(Dispatchers.IO) {
+                usageStatsHelper.getTodayUsageStats()
+            }
 
-            val appUsageWithNames = usageStats.mapNotNull { usage ->
-                val appName = usageStatsHelper.getAppName(usage.packageName)
-                if (appName != null) {
-                    AppUsageDisplay(
-                        packageName = usage.packageName,
-                        appName = appName,
-                        timeInForeground = usage.timeInForeground,
-                        formattedTime = formatTime(usage.timeInForeground)
-                    )
-                } else null
-            }.filter { it.timeInForeground > 0 }
-                .sortedByDescending { it.timeInForeground }
+            val appUsageWithNames = withContext(Dispatchers.IO) {
+                usageStats.mapNotNull { usage ->
+                    val appName = usageStatsHelper.getAppName(usage.packageName)
+                    if (appName != null) {
+                        AppUsageDisplay(
+                            packageName = usage.packageName,
+                            appName = appName,
+                            timeInForeground = usage.timeInForeground,
+                            formattedTime = formatTime(usage.timeInForeground)
+                        )
+                    } else null
+                }.filter { it.timeInForeground > 0 }
+                    .sortedByDescending { it.timeInForeground }
+            }
 
             val totalTime = appUsageWithNames.sumOf { it.timeInForeground }
 
