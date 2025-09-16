@@ -20,11 +20,13 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.SessionExpiryActionDialog
@@ -287,6 +289,41 @@ fun HomeScreen(
                 onMathChallenge = if (uiState.sessionExpiryShowMathOption) {
                     { viewModel.onSessionExpiryDecisionMathChallenge() }
                 } else null
+            )
+        }
+
+        if (uiState.showOverlayPermissionDialog) {
+            val appName = uiState.sessionExpiryAppName
+                ?: stringResource(id = R.string.overlay_permission_generic_app)
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissOverlayPermissionDialog() },
+                title = {
+                    Text(
+                        text = stringResource(id = R.string.overlay_permission_required_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(
+                            id = R.string.overlay_permission_required_message,
+                            appName
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.openOverlayPermissionSettings() }) {
+                        Text(stringResource(id = R.string.overlay_permission_required_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissOverlayPermissionDialog() }) {
+                        Text(stringResource(id = R.string.overlay_permission_required_dismiss))
+                    }
+                }
             )
         }
 

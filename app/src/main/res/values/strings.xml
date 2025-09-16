@@ -21,6 +21,11 @@
     <string name="rename_app_dialog_placeholder">Enter a new name</string>
     <string name="rename_app_dialog_supporting_text">You can reset the name anytime from this menu.</string>
     <string name="rename_app_dialog_confirm">Save</string>
+    <string name="overlay_permission_required_title">Allow overlay reminders</string>
+    <string name="overlay_permission_required_message">To gently guide you away from %1$s when time is up, allow TALauncher to display over other apps in system settings.</string>
+    <string name="overlay_permission_required_confirm">Open settings</string>
+    <string name="overlay_permission_required_dismiss">Not now</string>
+    <string name="overlay_permission_generic_app">this app</string>
     <string-array name="motivational_quotes">
         <item>Every tap is a choice—make it count.</item>
         <item>Stay focused on what truly matters right now.</item>

@@ -262,7 +262,14 @@ fun LauncherNavigationPager(
                 // Main/Home Screen with pinned apps
                 val context = LocalContext.current
                 val homeViewModel: HomeViewModel = viewModel {
-                    HomeViewModel(appRepository, settingsRepository, onLaunchApp, sessionRepository, context)
+                    HomeViewModel(
+                        appRepository,
+                        settingsRepository,
+                        onLaunchApp,
+                        sessionRepository,
+                        context,
+                        permissionsHelper
+                    )
                 }
                 HomeScreen(
                     viewModel = homeViewModel,
