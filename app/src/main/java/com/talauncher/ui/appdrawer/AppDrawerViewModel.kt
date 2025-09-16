@@ -7,7 +7,6 @@ import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppInfo
-import com.talauncher.data.model.AppUsage
 import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
@@ -51,7 +50,7 @@ class AppDrawerViewModel(
         }
     }
 
-    private fun getRecentApps(allApps: List<AppInfo>): List<AppInfo> {
+    private suspend fun getRecentApps(allApps: List<AppInfo>): List<AppInfo> {
         val topUsedApps = usageStatsHelper.getTopUsedApps(5)
         val appMap = allApps.associateBy { it.packageName }
 

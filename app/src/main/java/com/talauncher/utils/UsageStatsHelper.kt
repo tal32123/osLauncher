@@ -1,7 +1,6 @@
 package com.talauncher.utils
 
 import android.app.AppOpsManager
-import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -9,6 +8,8 @@ import android.os.Build
 import android.os.Process
 import com.talauncher.data.model.AppUsage
 import java.util.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class UsageStatsHelper(private val context: Context) {
 
@@ -30,9 +31,9 @@ class UsageStatsHelper(private val context: Context) {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    fun getTodayUsageStats(): List<AppUsage> {
+    suspend fun getTodayUsageStats(): List<AppUsage> = withContext(Dispatchers.IO) {
         if (!hasUsageStatsPermission()) {
-            return emptyList()
+            return@withContext emptyList()
         }
 
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -51,7 +52,7 @@ class UsageStatsHelper(private val context: Context) {
             endTime
         )
 
-        return usageStats?.mapNotNull { stats ->
+        usageStats?.mapNotNull { stats ->
             if (stats.totalTimeInForeground > 0) {
                 AppUsage(
                     packageName = stats.packageName,
@@ -61,9 +62,9 @@ class UsageStatsHelper(private val context: Context) {
         } ?: emptyList()
     }
 
-    fun getPast48HoursUsageStats(): List<AppUsage> {
+    suspend fun getPast48HoursUsageStats(): List<AppUsage> = withContext(Dispatchers.IO) {
         if (!hasUsageStatsPermission()) {
-            return emptyList()
+            return@withContext emptyList()
         }
 
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -86,7 +87,7 @@ class UsageStatsHelper(private val context: Context) {
             }
         }
 
-        return packageUsageMap.map { (packageName, totalTime) ->
+        packageUsageMap.map { (packageName, totalTime) ->
             AppUsage(
                 packageName = packageName,
                 timeInForeground = totalTime
@@ -94,7 +95,7 @@ class UsageStatsHelper(private val context: Context) {
         }
     }
 
-    fun getTopUsedApps(limit: Int = 5): List<AppUsage> {
+    suspend fun getTopUsedApps(limit: Int = 5): List<AppUsage> {
         return getPast48HoursUsageStats()
             .sortedByDescending { it.timeInForeground }
             .take(limit)
