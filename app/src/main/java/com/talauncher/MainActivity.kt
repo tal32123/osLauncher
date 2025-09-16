@@ -27,9 +27,9 @@ import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.ui.appdrawer.AppDrawerViewModel
-import com.talauncher.ui.appdrawer.NewAppDrawerScreen
+import com.talauncher.ui.appdrawer.AppDrawerScreen
 import com.talauncher.ui.home.HomeViewModel
-import com.talauncher.ui.home.NewHomeScreen
+import com.talauncher.ui.home.HomeScreen
 import com.talauncher.ui.main.MainViewModel
 import com.talauncher.ui.onboarding.OnboardingScreen
 import com.talauncher.ui.onboarding.OnboardingViewModel
@@ -155,7 +155,7 @@ fun TALauncherApp(
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
 ) {
-    NiagaraLauncherPager(
+    LauncherNavigationPager(
         appRepository = appRepository,
         settingsRepository = settingsRepository,
         permissionsHelper = permissionsHelper,
@@ -167,7 +167,7 @@ fun TALauncherApp(
 }
 
 @Composable
-fun NiagaraLauncherPager(
+fun LauncherNavigationPager(
     appRepository: AppRepository,
     settingsRepository: SettingsRepository,
     permissionsHelper: PermissionsHelper,
@@ -177,7 +177,6 @@ fun NiagaraLauncherPager(
     onNavigatedToHome: () -> Unit = {}
 ) {
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
-    val settingsState by settingsRepository.getSettings().collectAsState(initial = null)
     val coroutineScope = rememberCoroutineScope()
 
     // Handle home button navigation
@@ -232,7 +231,7 @@ fun NiagaraLauncherPager(
                 val homeViewModel: HomeViewModel = viewModel {
                     HomeViewModel(appRepository, settingsRepository, onLaunchApp, sessionRepository)
                 }
-                NewHomeScreen(
+                HomeScreen(
                     viewModel = homeViewModel,
                     onNavigateToAppDrawer = {
                         coroutineScope.launch {
@@ -251,7 +250,7 @@ fun NiagaraLauncherPager(
                 val appDrawerViewModel: AppDrawerViewModel = viewModel {
                     AppDrawerViewModel(appRepository, settingsRepository, usageStatsHelper, onLaunchApp)
                 }
-                NewAppDrawerScreen(
+                AppDrawerScreen(
                     viewModel = appDrawerViewModel
                 )
             }
