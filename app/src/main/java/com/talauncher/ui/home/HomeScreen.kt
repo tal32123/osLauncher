@@ -32,7 +32,7 @@ import com.talauncher.ui.theme.*
 import kotlin.math.abs
 
 @Composable
-fun NewHomeScreen(
+fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToAppDrawer: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null
