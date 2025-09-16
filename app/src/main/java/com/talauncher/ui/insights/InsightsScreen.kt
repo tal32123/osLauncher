@@ -12,11 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.talauncher.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +112,7 @@ fun InsightsScreen(
 
 @Composable
 fun PermissionCard(onGrantPermission: () -> Unit) {
+    val appName = stringResource(R.string.app_name)
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -131,7 +134,8 @@ fun PermissionCard(onGrantPermission: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "To view usage statistics, TALauncher needs access to usage data. This permission allows the app to show you how much time you spend in different applications.",
+                text = "To view usage statistics, $appName needs access to usage data. " +
+                    "This permission allows the app to show you how much time you spend in different applications.",
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onErrorContainer
             )

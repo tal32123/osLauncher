@@ -12,5 +12,5 @@
     <string name="app_blocked">This app is blocked in Focus Mode</string>
     <string name="why_open_app">Why do you want to open this app?</string>
     <string name="continue_to_app">Continue to App</string>
-    <string name="uninstall_permission_required">Enable &quot;Uninstall other apps&quot; access so TALauncher can remove apps.</string>
+    <string name="uninstall_permission_required">Enable &quot;Uninstall other apps&quot; access so %1$s can remove apps.</string>
 </resources>
