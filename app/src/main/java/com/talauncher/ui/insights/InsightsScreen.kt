@@ -56,7 +56,9 @@ fun InsightsScreen(
         if (!uiState.hasPermission) {
             PermissionCard(
                 onGrantPermission = {
-                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
                     context.startActivity(intent)
                 }
             )

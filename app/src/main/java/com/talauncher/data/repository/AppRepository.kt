@@ -10,6 +10,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
+/**
+ * Repository providing app data and launch helpers.
+ *
+ * @param context Application context used for package queries and launching intents. Pass an
+ * application context so launches work correctly from non-Activity components.
+ */
 class AppRepository(
     private val appDao: AppDao,
     private val context: Context,
