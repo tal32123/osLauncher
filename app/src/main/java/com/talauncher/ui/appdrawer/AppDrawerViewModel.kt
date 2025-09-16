@@ -179,6 +179,42 @@ class AppDrawerViewModel(
         }
     }
 
+    fun startRenamingApp(app: AppInfo) {
+        _uiState.value = _uiState.value.copy(
+            appBeingRenamed = app,
+            renameInput = app.appName
+        )
+    }
+
+    fun updateRenameInput(value: String) {
+        _uiState.value = _uiState.value.copy(renameInput = value)
+    }
+
+    fun dismissRenameDialog() {
+        _uiState.value = _uiState.value.copy(
+            appBeingRenamed = null,
+            renameInput = ""
+        )
+    }
+
+    fun confirmRename() {
+        val app = _uiState.value.appBeingRenamed ?: return
+        val newName = _uiState.value.renameInput.trim()
+        if (newName.isEmpty()) {
+            return
+        }
+
+        if (newName == app.appName) {
+            dismissRenameDialog()
+            return
+        }
+
+        viewModelScope.launch {
+            appRepository.renameApp(app.packageName, newName)
+            dismissRenameDialog()
+        }
+    }
+
     fun showAppActionDialog(app: AppInfo) {
         _uiState.value = _uiState.value.copy(selectedAppForAction = app)
     }
@@ -233,6 +269,8 @@ data class AppDrawerUiState(
     val recentApps: List<AppInfo> = emptyList(), // Top 5 most used apps from past 48 hours
     val isLoading: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
+    val appBeingRenamed: AppInfo? = null,
+    val renameInput: String = "",
     val showFrictionDialog: Boolean = false,
     val selectedAppForFriction: String? = null,
     val showTimeLimitDialog: Boolean = false,

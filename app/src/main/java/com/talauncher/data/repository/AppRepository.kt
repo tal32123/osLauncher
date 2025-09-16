@@ -135,6 +135,39 @@ class AppRepository(
         }
     }
 
+    suspend fun renameApp(packageName: String, newName: String) {
+        val trimmedName = newName.trim()
+        if (trimmedName.isEmpty()) {
+            return
+        }
+
+        try {
+            val existingApp = getApp(packageName)
+            if (existingApp != null) {
+                if (existingApp.appName == trimmedName) {
+                    return
+                }
+
+                val updatedApp = existingApp.copy(appName = trimmedName)
+                appDao.updateApp(updatedApp)
+            } else {
+                val baseInfo = getAppInfoFromPackage(packageName)
+                if (baseInfo != null) {
+                    insertApp(baseInfo.copy(appName = trimmedName))
+                } else {
+                    insertApp(AppInfo(packageName = packageName, appName = trimmedName))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error renaming app: $packageName", e)
+            errorHandler?.showError(
+                "Rename App Error",
+                "Failed to rename app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
+        }
+    }
+
     suspend fun updateDistractingStatus(packageName: String, isDistracting: Boolean) {
         try {
             appDao.updateDistractingStatus(packageName, isDistracting)

@@ -20,11 +20,13 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.MathChallengeDialog
@@ -51,9 +53,16 @@ fun AppDrawerScreen(
 
     // Handle back button for dialogs
     BackHandler(
-        enabled = uiState.showFrictionDialog || uiState.showTimeLimitDialog || uiState.showMathChallengeDialog || uiState.selectedAppForAction != null
+        enabled = uiState.showFrictionDialog ||
+            uiState.showTimeLimitDialog ||
+            uiState.showMathChallengeDialog ||
+            uiState.selectedAppForAction != null ||
+            uiState.appBeingRenamed != null
     ) {
         when {
+            uiState.appBeingRenamed != null -> {
+                viewModel.dismissRenameDialog()
+            }
             uiState.showMathChallengeDialog -> {
                 // Math challenge cannot be dismissed with back button - force completion
             }
@@ -282,6 +291,7 @@ fun AppDrawerScreen(
             onDismiss = viewModel::dismissAppActionDialog,
             onPin = viewModel::pinApp,
             onUnpin = viewModel::unpinApp,
+            onRename = viewModel::startRenamingApp,
             onHide = viewModel::hideApp,
             onAppInfo = { packageName ->
                 viewModel.openAppInfo(context, packageName)
@@ -289,6 +299,14 @@ fun AppDrawerScreen(
             onUninstall = { packageName ->
                 viewModel.uninstallApp(context, packageName)
             }
+        )
+
+        RenameAppDialog(
+            app = uiState.appBeingRenamed,
+            newName = uiState.renameInput,
+            onNameChange = viewModel::updateRenameInput,
+            onConfirm = viewModel::confirmRename,
+            onDismiss = viewModel::dismissRenameDialog
         )
 
         // Friction barrier dialog for distracting apps
@@ -458,6 +476,7 @@ fun AppActionDialog(
     onDismiss: () -> Unit,
     onPin: (String) -> Unit,
     onUnpin: (String) -> Unit,
+    onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
@@ -506,6 +525,16 @@ fun AppActionDialog(
                         )
 
                         ActionTextButton(
+                            label = stringResource(R.string.rename_app_action_label),
+                            description = stringResource(R.string.rename_app_action_description),
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onRename(app)
+                                onDismiss()
+                            }
+                        )
+
+                        ActionTextButton(
                             label = "Hide app",
                             description = "Move this app to the hidden list.",
                             modifier = Modifier.fillMaxWidth(),
@@ -540,6 +569,109 @@ fun AppActionDialog(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = PrimerShapes.medium
+        )
+    }
+}
+
+@Composable
+fun RenameAppDialog(
+    app: AppInfo?,
+    newName: String,
+    onNameChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (app != null) {
+        val focusRequester = remember { FocusRequester() }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val trimmedName = newName.trim()
+        val isConfirmEnabled = trimmedName.isNotEmpty() && trimmedName != app.appName
+
+        LaunchedEffect(app.packageName) {
+            focusRequester.requestFocus()
+        }
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = stringResource(R.string.rename_app_dialog_title, app.appName),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
+                ) {
+                    Text(
+                        text = stringResource(R.string.rename_app_dialog_description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = onNameChange,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
+                        label = {
+                            Text(stringResource(R.string.rename_app_dialog_field_label))
+                        },
+                        placeholder = {
+                            Text(stringResource(R.string.rename_app_dialog_placeholder))
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (isConfirmEnabled) {
+                                    onConfirm()
+                                    keyboardController?.hide()
+                                }
+                            }
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimerBlue,
+                            unfocusedBorderColor = PrimerGray300,
+                            cursorColor = PrimerBlue
+                        ),
+                        shape = PrimerShapes.small
+                    )
+
+                    Text(
+                        text = stringResource(R.string.rename_app_dialog_supporting_text),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (isConfirmEnabled) {
+                            onConfirm()
+                            keyboardController?.hide()
+                        }
+                    },
+                    enabled = isConfirmEnabled
+                ) {
+                    Text(stringResource(R.string.rename_app_dialog_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        keyboardController?.hide()
+                        onDismiss()
+                    }
+                ) {
                     Text("Cancel")
                 }
             },
