@@ -4,12 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
+import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +24,7 @@ class AppDrawerViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
     private val usageStatsHelper: UsageStatsHelper,
+    private val permissionsHelper: PermissionsHelper,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null
 ) : ViewModel() {
 
@@ -195,14 +199,29 @@ class AppDrawerViewModel(
     }
 
     fun uninstallApp(context: Context, packageName: String) {
+        val shouldPromptForPermission = permissionsHelper.requiresUninstallPermission()
+
         try {
-            val intent = Intent(Intent.ACTION_DELETE)
-            intent.data = Uri.parse("package:$packageName")
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                data = Uri.parse("package:$packageName")
+                putExtra(Intent.EXTRA_RETURN_RESULT, true)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
             context.startActivity(intent)
+        } catch (e: SecurityException) {
+            // System denied the uninstall request. This can happen if the permission was revoked.
+            android.util.Log.e("AppDrawerViewModel", "Unable to request uninstall for $packageName", e)
+            if (shouldPromptForPermission) {
+                notifyPermissionRequired(context)
+            }
         } catch (e: Exception) {
-            // Handle error - could show a toast or log
+            android.util.Log.e("AppDrawerViewModel", "Failed to launch uninstall intent for $packageName", e)
         }
+    }
+
+    private fun notifyPermissionRequired(context: Context) {
+        Toast.makeText(context, R.string.uninstall_permission_required, Toast.LENGTH_LONG).show()
+        permissionsHelper.openUninstallPermissionSettings()
     }
 }
 
