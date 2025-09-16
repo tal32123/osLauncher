@@ -31,7 +31,6 @@ import com.talauncher.ui.components.SessionExpiryActionDialog
 import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.theme.*
-import kotlin.math.abs
 
 @Composable
 fun HomeScreen(
@@ -205,22 +204,6 @@ fun HomeScreen(
 
 
         // Gesture Detection Overlays - Invisible areas for reliable gesture capture
-
-        // Right edge swipe area for app drawer navigation
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight()
-                .width(60.dp) // Wide enough swipe area
-                .pointerInput("right_swipe") {
-                    detectDragGestures { _, dragAmount ->
-                        // Swipe right with more lenient requirements
-                        if (dragAmount.x > 80 && abs(dragAmount.y) < 150) {
-                            onNavigateToAppDrawer?.invoke()
-                        }
-                    }
-                }
-        )
 
         // Top area swipe down for notifications
         Box(
