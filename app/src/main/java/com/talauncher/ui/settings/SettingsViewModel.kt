@@ -8,11 +8,13 @@ import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsViewModel(
     private val appRepository: AppRepository,
@@ -34,7 +36,9 @@ class SettingsViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            allInstalledApps = appRepository.getInstalledApps()
+            allInstalledApps = withContext(Dispatchers.IO) {
+                appRepository.getInstalledApps()
+            }
 
             combine(
                 appRepository.getPinnedApps(),

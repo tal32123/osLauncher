@@ -2,12 +2,13 @@ package com.talauncher.data.repository
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.provider.Settings
 import com.talauncher.data.database.AppDao
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 class AppRepository(
     private val appDao: AppDao,
@@ -74,7 +75,7 @@ class AppRepository(
         }
     }
 
-    fun getInstalledApps(): List<InstalledApp> {
+    suspend fun getInstalledApps(): List<InstalledApp> = withContext(Dispatchers.IO) {
         val packageManager = context.packageManager
         val intent = Intent(Intent.ACTION_MAIN, null).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
@@ -82,7 +83,7 @@ class AppRepository(
 
         val activities = packageManager.queryIntentActivities(intent, 0)
 
-        return activities.map { resolveInfo ->
+        activities.map { resolveInfo ->
             val packageName = resolveInfo.activityInfo.packageName
             val appName = resolveInfo.loadLabel(packageManager).toString()
             val isSystemApp = (resolveInfo.activityInfo.applicationInfo.flags and
@@ -151,7 +152,7 @@ class AppRepository(
 
     suspend fun getAllAppsSync(): List<AppInfo> = appDao.getAllAppsSync()
 
-    suspend fun syncInstalledApps() {
+    suspend fun syncInstalledApps() = withContext(Dispatchers.IO) {
         val installedApps = getInstalledApps()
         val existingApps = getAllAppsSync()
 
