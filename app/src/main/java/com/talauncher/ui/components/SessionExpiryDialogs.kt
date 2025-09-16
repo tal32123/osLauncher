@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.platform.LocalContext
+import com.talauncher.ui.home.MotivationalQuotesProvider
 
 @Composable
 fun SessionExpiryCountdownDialog(
@@ -30,6 +32,11 @@ fun SessionExpiryCountdownDialog(
 ) {
     val progress = remember(remainingSeconds, totalSeconds) {
         if (totalSeconds <= 0) 1f else 1f - (remainingSeconds.coerceAtLeast(0) / totalSeconds.toFloat())
+    }
+    val context = LocalContext.current
+    val quotesProvider = remember(context) { MotivationalQuotesProvider(context) }
+    val motivationalQuote = remember(appName, quotesProvider) {
+        quotesProvider.getRandomQuote()
     }
 
     Dialog(
@@ -71,6 +78,15 @@ fun SessionExpiryCountdownDialog(
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center
                 )
+                if (motivationalQuote.isNotBlank()) {
+                    Text(
+                        text = motivationalQuote,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

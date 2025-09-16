@@ -11,6 +11,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.platform.LocalContext
+import com.talauncher.ui.home.MotivationalQuotesProvider
 
 @Composable
 fun TimeLimitDialog(
@@ -20,6 +22,11 @@ fun TimeLimitDialog(
 ) {
     var durationText by remember { mutableStateOf("30") }
     var isError by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val quotesProvider = remember(context) { MotivationalQuotesProvider(context) }
+    val motivationalQuote = remember(appName, quotesProvider) {
+        quotesProvider.getRandomQuote()
+    }
 
     // Prevent back button from dismissing the dialog
     BackHandler {
@@ -72,6 +79,17 @@ fun TimeLimitDialog(
                     } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                if (motivationalQuote.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = motivationalQuote,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
