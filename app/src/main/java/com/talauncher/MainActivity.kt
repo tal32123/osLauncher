@@ -151,6 +151,8 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Check for expired sessions when returning to launcher
         checkExpiredSessions()
+        // Always navigate back to the home page when the launcher becomes visible
+        shouldNavigateToHome = true
     }
 
     override fun onRequestPermissionsResult(
