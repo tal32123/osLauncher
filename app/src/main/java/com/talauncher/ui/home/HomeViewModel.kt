@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -434,20 +435,35 @@ class HomeViewModel(
         checkExpiredSessions()
     }
 
+    private fun startOverlayService(intent: Intent, requireForeground: Boolean) {
+        val ctx = context ?: return
+        val appContext = ctx.applicationContext
+        try {
+            if (requireForeground && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(appContext, intent)
+            } else {
+                appContext.startService(intent)
+            }
+        } catch (illegalState: IllegalStateException) {
+            if (requireForeground && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(appContext, intent)
+            }
+        }
+    }
+
     private fun showOverlayCountdown(appName: String, remainingSeconds: Int, totalSeconds: Int) {
         if (!ensureOverlayPermission(appName)) {
             return
         }
 
-        context?.let { ctx ->
-            val intent = Intent(ctx, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_SHOW_COUNTDOWN
-                putExtra(OverlayService.EXTRA_APP_NAME, appName)
-                putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
-                putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
-            }
-            ctx.startService(intent)
+        val ctx = context ?: return
+        val intent = Intent(ctx, OverlayService::class.java).apply {
+            action = OverlayService.ACTION_SHOW_COUNTDOWN
+            putExtra(OverlayService.EXTRA_APP_NAME, appName)
+            putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
+            putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
         }
+        startOverlayService(intent, requireForeground = true)
     }
 
     private fun showOverlayDecision(appName: String, packageName: String, showMathOption: Boolean) {
@@ -455,24 +471,22 @@ class HomeViewModel(
             return
         }
 
-        context?.let { ctx ->
-            val intent = Intent(ctx, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_SHOW_DECISION
-                putExtra(OverlayService.EXTRA_APP_NAME, appName)
-                putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
-                putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
-            }
-            ctx.startService(intent)
+        val ctx = context ?: return
+        val intent = Intent(ctx, OverlayService::class.java).apply {
+            action = OverlayService.ACTION_SHOW_DECISION
+            putExtra(OverlayService.EXTRA_APP_NAME, appName)
+            putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
+            putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
         }
+        startOverlayService(intent, requireForeground = true)
     }
 
     private fun hideOverlay() {
-        context?.let { ctx ->
-            val intent = Intent(ctx, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_HIDE_OVERLAY
-            }
-            ctx.startService(intent)
+        val ctx = context ?: return
+        val intent = Intent(ctx, OverlayService::class.java).apply {
+            action = OverlayService.ACTION_HIDE_OVERLAY
         }
+        startOverlayService(intent, requireForeground = false)
     }
 
     private fun ensureOverlayPermission(appName: String?): Boolean {

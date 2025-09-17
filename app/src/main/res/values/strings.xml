@@ -26,6 +26,11 @@
     <string name="overlay_permission_required_confirm">Open settings</string>
     <string name="overlay_permission_required_dismiss">Not now</string>
     <string name="overlay_permission_generic_app">this app</string>
+    <string name="overlay_notification_channel_name">Focus reminders</string>
+    <string name="overlay_notification_channel_description">Keeps TALauncher active while showing focus reminders over other apps.</string>
+    <string name="overlay_notification_countdown">Time is almost up in %1$s (%2$d s remaining).</string>
+    <string name="overlay_notification_decision">Decide how to continue with %1$s.</string>
+    <string name="overlay_notification_default">Focus reminder active.</string>
     <string-array name="motivational_quotes">
         <item>Every tap is a choice—make it count.</item>
         <item>Stay focused on what truly matters right now.</item>
