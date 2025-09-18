@@ -1,16 +1,12 @@
 package com.talauncher.ui.onboarding
 
 import android.app.Activity
-import android.content.Intent
 import android.os.Build
-import android.provider.Settings
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
@@ -25,18 +21,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
+import com.talauncher.ui.components.PermissionManager
+import com.talauncher.utils.PermissionType
+import com.talauncher.utils.PermissionsHelper
+import com.talauncher.utils.UsageStatsHelper
 
 @Composable
 fun OnboardingScreen(
     onOnboardingComplete: () -> Unit,
-    viewModel: OnboardingViewModel = viewModel()
+    viewModel: OnboardingViewModel = viewModel(),
+    permissionsHelper: PermissionsHelper,
+    usageStatsHelper: UsageStatsHelper
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val permissionState by permissionsHelper.permissionState.collectAsState()
     val context = LocalContext.current
     val appName = stringResource(R.string.app_name)
+    var isDefaultLauncher by remember { mutableStateOf(usageStatsHelper.isDefaultLauncher()) }
 
-    LaunchedEffect(uiState.allPermissionsGranted) {
-        if (uiState.allPermissionsGranted) {
+    PermissionManager(permissionsHelper)
+
+    LaunchedEffect(permissionState.allOnboardingPermissionsGranted, isDefaultLauncher) {
+        if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
             viewModel.completeOnboarding()
             onOnboardingComplete()
         }
@@ -84,33 +89,10 @@ fun OnboardingScreen(
             icon = Icons.Default.Home,
             title = "Set as Default Launcher",
             description = "Make $appName your default home screen",
-            isCompleted = uiState.isDefaultLauncher,
-            buttonText = if (uiState.isDefaultLauncher) "Completed" else "Set as Default",
+            isCompleted = isDefaultLauncher,
+            buttonText = if (isDefaultLauncher) "Completed" else "Set as Default",
             onButtonClick = {
-                val packageManager = context.packageManager
-                val candidateActions = listOf(
-                    Settings.ACTION_HOME_SETTINGS,
-                    Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS,
-                    Settings.ACTION_SETTINGS
-                )
-
-                val targetIntent = candidateActions
-                    .map { action ->
-                        Intent(action).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-                    }
-                    .firstOrNull { intent ->
-                        intent.resolveActivity(packageManager) != null
-                    }
-
-                if (targetIntent != null) {
-                    context.startActivity(targetIntent)
-                } else {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.onboarding_default_launcher_settings_unavailable),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                permissionsHelper.requestPermission(context as Activity, PermissionType.DEFAULT_LAUNCHER)
             }
         )
 
@@ -121,13 +103,10 @@ fun OnboardingScreen(
             icon = Icons.Default.Info,
             title = "Usage Statistics Permission",
             description = "Required to show your app usage insights and track time spent in distracting apps",
-            isCompleted = uiState.hasUsageStatsPermission,
-            buttonText = if (uiState.hasUsageStatsPermission) "Completed" else "Grant Permission",
+            isCompleted = permissionState.hasUsageStats,
+            buttonText = if (permissionState.hasUsageStats) "Completed" else "Grant Permission",
             onButtonClick = {
-                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                context.startActivity(intent)
+                permissionsHelper.requestPermission(context as Activity, PermissionType.USAGE_STATS)
             }
         )
 
@@ -139,10 +118,10 @@ fun OnboardingScreen(
                 icon = Icons.Default.Notifications,
                 title = "Allow Notifications",
                 description = "Required to show gentle reminders when time limits expire",
-                isCompleted = uiState.hasNotificationPermission,
-                buttonText = if (uiState.hasNotificationPermission) "Completed" else "Allow Notifications",
+                isCompleted = permissionState.hasNotifications,
+                buttonText = if (permissionState.hasNotifications) "Completed" else "Allow Notifications",
                 onButtonClick = {
-                    viewModel.requestNotificationPermission(context as? Activity)
+                    permissionsHelper.requestPermission(context as Activity, PermissionType.NOTIFICATIONS)
                 }
             )
 
@@ -154,16 +133,16 @@ fun OnboardingScreen(
             icon = Icons.Default.Notifications,
             title = "Overlay Permission",
             description = "Allows timer notifications to appear over other apps when time limits expire",
-            isCompleted = uiState.hasSystemAlertWindowPermission,
-            buttonText = if (uiState.hasSystemAlertWindowPermission) "Completed" else "Grant Permission",
+            isCompleted = permissionState.hasSystemAlertWindow,
+            buttonText = if (permissionState.hasSystemAlertWindow) "Completed" else "Grant Permission",
             onButtonClick = {
-                viewModel.requestSystemAlertWindowPermission()
+                permissionsHelper.requestPermission(context as Activity, PermissionType.SYSTEM_ALERT_WINDOW)
             }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        if (uiState.allPermissionsGranted) {
+        if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(

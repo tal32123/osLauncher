@@ -157,7 +157,7 @@ class HomeViewModel(
                     mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
                     searchResults = filtered
                 )
-            }.collect { }
+            }.collect { } 
         }
     }
 
@@ -250,7 +250,7 @@ class HomeViewModel(
             return
         }
 
-        if (!helper.hasContactsPermission()) {
+        if (!helper.permissionState.value.hasContacts) {
             _uiState.value = _uiState.value.copy(
                 isContactsPermissionMissing = true
             )
@@ -294,7 +294,7 @@ class HomeViewModel(
             return
         }
 
-        if (helper.hasContactsPermission()) {
+        if (helper.permissionState.value.hasContacts) {
             onContactsPermissionGranted()
             return
         }
@@ -318,7 +318,7 @@ class HomeViewModel(
         } else {
             val activity = context as? Activity
             if (activity != null) {
-                helper.requestContactsPermission(activity)
+                helper.requestPermission(activity, com.talauncher.utils.PermissionType.CONTACTS)
             } else {
                 onContactsPermissionDenied()
             }
@@ -542,8 +542,8 @@ class HomeViewModel(
             val packageName = currentExpiredSession?.packageName ?: return@launch
 
             // Check if user is still in the target app before showing math challenge
-            if (usageStatsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp()
+            if (usageStatsHelper != null && permissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != packageName) {
                     Log.d("HomeViewModel", "User left target app ($packageName) before math challenge, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
@@ -610,8 +610,8 @@ class HomeViewModel(
 
         viewModelScope.launch {
             // Check if user is still in the target app before showing any popup
-            if (usageStatsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp()
+            if (usageStatsHelper != null && permissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != session.packageName) {
                     Log.d("HomeViewModel", "User not in target app (${session.packageName}) when session expired, current app: $currentApp. Skipping popup.")
                     // User is not in the target app, don't show popup and clean up
@@ -653,8 +653,8 @@ class HomeViewModel(
 
             while (remaining > 0) {
                 // Check if user is still in the target app
-                if (targetPackageName != null && usageStatsHelper != null) {
-                    val currentApp = usageStatsHelper.getCurrentForegroundApp()
+                if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
+                    val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                     if (currentApp != targetPackageName) {
                         Log.d("HomeViewModel", "User left target app ($targetPackageName), current app: $currentApp. Cancelling countdown.")
                         // User has left the target app, cancel countdown and hide overlay
@@ -683,8 +683,8 @@ class HomeViewModel(
             val targetPackageName = _uiState.value.sessionExpiryPackageName
 
             // Check if user is still in the target app before showing decision dialog
-            if (targetPackageName != null && usageStatsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp()
+            if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != targetPackageName) {
                     Log.d("HomeViewModel", "User left target app ($targetPackageName) before decision dialog, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
@@ -811,7 +811,7 @@ class HomeViewModel(
 
     private fun ensureOverlayPermission(appName: String?): Boolean {
         val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
-        val hasPermission = helper?.hasSystemAlertWindowPermission()
+        val hasPermission = helper?.permissionState?.value?.hasSystemAlertWindow
 
         if (hasPermission == true) {
             overlayPermissionPrompted = false
@@ -824,7 +824,7 @@ class HomeViewModel(
         if (!overlayPermissionPrompted) {
             overlayPermissionPrompted = true
             _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = true)
-            helper?.requestSystemAlertWindowPermission()
+            helper?.requestPermission(context as Activity, com.talauncher.utils.PermissionType.SYSTEM_ALERT_WINDOW)
             viewModelScope.launch {
                 appRepository.closeCurrentApp()
             }
@@ -835,7 +835,7 @@ class HomeViewModel(
 
     private fun ensureOverlayPermissionImmediate(): Boolean {
         val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
-        return helper?.hasSystemAlertWindowPermission() == true
+        return helper?.permissionState?.value?.hasSystemAlertWindow == true
     }
 
     private fun showOverlayMathChallenge(appName: String, packageName: String, difficulty: String) {
@@ -862,7 +862,7 @@ class HomeViewModel(
         Log.w("HomeViewModel", "Failed to show math challenge overlay, using service fallback")
         val ctx = context ?: return
         val intent = Intent(ctx, OverlayService::class.java).apply {
-            action = OverlayService.ACTION_SHOW_MATH_CHALLENGE
+            action = OverlayService.ACTION_SHOW_MATH_CHallenge
             putExtra(OverlayService.EXTRA_APP_NAME, appName)
             putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
             putExtra(OverlayService.EXTRA_DIFFICULTY, difficulty)
@@ -909,7 +909,7 @@ class HomeViewModel(
 
     fun openOverlayPermissionSettings() {
         val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
-        helper?.requestSystemAlertWindowPermission()
+        helper?.requestPermission(context as Activity, com.talauncher.utils.PermissionType.SYSTEM_ALERT_WINDOW)
     }
 
     fun callContact(contact: ContactInfo) {

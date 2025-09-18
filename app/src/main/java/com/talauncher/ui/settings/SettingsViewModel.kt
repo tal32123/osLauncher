@@ -7,7 +7,6 @@ import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
-import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +18,6 @@ import kotlinx.coroutines.withContext
 class SettingsViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
-    val usageStatsHelper: UsageStatsHelper,
     val permissionsHelper: PermissionsHelper
 ) : ViewModel() {
 
@@ -164,25 +162,3 @@ data class SettingsUiState(
     val isLoading: Boolean = false,
     val searchQuery: String = ""
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

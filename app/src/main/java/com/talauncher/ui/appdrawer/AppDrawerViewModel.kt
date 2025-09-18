@@ -42,11 +42,12 @@ class AppDrawerViewModel(
             combine(
                 appRepository.getAllVisibleApps(),
                 appRepository.getHiddenApps(),
-                settingsRepository.getSettings()
-            ) { visibleApps, hiddenApps, settings ->
+                settingsRepository.getSettings(),
+                permissionsHelper.permissionState
+            ) { visibleApps, hiddenApps, settings, permissionState ->
                 // Get top used apps from usage stats
                 val recentLimit = settings?.recentAppsLimit ?: 5
-                val recentApps = getRecentApps(visibleApps, recentLimit)
+                val recentApps = getRecentApps(visibleApps, recentLimit, permissionState.hasUsageStats)
 
                 _uiState.value = _uiState.value.copy(
                     allApps = visibleApps,
@@ -55,12 +56,12 @@ class AppDrawerViewModel(
                     mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
                     recentAppsLimit = recentLimit
                 )
-            }.collect { }
+            }.collect { } 
         }
     }
 
-    private suspend fun getRecentApps(allApps: List<AppInfo>, limit: Int): List<AppInfo> {
-        if (!usageStatsHelper.hasUsageStatsPermission()) {
+    private suspend fun getRecentApps(allApps: List<AppInfo>, limit: Int, hasPermission: Boolean): List<AppInfo> {
+        if (!hasPermission) {
             return emptyList()
         }
 
@@ -69,7 +70,7 @@ class AppDrawerViewModel(
             return emptyList()
         }
 
-        val topUsedApps = usageStatsHelper.getTopUsedApps(sanitizedLimit)
+        val topUsedApps = usageStatsHelper.getTopUsedApps(hasPermission, sanitizedLimit)
         val appMap = allApps.associateBy { it.packageName }
 
         return topUsedApps.mapNotNull { usageApp ->
@@ -247,7 +248,6 @@ class AppDrawerViewModel(
     }
 
     fun uninstallApp(context: Context, packageName: String) {
-        val shouldPromptForPermission = permissionsHelper.requiresUninstallPermission()
 
         try {
             val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
@@ -259,20 +259,13 @@ class AppDrawerViewModel(
         } catch (e: SecurityException) {
             // System denied the uninstall request. This can happen if the permission was revoked.
             android.util.Log.e("AppDrawerViewModel", "Unable to request uninstall for $packageName", e)
-            if (shouldPromptForPermission) {
-                notifyPermissionRequired(context)
-            }
+            
         } catch (e: Exception) {
             android.util.Log.e("AppDrawerViewModel", "Failed to launch uninstall intent for $packageName", e)
         }
     }
 
-    private fun notifyPermissionRequired(context: Context) {
-        val appName = context.getString(R.string.app_name)
-        val message = context.getString(R.string.uninstall_permission_required, appName)
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-        permissionsHelper.openUninstallPermissionSettings()
-    }
+    
 
     fun performGoogleSearch(query: String) {
         context?.let { ctx ->
@@ -325,12 +318,3 @@ data class AppDrawerUiState(
     val recentAppsLimit: Int = 5,
     val searchQuery: String = ""
 )
-
-
-
-
-
-
-
-
-

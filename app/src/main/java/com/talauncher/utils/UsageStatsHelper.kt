@@ -1,21 +1,17 @@
 package com.talauncher.utils
 
-import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Process
 import com.talauncher.data.model.AppUsage
 import java.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class UsageStatsHelper(
-    private val context: Context,
-    private val permissionsHelper: PermissionsHelper
+    private val context: Context
 ) {
     companion object {
         private const val CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutes
@@ -26,26 +22,8 @@ class UsageStatsHelper(
     private var cachedPast48HoursUsage: List<AppUsage>? = null
     private var cachedPast48HoursUsageTime: Long = 0L
 
-    fun hasUsageStatsPermission(): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(),
-                context.packageName
-            )
-        } else {
-            appOps.checkOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(),
-                context.packageName
-            )
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    suspend fun getTodayUsageStats(): List<AppUsage> = withContext(Dispatchers.IO) {
-        if (!permissionsHelper.hasUsageStatsPermission()) {
+    suspend fun getTodayUsageStats(hasPermission: Boolean): List<AppUsage> = withContext(Dispatchers.IO) {
+        if (!hasPermission) {
             return@withContext emptyList()
         }
 
@@ -88,8 +66,8 @@ class UsageStatsHelper(
         result
     }
 
-    suspend fun getPast48HoursUsageStats(): List<AppUsage> = withContext(Dispatchers.IO) {
-        if (!permissionsHelper.hasUsageStatsPermission()) {
+    suspend fun getPast48HoursUsageStats(hasPermission: Boolean): List<AppUsage> = withContext(Dispatchers.IO) {
+        if (!hasPermission) {
             return@withContext emptyList()
         }
 
@@ -134,8 +112,8 @@ class UsageStatsHelper(
         result
     }
 
-    suspend fun getTopUsedApps(limit: Int = 5): List<AppUsage> {
-        return getPast48HoursUsageStats()
+    suspend fun getTopUsedApps(hasPermission: Boolean, limit: Int = 5): List<AppUsage> {
+        return getPast48HoursUsageStats(hasPermission)
             .sortedByDescending { it.timeInForeground }
             .take(limit)
             .filter { it.timeInForeground > 0 }
@@ -166,8 +144,8 @@ class UsageStatsHelper(
         }
     }
 
-    suspend fun getCurrentForegroundApp(): String? = withContext(Dispatchers.IO) {
-        if (!permissionsHelper.hasUsageStatsPermission()) {
+    suspend fun getCurrentForegroundApp(hasPermission: Boolean): String? = withContext(Dispatchers.IO) {
+        if (!hasPermission) {
             return@withContext null
         }
 

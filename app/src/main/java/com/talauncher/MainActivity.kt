@@ -52,6 +52,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var sessionRepository: SessionRepository
     private lateinit var appRepository: AppRepository
     private lateinit var errorHandler: MainErrorHandler
+    private lateinit var permissionsHelper: PermissionsHelper
+    private lateinit var usageStatsHelper: UsageStatsHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +63,8 @@ class MainActivity : ComponentActivity() {
             val settingsRepository = SettingsRepository(database.settingsDao())
             this.sessionRepository = SessionRepository(database.appSessionDao())
             this.errorHandler = MainErrorHandler(this)
+            this.permissionsHelper = PermissionsHelper(applicationContext)
+            this.usageStatsHelper = UsageStatsHelper(applicationContext)
             this.appRepository = AppRepository(
                 database.appDao(),
                 this,
@@ -68,8 +72,6 @@ class MainActivity : ComponentActivity() {
                 this.sessionRepository,
                 this.errorHandler
             )
-            val permissionsHelper = PermissionsHelper(applicationContext)
-            val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
 
             lifecycleScope.launch {
                 sessionRepository.initialize()
@@ -109,11 +111,13 @@ class MainActivity : ComponentActivity() {
                             LoadingScreen()
                         } else if (!mainUiState.isOnboardingCompleted) {
                             val onboardingViewModel: OnboardingViewModel = viewModel {
-                                OnboardingViewModel(permissionsHelper, usageStatsHelper, settingsRepository)
+                                OnboardingViewModel(settingsRepository)
                             }
                             OnboardingScreen(
                                 onOnboardingComplete = mainViewModel::onOnboardingCompleted,
-                                viewModel = onboardingViewModel
+                                viewModel = onboardingViewModel,
+                                permissionsHelper = permissionsHelper,
+                                usageStatsHelper = usageStatsHelper
                             )
                         } else {
                             TALauncherApp(
@@ -154,6 +158,9 @@ class MainActivity : ComponentActivity() {
         checkExpiredSessions()
         // Always navigate back to the home page when the launcher becomes visible
         shouldNavigateToHome = true
+        if(::permissionsHelper.isInitialized) {
+            permissionsHelper.checkAllPermissions()
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -162,8 +169,8 @@ class MainActivity : ComponentActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (::errorHandler.isInitialized) {
-            errorHandler.onPermissionResult(requestCode, permissions, grantResults)
+        if (::permissionsHelper.isInitialized) {
+            permissionsHelper.handlePermissionResult(requestCode, permissions, grantResults)
         }
     }
 
@@ -254,7 +261,7 @@ fun LauncherNavigationPager(
             0 -> {
                 // Settings/Insights Screen
                 val settingsViewModel: SettingsViewModel = viewModel {
-                    SettingsViewModel(appRepository, settingsRepository, usageStatsHelper, permissionsHelper)
+                    SettingsViewModel(appRepository, settingsRepository, permissionsHelper)
                 }
                 SettingsScreen(
                     onNavigateBack = {},
@@ -287,7 +294,7 @@ fun LauncherNavigationPager(
                     viewModel = homeViewModel,
                     onNavigateToAppDrawer = {
                         coroutineScope.launch {
-                            pagerState.animateScrollToPage(2)
+                            pager.animateScrollToPage(2)
                         }
                     },
                     onNavigateToSettings = {
@@ -368,7 +375,7 @@ private fun StartupErrorScreen(error: Throwable) {
     val stackTrace = remember(error) { error.asStackTraceString() }
     val scrollState = rememberScrollState()
     val message = remember(error) {
-        error.localizedMessage?.takeIf { it.isNotBlank() }
+        error.localizedMessage?.takeIf { it.isNotBlank() } 
             ?: "${error::class.qualifiedName ?: error::class.simpleName}"
     }
     val appName = stringResource(R.string.app_name)
