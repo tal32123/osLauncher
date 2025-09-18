@@ -16,6 +16,7 @@ import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.service.OverlayService
+import com.talauncher.utils.BackgroundOverlayManager
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Job
@@ -57,6 +58,7 @@ class HomeViewModel(
     private var overlayPermissionPrompted = false
     private var isReceiverRegistered = false
     private val sessionExpirationMutex = Mutex()
+    private var backgroundOverlayManager: BackgroundOverlayManager? = null
 
     private val sessionExpiryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -92,6 +94,9 @@ class HomeViewModel(
         observeSessionExpirations()
         checkExpiredSessions()
         setupBroadcastReceiver()
+        context?.let {
+            backgroundOverlayManager = BackgroundOverlayManager.getInstance(it)
+        }
     }
 
     private fun setupBroadcastReceiver() {
@@ -613,14 +618,21 @@ class HomeViewModel(
             return
         }
 
-        val ctx = context ?: return
-        val intent = Intent(ctx, OverlayService::class.java).apply {
-            action = OverlayService.ACTION_SHOW_COUNTDOWN
-            putExtra(OverlayService.EXTRA_APP_NAME, appName)
-            putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
-            putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
+        val overlayManager = backgroundOverlayManager ?: return
+        val success = overlayManager.showCountdownOverlay(appName, remainingSeconds, totalSeconds)
+
+        if (!success) {
+            Log.w("HomeViewModel", "Failed to show countdown overlay, using fallback")
+            // Keep existing service fallback for compatibility
+            val ctx = context ?: return
+            val intent = Intent(ctx, OverlayService::class.java).apply {
+                action = OverlayService.ACTION_SHOW_COUNTDOWN
+                putExtra(OverlayService.EXTRA_APP_NAME, appName)
+                putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
+                putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
+            }
+            startOverlayServiceSafely(intent, requireForeground = true)
         }
-        startOverlayServiceSafely(intent, requireForeground = true)
     }
 
     private fun showOverlayDecision(appName: String, packageName: String, showMathOption: Boolean) {
@@ -628,17 +640,35 @@ class HomeViewModel(
             return
         }
 
-        val ctx = context ?: return
-        val intent = Intent(ctx, OverlayService::class.java).apply {
-            action = OverlayService.ACTION_SHOW_DECISION
-            putExtra(OverlayService.EXTRA_APP_NAME, appName)
-            putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
-            putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
+        val overlayManager = backgroundOverlayManager ?: return
+        val success = overlayManager.showDecisionOverlay(
+            appName = appName,
+            packageName = packageName,
+            showMathOption = showMathOption,
+            onExtend = { onSessionExpiryDecisionExtend() },
+            onClose = { onSessionExpiryDecisionClose() },
+            onMathChallenge = if (showMathOption) {{ onSessionExpiryDecisionMathChallenge() }} else null
+        )
+
+        if (!success) {
+            Log.w("HomeViewModel", "Failed to show decision overlay, using fallback")
+            // Keep existing service fallback for compatibility
+            val ctx = context ?: return
+            val intent = Intent(ctx, OverlayService::class.java).apply {
+                action = OverlayService.ACTION_SHOW_DECISION
+                putExtra(OverlayService.EXTRA_APP_NAME, appName)
+                putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
+                putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
+            }
+            startOverlayServiceSafely(intent, requireForeground = true)
         }
-        startOverlayServiceSafely(intent, requireForeground = true)
     }
 
     private fun hideOverlay() {
+        // Hide background overlay first
+        backgroundOverlayManager?.hideCurrentOverlay()
+
+        // Also hide service overlay for compatibility
         val ctx = context ?: return
         val intent = Intent(ctx, OverlayService::class.java).apply {
             action = OverlayService.ACTION_HIDE_OVERLAY
@@ -676,6 +706,27 @@ class HomeViewModel(
     }
 
     private fun showOverlayMathChallenge(appName: String, packageName: String, difficulty: String) {
+        val overlayManager = backgroundOverlayManager
+        if (overlayManager != null) {
+            val success = overlayManager.showMathChallengeOverlay(
+                appName = appName,
+                packageName = packageName,
+                difficulty = difficulty,
+                onCorrect = {
+                    onMathChallengeCompleted(packageName)
+                },
+                onDismiss = {
+                    dismissMathChallengeDialog()
+                }
+            )
+
+            if (success) {
+                return // Successfully shown background overlay
+            }
+        }
+
+        // Fallback to service approach
+        Log.w("HomeViewModel", "Failed to show math challenge overlay, using service fallback")
         val ctx = context ?: return
         val intent = Intent(ctx, OverlayService::class.java).apply {
             action = OverlayService.ACTION_SHOW_MATH_CHALLENGE

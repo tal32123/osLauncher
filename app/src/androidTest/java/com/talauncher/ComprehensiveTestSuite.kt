@@ -1,0 +1,38 @@
+package com.talauncher
+
+import org.junit.runner.RunWith
+import org.junit.runners.Suite
+
+/**
+ * Comprehensive test suite that runs all Android instrumentation tests
+ * Provides a single entry point for running all UI and integration tests
+ */
+@RunWith(Suite::class)
+@Suite.SuiteClasses(
+    // Navigation and basic functionality
+    LauncherNavigationIntegrationTest::class,
+    LauncherUITest::class,
+
+    // App drawer functionality
+    AppDrawerIntegrationTest::class,
+
+    // API compatibility tests
+    APICompatibilityTest::class,
+
+    // Existing overlay and session tests
+    OverlayServiceTest::class,
+    ComprehensiveOverlayE2ETest::class,
+    MathChallengeOverlayE2ETest::class,
+    TimeLimitOverlayBasicFlowTest::class,
+    OverlayInteractionBlockingTest::class,
+    TimeLimitExpiryRealWorldTest::class,
+    SettingsIntegrationTest::class,
+
+    // Stress and performance tests
+    StressAndPerformanceTest::class,
+    PerformanceStressTest::class
+)
+class ComprehensiveTestSuite {
+    // This class serves as a test suite runner
+    // All tests are specified in the @Suite.SuiteClasses annotation
+}
