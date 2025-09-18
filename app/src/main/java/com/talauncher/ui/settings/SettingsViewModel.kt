@@ -57,6 +57,7 @@ class SettingsViewModel(
                     showMessageAction = settings?.showMessageAction ?: true,
                     showWhatsAppAction = settings?.showWhatsAppAction ?: true,
                     weatherDisplay = settings?.weatherDisplay ?: "off",
+                    weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius",
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -156,6 +157,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateWeatherTemperatureUnit(unit: String) {
+        viewModelScope.launch {
+            settingsRepository.updateWeatherTemperatureUnit(unit)
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
@@ -198,5 +205,6 @@ data class SettingsUiState(
     val showPhoneAction: Boolean = false,
     val showMessageAction: Boolean = false,
     val showWhatsAppAction: Boolean = false,
-    val weatherDisplay: String = "off"
+    val weatherDisplay: String = "off",
+    val weatherTemperatureUnit: String = "celsius"
 )

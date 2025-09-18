@@ -17,9 +17,12 @@ import kotlin.math.roundToInt
 fun WeatherDisplay(
     weatherData: WeatherData?,
     modifier: Modifier = Modifier,
-    showTemperature: Boolean = true
+    showTemperature: Boolean = true,
+    temperatureUnit: String = "celsius"
 ) {
     if (weatherData != null) {
+        val convertedTemperature = convertTemperature(weatherData.temperature, temperatureUnit)
+        val unitSuffix = getTemperatureSuffix(temperatureUnit)
         Row(
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
@@ -34,7 +37,7 @@ fun WeatherDisplay(
 
             if (showTemperature) {
                 Text(
-                    text = "${weatherData.temperature.roundToInt()}°",
+                    text = "${convertedTemperature.roundToInt()}°$unitSuffix",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onBackground
@@ -56,4 +59,18 @@ fun WeatherIcon(
         color = MaterialTheme.colorScheme.onBackground,
         modifier = modifier
     )
+}
+
+private fun convertTemperature(temperatureCelsius: Double, unit: String): Double {
+    return when (unit.lowercase()) {
+        "fahrenheit" -> (temperatureCelsius * 9 / 5) + 32
+        else -> temperatureCelsius
+    }
+}
+
+private fun getTemperatureSuffix(unit: String): String {
+    return when (unit.lowercase()) {
+        "fahrenheit" -> "F"
+        else -> "C"
+    }
 }

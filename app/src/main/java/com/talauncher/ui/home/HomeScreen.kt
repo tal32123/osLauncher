@@ -159,7 +159,8 @@ fun HomeScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             com.talauncher.ui.components.WeatherDisplay(
                                 weatherData = uiState.weatherData,
-                                showTemperature = uiState.weatherDisplay == "daily"
+                                showTemperature = true,
+                                temperatureUnit = uiState.weatherTemperatureUnit
                             )
                         }
                     }
