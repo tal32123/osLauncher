@@ -33,6 +33,13 @@ fun SettingsScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("General", "Essential Apps", "Distracting Apps", "Usage Insights")
 
+    // Clear search when navigating away from app selection tabs
+    LaunchedEffect(selectedTab) {
+        if (selectedTab != 1 && selectedTab != 2) {
+            viewModel.clearSearchQuery()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -45,12 +52,18 @@ fun SettingsScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        TabRow(selectedTabIndex = selectedTab) {
+        ScrollableTabRow(selectedTabIndex = selectedTab) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTab == index,
                     onClick = { selectedTab = index },
-                    text = { Text(title) }
+                    text = {
+                        Text(
+                            text = title,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
                 )
             }
         }

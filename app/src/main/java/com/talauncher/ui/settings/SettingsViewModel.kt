@@ -128,6 +128,10 @@ class SettingsViewModel(
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
 
+    fun clearSearchQuery() {
+        _uiState.value = _uiState.value.copy(searchQuery = "")
+    }
+
     fun getFilteredApps(): List<InstalledApp> {
         val query = _uiState.value.searchQuery
         return if (query.isBlank()) {
