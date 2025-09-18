@@ -67,4 +67,14 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(showWhatsAppAction = enabled))
     }
+
+    suspend fun updateWeatherDisplay(display: String) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(weatherDisplay = display))
+    }
+
+    suspend fun updateWeatherLocation(lat: Double?, lon: Double?) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(weatherLocationLat = lat, weatherLocationLon = lon))
+    }
 }

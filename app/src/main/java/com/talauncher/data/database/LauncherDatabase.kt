@@ -12,7 +12,7 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -98,6 +98,37 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN recentAppsLimit INTEGER NOT NULL DEFAULT 10"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN showPhoneAction INTEGER NOT NULL DEFAULT 1"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN showMessageAction INTEGER NOT NULL DEFAULT 1"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN showWhatsAppAction INTEGER NOT NULL DEFAULT 1"
+                )
+            }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN weatherDisplay TEXT NOT NULL DEFAULT 'off'"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN weatherLocationLat REAL"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN weatherLocationLon REAL"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -109,7 +140,9 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_2_3,
                     MIGRATION_3_4,
                     MIGRATION_4_5,
-                    MIGRATION_5_6
+                    MIGRATION_5_6,
+                    MIGRATION_6_7,
+                    MIGRATION_7_8
                 ).build()
                 INSTANCE = instance
                 instance

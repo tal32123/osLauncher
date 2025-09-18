@@ -142,12 +142,27 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(PrimerSpacing.xxxl))
 
                 if (uiState.showTime) {
-                    Text(
-                        text = uiState.currentTime,
-                        style = MaterialTheme.typography.displayLarge,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = uiState.currentTime,
+                            style = MaterialTheme.typography.displayLarge,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+
+                        // Weather display next to time
+                        if (uiState.weatherDisplay != "off" && uiState.weatherData != null) {
+                            Spacer(modifier = Modifier.width(12.dp))
+                            com.talauncher.ui.components.WeatherDisplay(
+                                weatherData = uiState.weatherData,
+                                showTemperature = uiState.weatherDisplay == "daily"
+                            )
+                        }
+                    }
                 }
 
                 if (uiState.showDate) {

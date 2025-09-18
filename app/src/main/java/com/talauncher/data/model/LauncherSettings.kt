@@ -19,5 +19,8 @@ data class LauncherSettings(
     val recentAppsLimit: Int = 10, // Number of recent apps to show in insights
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
-    val showWhatsAppAction: Boolean = true
+    val showWhatsAppAction: Boolean = true,
+    val weatherDisplay: String = "off", // "off", "daily", "hourly"
+    val weatherLocationLat: Double? = null,
+    val weatherLocationLon: Double? = null
 )

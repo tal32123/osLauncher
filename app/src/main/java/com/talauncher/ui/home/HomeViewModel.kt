@@ -19,10 +19,26 @@ import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.service.OverlayService
+import com.talauncher.service.WeatherService
 import com.talauncher.utils.BackgroundOverlayManager
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
 import com.talauncher.utils.ErrorHandler
+import com.talauncher.utils.PermissionsHelper
+import com.talauncher.utils.UsageStatsHelper
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.text.SimpleDateFormat
+import java.util.ArrayDeque
+import java.util.Date
+import java.util.Locale
 
 sealed class SearchItem {
     abstract val name: String
@@ -42,21 +58,6 @@ sealed class SearchItem {
         override val name: String = contactInfo.name
     }
 }
-import com.talauncher.utils.PermissionsHelper
-import com.talauncher.utils.UsageStatsHelper
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import java.text.SimpleDateFormat
-import java.util.ArrayDeque
-import java.util.Date
-import java.util.Locale
 
 class HomeViewModel(
     private val appRepository: AppRepository,
@@ -88,6 +89,8 @@ class HomeViewModel(
     private var contactHelper: ContactHelper? = null
     private var pendingContactQuery: String? = null
     private var hasShownContactsPermissionPrompt = false
+    private var weatherService: WeatherService? = null
+    private var weatherUpdateJob: Job? = null
 
 
     private val sessionExpiryReceiver = object : BroadcastReceiver() {
@@ -129,6 +132,7 @@ class HomeViewModel(
             if (permissionsHelper != null) {
                 contactHelper = ContactHelper(it, permissionsHelper)
             }
+            weatherService = WeatherService(it)
         }
     }
 
@@ -177,8 +181,15 @@ class HomeViewModel(
                     searchResults = filtered,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
-                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && (contactHelper?.isWhatsAppInstalled() ?: false)
+                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && (contactHelper?.isWhatsAppInstalled() ?: false),
+                    weatherDisplay = settings?.weatherDisplay ?: "off"
                 )
+
+                // Update weather data if needed
+                val weatherDisplay = settings?.weatherDisplay ?: "off"
+                if (weatherDisplay != "off") {
+                    updateWeatherData(settings?.weatherLocationLat, settings?.weatherLocationLon)
+                }
             }.collect { } 
         }
     }
@@ -998,6 +1009,57 @@ class HomeViewModel(
         clearSearch()
     }
 
+    private fun updateWeatherData(savedLat: Double?, savedLon: Double?) {
+        weatherUpdateJob?.cancel()
+        weatherUpdateJob = viewModelScope.launch {
+            try {
+                val location = if (savedLat != null && savedLon != null) {
+                    Pair(savedLat, savedLon)
+                } else {
+                    // Try to get current location
+                    if (permissionsHelper?.hasLocationPermission() == true) {
+                        weatherService?.getCurrentLocation()
+                    } else {
+                        null
+                    }
+                }
+
+                if (location != null) {
+                    // Save the location if we got it fresh
+                    if (savedLat == null || savedLon == null) {
+                        settingsRepository.updateWeatherLocation(location.first, location.second)
+                    }
+
+                    val result = weatherService?.getCurrentWeather(location.first, location.second)
+                    result?.fold(
+                        onSuccess = { weatherData ->
+                            _uiState.value = _uiState.value.copy(
+                                weatherData = weatherData,
+                                weatherError = null
+                            )
+                        },
+                        onFailure = { error ->
+                            _uiState.value = _uiState.value.copy(
+                                weatherData = null,
+                                weatherError = "Failed to get weather: ${error.message}"
+                            )
+                        }
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        weatherData = null,
+                        weatherError = "Location permission required"
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    weatherData = null,
+                    weatherError = "Weather update failed: ${e.message}"
+                )
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         if (isReceiverRegistered) {
@@ -1014,6 +1076,7 @@ class HomeViewModel(
         }
         hideOverlay()
         countdownJob?.cancel()
+        weatherUpdateJob?.cancel()
     }
 }
 
@@ -1051,5 +1114,8 @@ data class HomeUiState(
     val showOverlayPermissionDialog: Boolean = false,
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
-    val showWhatsAppAction: Boolean = true
+    val showWhatsAppAction: Boolean = true,
+    val weatherDisplay: String = "off",
+    val weatherData: com.talauncher.data.model.WeatherData? = null,
+    val weatherError: String? = null
 )

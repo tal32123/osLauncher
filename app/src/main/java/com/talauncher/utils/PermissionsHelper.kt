@@ -21,7 +21,8 @@ data class PermissionState(
     val hasSystemAlertWindow: Boolean = false,
     val hasNotifications: Boolean = false,
     val hasContacts: Boolean = false,
-    val hasCallPhone: Boolean = false
+    val hasCallPhone: Boolean = false,
+    val hasLocation: Boolean = false
 ) {
     val allOnboardingPermissionsGranted: Boolean
         get() = hasUsageStats && hasSystemAlertWindow && hasNotifications
@@ -33,7 +34,8 @@ enum class PermissionType {
     NOTIFICATIONS,
     CONTACTS,
     CALL_PHONE,
-    DEFAULT_LAUNCHER
+    DEFAULT_LAUNCHER,
+    LOCATION
 }
 
 class PermissionsHelper(
@@ -53,7 +55,8 @@ class PermissionsHelper(
             hasSystemAlertWindow = hasSystemAlertWindowPermission(),
             hasNotifications = hasNotificationPermission(),
             hasContacts = hasContactsPermission(),
-            hasCallPhone = hasCallPhonePermission()
+            hasCallPhone = hasCallPhonePermission(),
+            hasLocation = hasLocationPermission()
         )
     }
 
@@ -65,6 +68,7 @@ class PermissionsHelper(
             PermissionType.CONTACTS -> requestContactsPermission(activity)
             PermissionType.CALL_PHONE -> requestCallPhonePermission(activity)
             PermissionType.DEFAULT_LAUNCHER -> openDefaultLauncherSettings()
+            PermissionType.LOCATION -> requestLocationPermission(activity)
         }
     }
 
@@ -196,9 +200,25 @@ class PermissionsHelper(
         }
     }
 
+    fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestLocationPermission(activity: Activity) {
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
+
     companion object {
         const val CONTACTS_PERMISSION_REQUEST_CODE = 1001
         const val CALL_PHONE_PERMISSION_REQUEST_CODE = 1002
         const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1003
+        const val LOCATION_PERMISSION_REQUEST_CODE = 1004
     }
 }

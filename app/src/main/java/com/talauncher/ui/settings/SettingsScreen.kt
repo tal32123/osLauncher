@@ -87,7 +87,10 @@ fun SettingsScreen(
                 showMessageAction = uiState.showMessageAction,
                 onToggleShowMessageAction = viewModel::toggleShowMessageAction,
                 showWhatsAppAction = uiState.showWhatsAppAction,
-                onToggleShowWhatsAppAction = viewModel::toggleShowWhatsAppAction
+                onToggleShowWhatsAppAction = viewModel::toggleShowWhatsAppAction,
+                weatherDisplay = uiState.weatherDisplay,
+                onUpdateWeatherDisplay = viewModel::updateWeatherDisplay,
+                permissionsHelper = viewModel.permissionsHelper
             )
             1 -> AppSelectionTab(
                 title = "Essential Apps",
@@ -139,7 +142,10 @@ fun GeneralSettings(
     showMessageAction: Boolean,
     onToggleShowMessageAction: () -> Unit,
     showWhatsAppAction: Boolean,
-    onToggleShowWhatsAppAction: () -> Unit
+    onToggleShowWhatsAppAction: () -> Unit,
+    weatherDisplay: String,
+    onUpdateWeatherDisplay: (String) -> Unit,
+    permissionsHelper: com.talauncher.utils.PermissionsHelper
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -280,6 +286,71 @@ fun GeneralSettings(
                         checked = showWhatsAppAction,
                         onCheckedChange = { onToggleShowWhatsAppAction() }
                     )
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Weather",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val permissionState by permissionsHelper.permissionState.collectAsState()
+
+                    Text(
+                        text = "Display Options",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("off", "daily", "hourly").forEach { option ->
+                            FilterChip(
+                                selected = weatherDisplay == option,
+                                onClick = {
+                                    if (option != "off" && !permissionState.hasLocation) {
+                                        if (context is androidx.activity.ComponentActivity) {
+                                            permissionsHelper.requestPermission(context, com.talauncher.utils.PermissionType.LOCATION)
+                                        }
+                                    }
+                                    onUpdateWeatherDisplay(option)
+                                },
+                                label = {
+                                    Text(when(option) {
+                                        "off" -> "Off"
+                                        "daily" -> "Daily"
+                                        "hourly" -> "Hourly"
+                                        else -> option
+                                    })
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    if (weatherDisplay != "off" && !permissionState.hasLocation) {
+                        Text(
+                            text = "Location permission required for weather",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }

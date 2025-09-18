@@ -56,6 +56,7 @@ class SettingsViewModel(
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
                     showWhatsAppAction = settings?.showWhatsAppAction ?: true,
+                    weatherDisplay = settings?.weatherDisplay ?: "off",
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -144,6 +145,17 @@ class SettingsViewModel(
         }
     }
 
+    fun updateWeatherDisplay(display: String) {
+        viewModelScope.launch {
+            settingsRepository.updateWeatherDisplay(display)
+
+            // If enabling weather, request location permission if not already granted
+            if (display != "off" && !permissionsHelper.hasLocationPermission()) {
+                // Permission will be requested in the UI when user interacts
+            }
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
@@ -185,5 +197,6 @@ data class SettingsUiState(
     val searchQuery: String = "",
     val showPhoneAction: Boolean = false,
     val showMessageAction: Boolean = false,
-    val showWhatsAppAction: Boolean = false
+    val showWhatsAppAction: Boolean = false,
+    val weatherDisplay: String = "off"
 )
