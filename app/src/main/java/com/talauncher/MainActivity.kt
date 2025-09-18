@@ -304,6 +304,13 @@ fun LauncherNavigationPager(
                         onLaunchApp
                     )
                 }
+                // Clear search when navigating away from app drawer
+                LaunchedEffect(pagerState.currentPage) {
+                    if (pagerState.currentPage != 2) {
+                        appDrawerViewModel.clearSearchOnNavigation()
+                    }
+                }
+
                 AppDrawerScreen(
                     viewModel = appDrawerViewModel
                 )

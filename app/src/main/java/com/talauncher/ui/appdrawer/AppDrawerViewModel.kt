@@ -287,6 +287,24 @@ class AppDrawerViewModel(
             }
         }
     }
+
+    fun updateSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+    }
+
+    fun clearSearchOnNavigation() {
+        _uiState.value = _uiState.value.copy(searchQuery = "")
+    }
+
+    fun refreshApps() {
+        viewModelScope.launch {
+            try {
+                appRepository.syncInstalledApps()
+            } catch (e: Exception) {
+                Log.e("AppDrawerViewModel", "Failed to refresh apps", e)
+            }
+        }
+    }
 }
 
 data class AppDrawerUiState(
@@ -304,7 +322,8 @@ data class AppDrawerUiState(
     val showMathChallengeDialog: Boolean = false,
     val selectedAppForMathChallenge: String? = null,
     val mathChallengeDifficulty: String = "easy",
-    val recentAppsLimit: Int = 5
+    val recentAppsLimit: Int = 5,
+    val searchQuery: String = ""
 )
 
 

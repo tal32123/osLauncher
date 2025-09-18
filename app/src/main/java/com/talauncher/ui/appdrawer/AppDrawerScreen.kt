@@ -3,6 +3,9 @@ package com.talauncher.ui.appdrawer
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -63,11 +66,19 @@ fun AppDrawerScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
-    var searchQuery by remember { mutableStateOf("") }
+    val searchQuery = uiState.searchQuery
     var showHiddenApps by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val layoutDirection = LocalLayoutDirection.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Refresh apps when screen becomes visible
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.refreshApps()
+        }
+    }
 
     val locale = remember(configuration) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -227,7 +238,7 @@ fun AppDrawerScreen(
             ) {
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    onValueChange = { viewModel.updateSearchQuery(it) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
@@ -249,7 +260,7 @@ fun AppDrawerScreen(
                         if (searchQuery.isNotEmpty()) {
                             TextButton(
                                 onClick = {
-                                    searchQuery = ""
+                                    viewModel.updateSearchQuery("")
                                     keyboardController?.hide()
                                 },
                                 colors = ButtonDefaults.textButtonColors(
