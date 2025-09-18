@@ -41,6 +41,7 @@ import com.talauncher.ui.settings.SettingsViewModel
 import com.talauncher.ui.theme.TALauncherTheme
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.MainErrorHandler
 import com.talauncher.ui.components.ErrorDialog
 import java.io.PrintWriter
@@ -121,6 +122,7 @@ class MainActivity : ComponentActivity() {
                                 permissionsHelper = permissionsHelper,
                                 usageStatsHelper = usageStatsHelper,
                                 sessionRepository = sessionRepository,
+                                errorHandler = errorHandler,
                                 shouldNavigateToHome = shouldNavigateToHome,
                                 onNavigatedToHome = { shouldNavigateToHome = false }
                             )
@@ -183,6 +185,7 @@ fun TALauncherApp(
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
+    errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
 ) {
@@ -192,6 +195,7 @@ fun TALauncherApp(
         permissionsHelper = permissionsHelper,
         usageStatsHelper = usageStatsHelper,
         sessionRepository = sessionRepository,
+        errorHandler = errorHandler,
         shouldNavigateToHome = shouldNavigateToHome,
         onNavigatedToHome = onNavigatedToHome
     )
@@ -204,6 +208,7 @@ fun LauncherNavigationPager(
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
+    errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
 ) {
@@ -267,7 +272,8 @@ fun LauncherNavigationPager(
                         sessionRepository,
                         context,
                         permissionsHelper,
-                        usageStatsHelper
+                        usageStatsHelper,
+                        errorHandler
                     )
                 }
                 // Clear search when navigating to home screen

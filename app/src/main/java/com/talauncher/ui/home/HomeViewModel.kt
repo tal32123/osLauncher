@@ -1,5 +1,7 @@
 package com.talauncher.ui.home
 
+import android.Manifest
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,6 +12,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.repository.AppRepository
@@ -19,6 +22,7 @@ import com.talauncher.service.OverlayService
 import com.talauncher.utils.BackgroundOverlayManager
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
+import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Job
@@ -42,7 +46,8 @@ class HomeViewModel(
     private val sessionRepository: SessionRepository? = null,
     private val context: Context? = null,
     private val permissionsHelper: PermissionsHelper? = null,
-    private val usageStatsHelper: UsageStatsHelper? = null
+    private val usageStatsHelper: UsageStatsHelper? = null,
+    private val errorHandler: ErrorHandler? = null
 ) : ViewModel() {
 
     private enum class TimeLimitRequestSource { STANDARD, SESSION_EXTENSION }
@@ -62,6 +67,9 @@ class HomeViewModel(
     private val sessionExpirationMutex = Mutex()
     private var backgroundOverlayManager: BackgroundOverlayManager? = null
     private var contactHelper: ContactHelper? = null
+    private var pendingContactQuery: String? = null
+    private var hasShownContactsPermissionPrompt = false
+
 
     private val sessionExpiryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -225,23 +233,127 @@ class HomeViewModel(
             contactResults = emptyList()
         )
 
-        // Search contacts if query is not blank
-        if (sanitized.isNotBlank()) {
-            viewModelScope.launch {
-                val contacts = contactHelper?.searchContacts(sanitized) ?: emptyList()
-                _uiState.value = _uiState.value.copy(contactResults = contacts)
+        if (sanitized.isBlank()) {
+            pendingContactQuery = null
+            hasShownContactsPermissionPrompt = false
+            _uiState.value = _uiState.value.copy(
+                isContactsPermissionMissing = false,
+                showContactsPermissionDialog = false
+            )
+            return
+        }
+
+        pendingContactQuery = sanitized
+
+        val helper = permissionsHelper
+        if (contactHelper == null || helper == null) {
+            return
+        }
+
+        if (!helper.hasContactsPermission()) {
+            _uiState.value = _uiState.value.copy(
+                isContactsPermissionMissing = true
+            )
+            if (!hasShownContactsPermissionPrompt) {
+                hasShownContactsPermissionPrompt = true
+                _uiState.value = _uiState.value.copy(showContactsPermissionDialog = true)
+            }
+            return
+        }
+
+        hasShownContactsPermissionPrompt = false
+        launchContactSearch(sanitized)
+    }
+
+    private fun launchContactSearch(query: String) {
+        pendingContactQuery = query
+        viewModelScope.launch {
+            val contacts = contactHelper?.searchContacts(query) ?: emptyList()
+            _uiState.value = _uiState.value.copy(
+                contactResults = contacts,
+                isContactsPermissionMissing = false
+            )
+        }
+    }
+
+    fun showContactsPermissionPrompt() {
+        if (_uiState.value.isContactsPermissionMissing) {
+            hasShownContactsPermissionPrompt = true
+            _uiState.value = _uiState.value.copy(showContactsPermissionDialog = true)
+        }
+    }
+
+    fun dismissContactsPermissionDialog() {
+        _uiState.value = _uiState.value.copy(showContactsPermissionDialog = false)
+    }
+
+    fun requestContactsPermission() {
+        val helper = permissionsHelper
+        if (helper == null || contactHelper == null) {
+            _uiState.value = _uiState.value.copy(showContactsPermissionDialog = false)
+            return
+        }
+
+        if (helper.hasContactsPermission()) {
+            onContactsPermissionGranted()
+            return
+        }
+
+        _uiState.value = _uiState.value.copy(showContactsPermissionDialog = false)
+
+        val rationale = context?.getString(R.string.contact_permission_required_message)
+            ?: "Allow TALauncher to access your contacts to find people quickly."
+        val handler = errorHandler
+        if (handler != null) {
+            handler.requestPermission(
+                Manifest.permission.READ_CONTACTS,
+                rationale
+            ) { granted ->
+                if (granted) {
+                    onContactsPermissionGranted()
+                } else {
+                    onContactsPermissionDenied()
+                }
+            }
+        } else {
+            val activity = context as? Activity
+            if (activity != null) {
+                helper.requestContactsPermission(activity)
+            } else {
+                onContactsPermissionDenied()
             }
         }
     }
 
+    private fun onContactsPermissionGranted() {
+        hasShownContactsPermissionPrompt = false
+        _uiState.value = _uiState.value.copy(
+            isContactsPermissionMissing = false,
+            showContactsPermissionDialog = false
+        )
+        val query = pendingContactQuery
+        if (!query.isNullOrBlank()) {
+            launchContactSearch(query)
+        }
+    }
+
+    private fun onContactsPermissionDenied() {
+        _uiState.value = _uiState.value.copy(
+            isContactsPermissionMissing = true
+        )
+    }
     fun clearSearch() {
         if (_uiState.value.searchQuery.isNotEmpty()) {
             _uiState.value = _uiState.value.copy(
                 searchQuery = "",
                 searchResults = emptyList(),
-                contactResults = emptyList()
+                contactResults = emptyList(),
+                isContactsPermissionMissing = false,
+                showContactsPermissionDialog = false
             )
         }
+        pendingContactQuery = null
+        hasShownContactsPermissionPrompt = false
     }
 
     fun clearSearchOnNavigation() {
@@ -840,6 +952,8 @@ data class HomeUiState(
     val searchQuery: String = "",
     val searchResults: List<AppInfo> = emptyList(),
     val contactResults: List<ContactInfo> = emptyList(),
+    val isContactsPermissionMissing: Boolean = false,
+    val showContactsPermissionDialog: Boolean = false,
     val showFrictionDialog: Boolean = false,
     val selectedAppForFriction: String? = null,
     val showTimeLimitDialog: Boolean = false,
@@ -859,4 +973,3 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val showOverlayPermissionDialog: Boolean = false
 )
-

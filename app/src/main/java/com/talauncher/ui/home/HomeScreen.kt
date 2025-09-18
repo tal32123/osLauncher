@@ -237,8 +237,19 @@ fun HomeScreen(
                         }
                     }
 
+                    if (uiState.isContactsPermissionMissing && searchQuery.isNotBlank()) {
+                        item {
+                            ContactPermissionCallout(
+                                onGrantAccess = {
+                                    keyboardController?.hide()
+                                    viewModel.showContactsPermissionPrompt()
+                                }
+                            )
+                        }
+                    }
+
                     // Show no results message only if both app and contact results are empty
-                    if (searchResults.isEmpty() && contactResults.isEmpty() && searchQuery.isNotBlank()) {
+                    if (searchResults.isEmpty() && contactResults.isEmpty() && searchQuery.isNotBlank() && !uiState.isContactsPermissionMissing) {
                         item {
                             Text(
                                 text = stringResource(R.string.home_search_no_results),
@@ -396,6 +407,39 @@ fun HomeScreen(
                 onMathChallenge = if (uiState.sessionExpiryShowMathOption) {
                     { viewModel.onSessionExpiryDecisionMathChallenge() }
                 } else null
+            )
+        }
+
+        if (uiState.showContactsPermissionDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissContactsPermissionDialog() },
+                title = {
+                    Text(
+                        text = stringResource(R.string.contact_permission_required_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                text = {
+                    Text(
+                        text = stringResource(R.string.contact_permission_required_message),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        keyboardController?.hide()
+                        viewModel.requestContactsPermission()
+                    }) {
+                        Text(stringResource(R.string.contact_permission_required_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissContactsPermissionDialog() }) {
+                        Text(stringResource(R.string.contact_permission_required_dismiss))
+                    }
+                }
             )
         }
 
@@ -622,6 +666,39 @@ fun PinnedAppItem(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
+        }
+    }
+}
+
+@Composable
+fun ContactPermissionCallout(
+    onGrantAccess: () -> Unit
+) {
+    PrimerCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PrimerSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
+        ) {
+            Text(
+                text = stringResource(R.string.contact_permission_missing_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            OutlinedButton(
+                onClick = onGrantAccess,
+                shape = PrimerShapes.small,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+            ) {
+                Text(stringResource(R.string.contact_permission_required_confirm))
+            }
         }
     }
 }

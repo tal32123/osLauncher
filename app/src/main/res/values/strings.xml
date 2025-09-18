@@ -34,6 +34,11 @@
     <string name="home_search_placeholder">Search apps...</string>
     <string name="home_search_clear">Clear</string>
     <string name="home_search_no_results">No apps match your search.</string>
+    <string name="contact_permission_required_title">Allow contact access</string>
+    <string name="contact_permission_required_message">To find people quickly, allow TALauncher to read your contacts.</string>
+    <string name="contact_permission_required_confirm">Grant access</string>
+    <string name="contact_permission_required_dismiss">Not now</string>
+    <string name="contact_permission_missing_hint">Grant contact access to call or message contacts from search.</string>
     <string name="onboarding_default_launcher_settings_unavailable">Unable to open launcher settings on this device. Please set TALauncher as your default home app from system settings.</string>
     <string-array name="motivational_quotes">
         <item>Every tap is a choice—make it count.</item>
