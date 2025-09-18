@@ -227,6 +227,10 @@ class HomeViewModel(
         }
     }
 
+    fun clearSearchOnNavigation() {
+        clearSearch()
+    }
+
     fun dismissFrictionDialog() {
         _uiState.value = _uiState.value.copy(
             showFrictionDialog = false,

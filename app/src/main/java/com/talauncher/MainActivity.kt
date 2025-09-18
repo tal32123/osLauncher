@@ -270,6 +270,13 @@ fun LauncherNavigationPager(
                         usageStatsHelper
                     )
                 }
+                // Clear search when navigating to home screen
+                LaunchedEffect(pagerState.currentPage) {
+                    if (pagerState.currentPage == 1) {
+                        homeViewModel.clearSearchOnNavigation()
+                    }
+                }
+
                 HomeScreen(
                     viewModel = homeViewModel,
                     onNavigateToAppDrawer = {

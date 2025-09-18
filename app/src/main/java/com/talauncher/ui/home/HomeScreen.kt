@@ -96,6 +96,7 @@ fun HomeScreen(
         viewModel.checkExpiredSessionsManually()
     }
 
+
     // Determine background modifier based on settings
     val backgroundModifier = if (uiState.showWallpaper) {
         // Show wallpaper - transparent background to allow wallpaper to show through
