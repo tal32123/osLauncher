@@ -488,7 +488,7 @@ fun AppSelectionTab(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search apps...") },
+            placeholder = { Text("Search") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,

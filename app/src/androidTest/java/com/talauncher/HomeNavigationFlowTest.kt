@@ -50,7 +50,7 @@ class HomeNavigationFlowTest {
         composeTestRule.waitForIdle()
 
         // Verify we're on app drawer
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Test right swipe back to home
         composeTestRule.onRoot().performTouchInput {
@@ -105,7 +105,7 @@ class HomeNavigationFlowTest {
         composeTestRule.waitForIdle()
 
         // Verify navigation to app drawer
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Test return to home via gesture
         composeTestRule.onRoot().performTouchInput { swipeRight() }
@@ -278,7 +278,7 @@ class HomeNavigationFlowTest {
         composeTestRule.onNodeWithText("All Apps").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Return to home
         composeTestRule.onRoot().performTouchInput { swipeRight() }
@@ -336,7 +336,7 @@ class HomeNavigationFlowTest {
         composeTestRule.waitForIdle()
 
         // Should navigate to app drawer
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Return to home
         composeTestRule.onRoot().performTouchInput { swipeRight() }
@@ -361,7 +361,7 @@ class HomeNavigationFlowTest {
         composeTestRule.onNodeWithText("All Apps").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Return to home using gesture
         composeTestRule.onRoot().performTouchInput { swipeRight() }
@@ -387,7 +387,7 @@ class HomeNavigationFlowTest {
         composeTestRule.onNodeWithText("All Apps").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Return to home
         composeTestRule.onRoot().performTouchInput { swipeRight() }

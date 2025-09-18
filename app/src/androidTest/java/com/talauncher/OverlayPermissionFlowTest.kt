@@ -170,7 +170,7 @@ class OverlayPermissionFlowTest {
         // Verify core functionality still works without overlay permission
         composeTestRule.onNodeWithText("All Apps").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
     }
 
     /**
@@ -445,7 +445,7 @@ class OverlayPermissionFlowTest {
             {
                 composeTestRule.onNodeWithText("All Apps").performClick()
                 composeTestRule.waitForIdle()
-                composeTestRule.onNodeWithText("Search apps...").assertExists()
+                composeTestRule.onNodeWithText("Search").assertExists()
             }, // App Drawer
             {
                 composeTestRule.onRoot().performTouchInput { swipeRight() }
