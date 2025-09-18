@@ -401,45 +401,47 @@ class AppRepository(
             val existingAppMap = existingApps.associateBy { it.packageName }
             val installedPackages = installedApps.map { it.packageName }.toSet()
 
-            // Add new apps that don't exist in database
+            // Prepare batches for database operations
+            val appsToInsert = mutableListOf<AppInfo>()
+            val appsToDelete = mutableListOf<AppInfo>()
+
+            // Collect new apps that don't exist in database
             installedApps.forEach { installedApp ->
-                try {
-                    if (!existingAppMap.containsKey(installedApp.packageName)) {
-                        val appInfo = AppInfo(
+                if (!existingAppMap.containsKey(installedApp.packageName)) {
+                    appsToInsert.add(
+                        AppInfo(
                             packageName = installedApp.packageName,
                             appName = installedApp.appName
                         )
-                        insertApp(appInfo)
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error inserting app: ${installedApp.packageName}", e)
+                    )
                 }
             }
 
             // Add Device Settings entry if it doesn't exist
             val deviceSettingsPackage = "android.settings"
             if (!existingAppMap.containsKey(deviceSettingsPackage)) {
-                try {
-                    val deviceSettingsApp = AppInfo(
+                appsToInsert.add(
+                    AppInfo(
                         packageName = deviceSettingsPackage,
                         appName = "Device Settings"
                     )
-                    insertApp(deviceSettingsApp)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error inserting device settings app", e)
-                }
+                )
             }
 
-            // Remove apps that are no longer installed (excluding Device Settings shortcut)
+            // Collect apps that are no longer installed (excluding Device Settings shortcut)
             val packagesToKeep = installedPackages + deviceSettingsPackage
             existingApps.forEach { storedApp ->
                 if (!packagesToKeep.contains(storedApp.packageName)) {
-                    try {
-                        appDao.deleteApp(storedApp)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error removing uninstalled app: ${storedApp.packageName}", e)
-                    }
+                    appsToDelete.add(storedApp)
                 }
+            }
+
+            // Perform batch operations
+            if (appsToInsert.isNotEmpty()) {
+                appDao.insertApps(appsToInsert)
+            }
+            if (appsToDelete.isNotEmpty()) {
+                appDao.deleteApps(appsToDelete)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing installed apps", e)

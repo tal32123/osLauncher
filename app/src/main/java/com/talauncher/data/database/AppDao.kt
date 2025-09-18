@@ -24,11 +24,17 @@ interface AppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertApp(app: AppInfo)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertApps(apps: List<AppInfo>)
+
     @Update
     suspend fun updateApp(app: AppInfo)
 
     @Delete
     suspend fun deleteApp(app: AppInfo)
+
+    @Delete
+    suspend fun deleteApps(apps: List<AppInfo>)
 
     @Query("UPDATE app_info SET isPinned = :isPinned, pinnedOrder = :order WHERE packageName = :packageName")
     suspend fun updatePinnedStatus(packageName: String, isPinned: Boolean, order: Int = 0)

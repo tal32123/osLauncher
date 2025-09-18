@@ -17,6 +17,14 @@ class UsageStatsHelper(
     private val context: Context,
     private val permissionsHelper: PermissionsHelper
 ) {
+    companion object {
+        private const val CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutes
+    }
+
+    private var cachedTodayUsage: List<AppUsage>? = null
+    private var cachedTodayUsageTime: Long = 0L
+    private var cachedPast48HoursUsage: List<AppUsage>? = null
+    private var cachedPast48HoursUsageTime: Long = 0L
 
     fun hasUsageStatsPermission(): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
@@ -41,6 +49,13 @@ class UsageStatsHelper(
             return@withContext emptyList()
         }
 
+        val currentTime = System.currentTimeMillis()
+
+        // Check if cache is still valid
+        if (cachedTodayUsage != null && (currentTime - cachedTodayUsageTime) < CACHE_DURATION_MS) {
+            return@withContext cachedTodayUsage!!
+        }
+
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val calendar = Calendar.getInstance()
         val endTime = calendar.timeInMillis
@@ -57,7 +72,7 @@ class UsageStatsHelper(
             endTime
         )
 
-        usageStats?.mapNotNull { stats ->
+        val result = usageStats?.mapNotNull { stats ->
             if (stats.totalTimeInForeground > 0) {
                 AppUsage(
                     packageName = stats.packageName,
@@ -65,11 +80,24 @@ class UsageStatsHelper(
                 )
             } else null
         } ?: emptyList()
+
+        // Cache the result
+        cachedTodayUsage = result
+        cachedTodayUsageTime = currentTime
+
+        result
     }
 
     suspend fun getPast48HoursUsageStats(): List<AppUsage> = withContext(Dispatchers.IO) {
         if (!permissionsHelper.hasUsageStatsPermission()) {
             return@withContext emptyList()
+        }
+
+        val currentTime = System.currentTimeMillis()
+
+        // Check if cache is still valid
+        if (cachedPast48HoursUsage != null && (currentTime - cachedPast48HoursUsageTime) < CACHE_DURATION_MS) {
+            return@withContext cachedPast48HoursUsage!!
         }
 
         val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
@@ -92,12 +120,18 @@ class UsageStatsHelper(
             }
         }
 
-        packageUsageMap.map { (packageName, totalTime) ->
+        val result = packageUsageMap.map { (packageName, totalTime) ->
             AppUsage(
                 packageName = packageName,
                 timeInForeground = totalTime
             )
         }
+
+        // Cache the result
+        cachedPast48HoursUsage = result
+        cachedPast48HoursUsageTime = currentTime
+
+        result
     }
 
     suspend fun getTopUsedApps(limit: Int = 5): List<AppUsage> {

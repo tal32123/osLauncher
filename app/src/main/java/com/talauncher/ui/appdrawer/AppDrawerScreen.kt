@@ -84,15 +84,13 @@ fun AppDrawerScreen(
         }
     }
 
-    val filteredApps = remember(uiState.allApps, searchQuery) {
-        uiState.allApps.filter { app ->
+    val sections = remember(uiState.allApps, uiState.recentApps, searchQuery, collator, locale) {
+        val filteredApps = uiState.allApps.filter { app ->
             !app.isHidden &&
                 app.appName.contains(searchQuery, ignoreCase = true)
         }
-    }
 
-    val sortedFilteredApps = remember(filteredApps, collator) {
-        filteredApps.sortedWith { left, right ->
+        val sortedFilteredApps = filteredApps.sortedWith { left, right ->
             val labelComparison = collator.compare(left.appName, right.appName)
             if (labelComparison != 0) {
                 labelComparison
@@ -100,9 +98,7 @@ fun AppDrawerScreen(
                 left.packageName.compareTo(right.packageName)
             }
         }
-    }
 
-    val sections = remember(sortedFilteredApps, uiState.recentApps, searchQuery, locale) {
         buildList {
             if (uiState.recentApps.isNotEmpty() && searchQuery.isEmpty()) {
                 add(
