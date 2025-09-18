@@ -37,6 +37,7 @@ import com.talauncher.ui.components.SessionExpiryActionDialog
 import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.home.MotivationalQuotesProvider
+import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -51,6 +52,7 @@ fun HomeScreen(
     val searchQuery = uiState.searchQuery
     val searchResults = uiState.searchResults
     val contactResults = uiState.contactResults
+    val unifiedSearchResults = uiState.unifiedSearchResults
     val isSearching = searchQuery.isNotBlank()
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
@@ -207,44 +209,49 @@ fun HomeScreen(
                         )
                     }
 
-                    // Show app search results
-                    if (searchResults.isNotEmpty()) {
-                        items(searchResults, key = { it.packageName }) { app ->
-                            SearchResultItem(
-                                appInfo = app,
-                                onClick = {
-                                    keyboardController?.hide()
-                                    viewModel.launchApp(app.packageName)
+                    // Show unified search results (apps and contacts ordered by relevance)
+                    if (unifiedSearchResults.isNotEmpty()) {
+                        items(unifiedSearchResults, key = {
+                            when (it) {
+                                is SearchItem.App -> "app_${it.appInfo.packageName}"
+                                is SearchItem.Contact -> "contact_${it.contactInfo.id}"
+                            }
+                        }) { searchItem ->
+                            when (searchItem) {
+                                is SearchItem.App -> {
+                                    SearchResultItem(
+                                        appInfo = searchItem.appInfo,
+                                        onClick = {
+                                            keyboardController?.hide()
+                                            viewModel.launchApp(searchItem.appInfo.packageName)
+                                        }
+                                    )
                                 }
-                            )
-                        }
-                    }
-
-                    // Show contact search results
-                    if (contactResults.isNotEmpty()) {
-                        items(contactResults, key = { it.id }) { contact ->
-                            ContactItem(
-                                contact = contact,
-                                onCall = {
-                                    keyboardController?.hide()
-                                    viewModel.callContact(contact)
-                                },
-                                onMessage = {
-                                    keyboardController?.hide()
-                                    viewModel.messageContact(contact)
-                                },
-                                onWhatsApp = {
-                                    keyboardController?.hide()
-                                    viewModel.whatsAppContact(contact)
-                                },
-                                onOpenContact = {
-                                    keyboardController?.hide()
-                                    viewModel.openContact(contact)
-                                },
-                                showPhoneAction = uiState.showPhoneAction,
-                                showMessageAction = uiState.showMessageAction,
-                                showWhatsAppAction = uiState.showWhatsAppAction
-                            )
+                                is SearchItem.Contact -> {
+                                    ContactItem(
+                                        contact = searchItem.contactInfo,
+                                        onCall = {
+                                            keyboardController?.hide()
+                                            viewModel.callContact(searchItem.contactInfo)
+                                        },
+                                        onMessage = {
+                                            keyboardController?.hide()
+                                            viewModel.messageContact(searchItem.contactInfo)
+                                        },
+                                        onWhatsApp = {
+                                            keyboardController?.hide()
+                                            viewModel.whatsAppContact(searchItem.contactInfo)
+                                        },
+                                        onOpenContact = {
+                                            keyboardController?.hide()
+                                            viewModel.openContact(searchItem.contactInfo)
+                                        },
+                                        showPhoneAction = uiState.showPhoneAction,
+                                        showMessageAction = uiState.showMessageAction,
+                                        showWhatsAppAction = uiState.showWhatsAppAction
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -259,8 +266,8 @@ fun HomeScreen(
                         }
                     }
 
-                    // Show no results message only if both app and contact results are empty
-                    if (searchResults.isEmpty() && contactResults.isEmpty() && searchQuery.isNotBlank() && !uiState.isContactsPermissionMissing) {
+                    // Show no results message only if unified results are empty
+                    if (unifiedSearchResults.isEmpty() && searchQuery.isNotBlank() && !uiState.isContactsPermissionMissing) {
                         item {
                             Text(
                                 text = stringResource(R.string.home_search_no_results),

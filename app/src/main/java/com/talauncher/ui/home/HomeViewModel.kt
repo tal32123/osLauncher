@@ -23,6 +23,25 @@ import com.talauncher.utils.BackgroundOverlayManager
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
 import com.talauncher.utils.ErrorHandler
+
+sealed class SearchItem {
+    abstract val name: String
+    abstract val relevanceScore: Int
+
+    data class App(
+        val appInfo: AppInfo,
+        override val relevanceScore: Int
+    ) : SearchItem() {
+        override val name: String = appInfo.appName
+    }
+
+    data class Contact(
+        val contactInfo: ContactInfo,
+        override val relevanceScore: Int
+    ) : SearchItem() {
+        override val name: String = contactInfo.name
+    }
+}
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Job
@@ -175,6 +194,37 @@ class HomeViewModel(
         }.sortedBy { it.appName.lowercase(Locale.getDefault()) }
     }
 
+    private fun calculateRelevanceScore(query: String, name: String): Int {
+        val normalizedQuery = query.trim().lowercase()
+        val normalizedName = name.lowercase()
+
+        return when {
+            normalizedName == normalizedQuery -> 100 // Exact match
+            normalizedName.startsWith(normalizedQuery) -> 80 // Starts with
+            normalizedName.contains(" $normalizedQuery") -> 60 // Word boundary match
+            normalizedName.contains(normalizedQuery) -> 40 // Contains
+            else -> 0 // No match
+        }
+    }
+
+    private fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
+        if (query.isBlank()) return emptyList()
+
+        val appItems = apps.mapNotNull { app ->
+            val score = calculateRelevanceScore(query, app.appName)
+            if (score > 0) SearchItem.App(app, score) else null
+        }
+
+        val contactItems = contacts.mapNotNull { contact ->
+            val score = calculateRelevanceScore(query, contact.name)
+            if (score > 0) SearchItem.Contact(contact, score) else null
+        }
+
+        return (appItems + contactItems)
+            .sortedWith(compareByDescending<SearchItem> { it.relevanceScore }
+                .thenBy { it.name.lowercase() })
+    }
+
     private fun updateTime() {
         viewModelScope.launch {
             try {
@@ -230,10 +280,12 @@ class HomeViewModel(
             filterApps(sanitized, allVisibleApps)
         }
 
+        // Update individual results for backward compatibility
         _uiState.value = _uiState.value.copy(
             searchQuery = sanitized,
             searchResults = appResults,
-            contactResults = emptyList()
+            contactResults = emptyList(),
+            unifiedSearchResults = emptyList()
         )
 
         if (sanitized.isBlank()) {
@@ -250,11 +302,17 @@ class HomeViewModel(
 
         val helper = permissionsHelper
         if (contactHelper == null || helper == null) {
+            // Only show apps if no contact helper
+            val unifiedResults = createUnifiedSearchResults(sanitized, appResults, emptyList())
+            _uiState.value = _uiState.value.copy(unifiedSearchResults = unifiedResults)
             return
         }
 
         if (!helper.permissionState.value.hasContacts) {
+            // Only show apps if no contacts permission
+            val unifiedResults = createUnifiedSearchResults(sanitized, appResults, emptyList())
             _uiState.value = _uiState.value.copy(
+                unifiedSearchResults = unifiedResults,
                 isContactsPermissionMissing = true
             )
             if (!hasShownContactsPermissionPrompt) {
@@ -272,8 +330,12 @@ class HomeViewModel(
         pendingContactQuery = query
         viewModelScope.launch {
             val contacts = contactHelper?.searchContacts(query) ?: emptyList()
+            val currentAppResults = _uiState.value.searchResults
+            val unifiedResults = createUnifiedSearchResults(query, currentAppResults, contacts)
+
             _uiState.value = _uiState.value.copy(
                 contactResults = contacts,
+                unifiedSearchResults = unifiedResults,
                 isContactsPermissionMissing = false
             )
         }
@@ -351,6 +413,7 @@ class HomeViewModel(
                 searchQuery = "",
                 searchResults = emptyList(),
                 contactResults = emptyList(),
+                unifiedSearchResults = emptyList(),
                 isContactsPermissionMissing = false,
                 showContactsPermissionDialog = false
             )
@@ -965,6 +1028,7 @@ data class HomeUiState(
     val searchQuery: String = "",
     val searchResults: List<AppInfo> = emptyList(),
     val contactResults: List<ContactInfo> = emptyList(),
+    val unifiedSearchResults: List<SearchItem> = emptyList(),
     val isContactsPermissionMissing: Boolean = false,
     val showContactsPermissionDialog: Boolean = false,
     val showFrictionDialog: Boolean = false,
