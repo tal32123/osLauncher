@@ -1,13 +1,17 @@
 package com.talauncher.utils
 
 import android.Manifest
+import android.app.Activity
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class PermissionsHelper(private val context: Context) {
 
@@ -54,6 +58,53 @@ class PermissionsHelper(private val context: Context) {
         }
     }
 
+    fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            true
+        } else {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    fun requestNotificationPermission(activity: Activity?) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return
+        }
+
+        val targetActivity = activity
+        if (targetActivity != null) {
+            ActivityCompat.requestPermissions(
+                targetActivity,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                NOTIFICATION_PERMISSION_REQUEST_CODE
+            )
+        } else {
+            openNotificationSettings()
+        }
+    }
+
+    fun openNotificationSettings() {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", context.packageName, null)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            if (fallbackIntent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(fallbackIntent)
+            }
+        }
+    }
+
     fun openUninstallPermissionSettings() {
         val packageName = context.packageName
 
@@ -71,5 +122,9 @@ class PermissionsHelper(private val context: Context) {
             }
             context.startActivity(fallbackIntent)
         }
+    }
+
+    companion object {
+        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
     }
 }

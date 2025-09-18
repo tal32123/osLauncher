@@ -1,7 +1,10 @@
 package com.talauncher.ui.onboarding
 
+import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -84,10 +87,30 @@ fun OnboardingScreen(
             isCompleted = uiState.isDefaultLauncher,
             buttonText = if (uiState.isDefaultLauncher) "Completed" else "Set as Default",
             onButtonClick = {
-                val intent = Intent(Settings.ACTION_HOME_SETTINGS).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                val packageManager = context.packageManager
+                val candidateActions = listOf(
+                    Settings.ACTION_HOME_SETTINGS,
+                    Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS,
+                    Settings.ACTION_SETTINGS
+                )
+
+                val targetIntent = candidateActions
+                    .map { action ->
+                        Intent(action).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                    }
+                    .firstOrNull { intent ->
+                        intent.resolveActivity(packageManager) != null
+                    }
+
+                if (targetIntent != null) {
+                    context.startActivity(targetIntent)
+                } else {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.onboarding_default_launcher_settings_unavailable),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
-                context.startActivity(intent)
             }
         )
 
@@ -109,6 +132,22 @@ fun OnboardingScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Notification Permission (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            OnboardingStepCard(
+                icon = Icons.Default.Notifications,
+                title = "Allow Notifications",
+                description = "Required to show gentle reminders when time limits expire",
+                isCompleted = uiState.hasNotificationPermission,
+                buttonText = if (uiState.hasNotificationPermission) "Completed" else "Allow Notifications",
+                onButtonClick = {
+                    viewModel.requestNotificationPermission(context as? Activity)
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // System Alert Window Permission
         OnboardingStepCard(

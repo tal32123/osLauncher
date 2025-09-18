@@ -1,6 +1,7 @@
 package com.talauncher.utils
 
 import android.app.AppOpsManager
+import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
@@ -128,6 +129,43 @@ class UsageStatsHelper(
             packageManager.getApplicationLabel(applicationInfo).toString()
         } catch (e: PackageManager.NameNotFoundException) {
             null
+        }
+    }
+
+    suspend fun getCurrentForegroundApp(): String? = withContext(Dispatchers.IO) {
+        if (!permissionsHelper.hasUsageStatsPermission()) {
+            return@withContext null
+        }
+
+        try {
+            val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val endTime = System.currentTimeMillis()
+            val startTime = endTime - (60 * 1000L) // Look back 1 minute
+
+            val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
+            var currentApp: String? = null
+
+            if (usageEvents != null) {
+                val event = UsageEvents.Event()
+                while (usageEvents.hasNextEvent()) {
+                    usageEvents.getNextEvent(event)
+
+                    when (event.eventType) {
+                        UsageEvents.Event.ACTIVITY_RESUMED -> {
+                            currentApp = event.packageName
+                        }
+                        UsageEvents.Event.ACTIVITY_PAUSED -> {
+                            if (currentApp == event.packageName) {
+                                currentApp = null
+                            }
+                        }
+                    }
+                }
+            }
+
+            return@withContext currentApp
+        } catch (e: Exception) {
+            return@withContext null
         }
     }
 }

@@ -47,4 +47,9 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(sessionExpiryCountdownSeconds = seconds.coerceIn(0, 30)))
     }
+
+    suspend fun updateRecentAppsLimit(limit: Int) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(recentAppsLimit = limit.coerceIn(1, 50)))
+    }
 }

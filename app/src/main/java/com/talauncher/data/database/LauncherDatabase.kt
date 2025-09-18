@@ -12,7 +12,7 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {

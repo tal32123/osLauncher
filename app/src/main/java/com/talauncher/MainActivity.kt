@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.talauncher.data.database.LauncherDatabase
 import com.talauncher.data.repository.AppRepository
@@ -235,10 +234,9 @@ fun LauncherNavigationPager(
     }
 
     // Function to launch app and navigate to rightmost screen
-    val onLaunchApp: (String, Int?) -> Unit = { packageName, plannedDuration ->
+    val onLaunchApp: (String, Int?) -> Unit = { _, _ ->
         coroutineScope.launch {
-            appRepository.launchApp(packageName, plannedDuration = plannedDuration)
-            // Navigate to rightmost screen after launching app
+            // Navigate to rightmost screen after an app launch completes elsewhere
             pagerState.animateScrollToPage(2)
         }
     }
@@ -268,7 +266,8 @@ fun LauncherNavigationPager(
                         onLaunchApp,
                         sessionRepository,
                         context,
-                        permissionsHelper
+                        permissionsHelper,
+                        usageStatsHelper
                     )
                 }
                 HomeScreen(
@@ -287,12 +286,14 @@ fun LauncherNavigationPager(
             }
             2 -> {
                 // All Apps Screen
+                val context = LocalContext.current
                 val appDrawerViewModel: AppDrawerViewModel = viewModel {
                     AppDrawerViewModel(
                         appRepository,
                         settingsRepository,
                         usageStatsHelper,
                         permissionsHelper,
+                        context,
                         onLaunchApp
                     )
                 }

@@ -1,5 +1,6 @@
 package com.talauncher.ui.onboarding
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.repository.SettingsRepository
@@ -46,17 +47,28 @@ class OnboardingViewModel(
         val hasUsageStats = permissionsHelper.hasUsageStatsPermission()
         val isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
         val hasSystemAlertWindow = permissionsHelper.hasSystemAlertWindowPermission()
+        val hasNotifications = permissionsHelper.hasNotificationPermission()
 
         _uiState.value = _uiState.value.copy(
             hasUsageStatsPermission = hasUsageStats,
             isDefaultLauncher = isDefaultLauncher,
             hasSystemAlertWindowPermission = hasSystemAlertWindow,
-            allPermissionsGranted = hasUsageStats && isDefaultLauncher && hasSystemAlertWindow
+            hasNotificationPermission = hasNotifications,
+            allPermissionsGranted = hasUsageStats &&
+                isDefaultLauncher &&
+                hasSystemAlertWindow &&
+                hasNotifications
         )
     }
 
     fun requestSystemAlertWindowPermission() {
         permissionsHelper.requestSystemAlertWindowPermission()
+        checkPermissions()
+    }
+
+    fun requestNotificationPermission(activity: Activity?) {
+        permissionsHelper.requestNotificationPermission(activity)
+        checkPermissions()
     }
 
     fun completeOnboarding() {
@@ -70,6 +82,7 @@ data class OnboardingUiState(
     val hasUsageStatsPermission: Boolean = false,
     val isDefaultLauncher: Boolean = false,
     val hasSystemAlertWindowPermission: Boolean = false,
+    val hasNotificationPermission: Boolean = false,
     val allPermissionsGranted: Boolean = false,
     val isOnboardingCompleted: Boolean = false
 )

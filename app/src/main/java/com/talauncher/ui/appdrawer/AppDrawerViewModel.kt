@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,6 +26,7 @@ class AppDrawerViewModel(
     private val settingsRepository: SettingsRepository,
     private val usageStatsHelper: UsageStatsHelper,
     private val permissionsHelper: PermissionsHelper,
+    private val context: Context? = null,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null
 ) : ViewModel() {
 
@@ -43,23 +45,31 @@ class AppDrawerViewModel(
                 settingsRepository.getSettings()
             ) { visibleApps, hiddenApps, settings ->
                 // Get top used apps from usage stats
-                val recentApps = getRecentApps(visibleApps)
+                val recentLimit = settings?.recentAppsLimit ?: 5
+                val recentApps = getRecentApps(visibleApps, recentLimit)
 
                 _uiState.value = _uiState.value.copy(
                     allApps = visibleApps,
                     hiddenApps = hiddenApps,
-                    recentApps = recentApps
+                    recentApps = recentApps,
+                    mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
+                    recentAppsLimit = recentLimit
                 )
-            }.collect { /* Data collection handled in the combine block */ }
+            }.collect { }
         }
     }
 
-    private suspend fun getRecentApps(allApps: List<AppInfo>): List<AppInfo> {
+    private suspend fun getRecentApps(allApps: List<AppInfo>, limit: Int): List<AppInfo> {
         if (!usageStatsHelper.hasUsageStatsPermission()) {
             return emptyList()
         }
 
-        val topUsedApps = usageStatsHelper.getTopUsedApps(5)
+        val sanitizedLimit = limit.coerceAtLeast(0)
+        if (sanitizedLimit == 0) {
+            return emptyList()
+        }
+
+        val topUsedApps = usageStatsHelper.getTopUsedApps(sanitizedLimit)
         val appMap = allApps.associateBy { it.packageName }
 
         return topUsedApps.mapNotNull { usageApp ->
@@ -103,9 +113,11 @@ class AppDrawerViewModel(
     fun launchAppWithReason(packageName: String, reason: String) {
         viewModelScope.launch {
             // Log the reason for analytics/insights if needed
-            appRepository.launchApp(packageName, bypassFriction = true)
-            onLaunchApp?.invoke(packageName, null)
-            dismissFrictionDialog()
+            val launched = appRepository.launchApp(packageName, bypassFriction = true)
+            if (launched) {
+                onLaunchApp?.invoke(packageName, null)
+                dismissFrictionDialog()
+            }
         }
     }
 
@@ -261,12 +273,26 @@ class AppDrawerViewModel(
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         permissionsHelper.openUninstallPermissionSettings()
     }
+
+    fun performGoogleSearch(query: String) {
+        context?.let { ctx ->
+            try {
+                val searchUrl = "https://www.google.com/search?q=${Uri.encode(query)}"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(searchUrl)).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                ctx.startActivity(intent)
+            } catch (e: Exception) {
+                Log.e("AppDrawerViewModel", "Failed to open Google search", e)
+            }
+        }
+    }
 }
 
 data class AppDrawerUiState(
     val allApps: List<AppInfo> = emptyList(),
     val hiddenApps: List<AppInfo> = emptyList(),
-    val recentApps: List<AppInfo> = emptyList(), // Top 5 most used apps from past 48 hours
+    val recentApps: List<AppInfo> = emptyList(), // Most used apps from past 48 hours respecting user limit
     val isLoading: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val appBeingRenamed: AppInfo? = null,
@@ -276,5 +302,16 @@ data class AppDrawerUiState(
     val showTimeLimitDialog: Boolean = false,
     val selectedAppForTimeLimit: String? = null,
     val showMathChallengeDialog: Boolean = false,
-    val selectedAppForMathChallenge: String? = null
+    val selectedAppForMathChallenge: String? = null,
+    val mathChallengeDifficulty: String = "easy",
+    val recentAppsLimit: Int = 5
 )
+
+
+
+
+
+
+
+
+

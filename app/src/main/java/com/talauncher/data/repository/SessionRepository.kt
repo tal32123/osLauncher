@@ -100,19 +100,22 @@ class SessionRepository(private val appSessionDao: AppSessionDao) {
     }
 
     private suspend fun triggerExpiration(session: AppSession) {
-        val activeSession = withContext(Dispatchers.IO) {
-            appSessionDao.getActiveSessionForApp(session.packageName)
-        }
-        if (activeSession?.id == session.id && activeSession.isActive) {
-            expirationEvents.emit(activeSession)
-            withContext(Dispatchers.IO) {
-                appSessionDao.endSession(session.id, System.currentTimeMillis())
+        var sessionForEvent: AppSession? = null
+        withContext(Dispatchers.IO) {
+            val activeSession = appSessionDao.getActiveSessionForApp(session.packageName)
+            if (activeSession?.id == session.id && activeSession.isActive) {
+                val endTime = System.currentTimeMillis()
+                // End session first to prevent race conditions
+                appSessionDao.endSession(session.id, endTime)
+                sessionForEvent = activeSession.copy(isActive = false, endTime = endTime)
             }
         }
         cancelExpirationJob(session.id)
+        sessionForEvent?.let { expirationEvents.emit(it) }
     }
 
     private fun cancelExpirationJob(sessionId: Long) {
         expirationJobs.remove(sessionId)?.cancel()
     }
 }
+

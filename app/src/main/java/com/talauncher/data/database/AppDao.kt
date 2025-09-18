@@ -9,7 +9,7 @@ interface AppDao {
     @Query("SELECT * FROM app_info WHERE isHidden = 0 ORDER BY appName ASC")
     fun getAllVisibleApps(): Flow<List<AppInfo>>
 
-    @Query("SELECT * FROM app_info WHERE isPinned = 1 ORDER BY pinnedOrder ASC, appName ASC")
+    @Query("SELECT * FROM app_info WHERE isPinned = 1 AND isHidden = 0 ORDER BY pinnedOrder ASC, appName ASC")
     fun getPinnedApps(): Flow<List<AppInfo>>
 
     @Query("SELECT * FROM app_info WHERE isHidden = 1 ORDER BY appName ASC")

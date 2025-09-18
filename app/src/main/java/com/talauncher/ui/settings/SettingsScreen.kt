@@ -13,9 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.talauncher.R
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
 import com.talauncher.utils.UsageStatsHelper
@@ -63,6 +65,8 @@ fun SettingsScreen(
                 onToggleMathChallenge = viewModel::toggleMathChallenge,
                 mathDifficulty = uiState.mathDifficulty,
                 onUpdateMathDifficulty = viewModel::updateMathDifficulty,
+                recentAppsLimit = uiState.recentAppsLimit,
+                onUpdateRecentAppsLimit = viewModel::updateRecentAppsLimit,
                 sessionExpiryCountdownSeconds = uiState.sessionExpiryCountdownSeconds,
                 onUpdateSessionExpiryCountdown = viewModel::updateSessionExpiryCountdown
             )
@@ -107,6 +111,8 @@ fun GeneralSettings(
     onToggleMathChallenge: () -> Unit,
     mathDifficulty: String,
     onUpdateMathDifficulty: (String) -> Unit,
+    recentAppsLimit: Int,
+    onUpdateRecentAppsLimit: (Int) -> Unit,
     sessionExpiryCountdownSeconds: Int,
     onUpdateSessionExpiryCountdown: (Int) -> Unit
 ) {
@@ -142,6 +148,9 @@ fun GeneralSettings(
                     var sliderValue by remember(sessionExpiryCountdownSeconds) {
                         mutableStateOf(sessionExpiryCountdownSeconds.toFloat())
                     }
+                    var recentAppsValue by remember(recentAppsLimit) {
+                        mutableStateOf(recentAppsLimit.toFloat())
+                    }
 
                     Column(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -163,6 +172,36 @@ fun GeneralSettings(
                         )
                         Text(
                             text = "${sliderValue.roundToInt()} second${if (sliderValue.roundToInt() == 1) "" else "s"}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_recent_apps_limit_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Slider(
+                            value = recentAppsValue,
+                            onValueChange = { recentAppsValue = it },
+                            valueRange = 0f..10f,
+                            steps = 9,
+                            onValueChangeFinished = {
+                                onUpdateRecentAppsLimit(recentAppsValue.roundToInt())
+                            }
+                        )
+                        val recentCount = recentAppsValue.roundToInt()
+                        val recentSummary = when {
+                            recentCount == 0 -> stringResource(R.string.settings_recent_apps_limit_hidden)
+                            recentCount == 1 -> stringResource(R.string.settings_recent_apps_limit_summary_single)
+                            else -> stringResource(R.string.settings_recent_apps_limit_summary_plural, recentCount)
+                        }
+                        Text(
+                            text = recentSummary,
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -362,3 +401,5 @@ fun AppSelectionItem(
         }
     }
 }
+
+

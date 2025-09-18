@@ -58,12 +58,25 @@ class AppRepository(
     suspend fun pinApp(packageName: String) {
         try {
             // Get current app or create new one
-            val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
-            if (app != null) {
-                val maxOrder = appDao.getMaxPinnedOrder() ?: 0
-                appDao.updatePinnedStatus(packageName, true, maxOrder + 1)
-                if (getApp(packageName) == null) {
-                    insertApp(app.copy(isPinned = true, pinnedOrder = maxOrder + 1))
+            val existingApp = getApp(packageName)
+            val nextOrder = (appDao.getMaxPinnedOrder() ?: 0) + 1
+            if (existingApp != null) {
+                val updatedApp = existingApp.copy(
+                    isPinned = true,
+                    pinnedOrder = nextOrder,
+                    isHidden = false
+                )
+                appDao.updateApp(updatedApp)
+            } else {
+                val app = getAppInfoFromPackage(packageName)
+                if (app != null) {
+                    insertApp(
+                        app.copy(
+                            isPinned = true,
+                            pinnedOrder = nextOrder,
+                            isHidden = false
+                        )
+                    )
                 }
             }
         } catch (e: SecurityException) {
@@ -259,7 +272,6 @@ class AppRepository(
         try {
             // Check if app is distracting and should show friction barrier
             val app = getApp(packageName)
-            val settings = settingsRepository.getSettingsSync()
 
             val requiresFriction = !bypassFriction && plannedDuration == null && app?.isDistracting == true
             if (requiresFriction) {
@@ -267,8 +279,7 @@ class AppRepository(
                 return false
             }
 
-            // Start session if time limit prompt is enabled and duration is provided
-            if (settings.enableTimeLimitPrompt && plannedDuration != null && sessionRepository != null) {
+            if (plannedDuration != null && plannedDuration > 0 && sessionRepository != null) {
                 sessionRepository.startSession(packageName, plannedDuration)
             }
 
@@ -332,7 +343,9 @@ class AppRepository(
             return true
         }
 
-        return isDistractingCategory(packageName)
+        return withContext(Dispatchers.IO) {
+            isDistractingCategory(packageName)
+        }
     }
 
     suspend fun shouldShowMathChallenge(packageName: String): Boolean {
@@ -386,6 +399,7 @@ class AppRepository(
 
             // Create a map of existing apps for quick lookup
             val existingAppMap = existingApps.associateBy { it.packageName }
+            val installedPackages = installedApps.map { it.packageName }.toSet()
 
             // Add new apps that don't exist in database
             installedApps.forEach { installedApp ->
@@ -413,6 +427,18 @@ class AppRepository(
                     insertApp(deviceSettingsApp)
                 } catch (e: Exception) {
                     Log.e(TAG, "Error inserting device settings app", e)
+                }
+            }
+
+            // Remove apps that are no longer installed (excluding Device Settings shortcut)
+            val packagesToKeep = installedPackages + deviceSettingsPackage
+            existingApps.forEach { storedApp ->
+                if (!packagesToKeep.contains(storedApp.packageName)) {
+                    try {
+                        appDao.deleteApp(storedApp)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error removing uninstalled app: ${storedApp.packageName}", e)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -446,3 +472,4 @@ class AppRepository(
         }
     }
 }
+

@@ -52,6 +52,8 @@ class SettingsViewModel(
                     enableMathChallenge = settings?.enableMathChallenge ?: false,
                     mathDifficulty = settings?.mathDifficulty ?: "easy",
                     sessionExpiryCountdownSeconds = settings?.sessionExpiryCountdownSeconds ?: 5,
+                    recentAppsLimit = settings?.recentAppsLimit ?: 5,
+
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -116,6 +118,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateRecentAppsLimit(limit: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateRecentAppsLimit(limit)
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
@@ -148,6 +156,29 @@ data class SettingsUiState(
     val enableMathChallenge: Boolean = false,
     val mathDifficulty: String = "easy",
     val sessionExpiryCountdownSeconds: Int = 5,
+    val recentAppsLimit: Int = 5,
     val isLoading: Boolean = false,
     val searchQuery: String = ""
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

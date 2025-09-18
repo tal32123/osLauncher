@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.stickyHeader
+// import androidx.compose.foundation.lazy.stickyHeader
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -25,8 +25,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.offset
+// import androidx.compose.ui.layout.offset
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -43,10 +44,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.theme.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.Collator
 import java.util.Locale
 import kotlin.math.max
@@ -319,8 +323,21 @@ fun AppDrawerScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
                 ) {
+                    // Show Google search as first option when searching
+                    if (searchQuery.isNotBlank()) {
+                        item {
+                            GoogleSearchItem(
+                                query = searchQuery,
+                                onClick = {
+                                    keyboardController?.hide()
+                                    viewModel.performGoogleSearch(searchQuery)
+                                }
+                            )
+                        }
+                    }
+
                     sections.forEachIndexed { index, section ->
-                        stickyHeader {
+                        item {
                             SectionHeader(
                                 label = section.label,
                                 modifier = Modifier
@@ -477,9 +494,10 @@ fun AppDrawerScreen(
                                     Alignment.TopEnd
                                 }
                             )
-                            .offset(
-                                x = if (layoutDirection == LayoutDirection.Rtl) 72.dp else (-72).dp,
-                                y = previewOffsetY
+                            .padding(
+                                start = if (layoutDirection == LayoutDirection.Rtl) 72.dp else 0.dp,
+                                end = if (layoutDirection == LayoutDirection.Rtl) 0.dp else 72.dp,
+                                top = previewOffsetY
                             )
                     )
                 }
@@ -525,13 +543,17 @@ fun AppDrawerScreen(
         if (uiState.showTimeLimitDialog) {
             run {
                 val selectedPackage = uiState.selectedAppForTimeLimit ?: return@run
-                val appName = remember(selectedPackage) {
-                    try {
-                        val packageManager = context.packageManager
-                        val appInfo = packageManager.getApplicationInfo(selectedPackage, 0)
-                        packageManager.getApplicationLabel(appInfo).toString()
-                    } catch (e: Exception) {
-                        selectedPackage
+                var appName by remember(selectedPackage) { mutableStateOf(selectedPackage) }
+
+                LaunchedEffect(selectedPackage) {
+                    appName = withContext(Dispatchers.IO) {
+                        try {
+                            val packageManager = context.packageManager
+                            val appInfo = packageManager.getApplicationInfo(selectedPackage, 0)
+                            packageManager.getApplicationLabel(appInfo).toString()
+                        } catch (e: Exception) {
+                            selectedPackage
+                        }
                     }
                 }
 
@@ -549,7 +571,7 @@ fun AppDrawerScreen(
             run {
                 val selectedPackage = uiState.selectedAppForMathChallenge ?: return@run
                 MathChallengeDialog(
-                    difficulty = "medium",
+                    difficulty = uiState.mathChallengeDifficulty,
                     onCorrect = {
                         viewModel.onMathChallengeCompleted(selectedPackage)
                     },

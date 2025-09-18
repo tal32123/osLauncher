@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,11 +30,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.SessionExpiryActionDialog
 import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.TimeLimitDialog
+import com.talauncher.ui.home.MotivationalQuotesProvider
 import com.talauncher.ui.theme.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun HomeScreen(
@@ -41,6 +47,10 @@ fun HomeScreen(
     onNavigateToSettings: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val searchQuery = uiState.searchQuery
+    val searchResults = uiState.searchResults
+    val isSearching = searchQuery.isNotBlank()
+    val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
 
@@ -148,55 +158,125 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
 
-            // Pinned Apps Section
-            if (uiState.pinnedApps.isNotEmpty()) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = viewModel::updateSearchQuery,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = PrimerSpacing.lg),
+                placeholder = { Text(stringResource(R.string.home_search_placeholder)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        if (searchQuery.isNotBlank()) {
+                            // Search Google as the primary action
+                            viewModel.performGoogleSearch(searchQuery)
+                            keyboardController?.hide()
+                        }
+                    }
+                ),
+                trailingIcon = {
+                    if (searchQuery.isNotBlank()) {
+                        TextButton(onClick = {
+                            viewModel.clearSearch()
+                            keyboardController?.hide()
+                        }) {
+                            Text(stringResource(R.string.home_search_clear))
+                        }
+                    }
+                }
+            )
+
+            if (isSearching) {
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
                 ) {
-                    items(uiState.pinnedApps, key = { it.packageName }) { app ->
-                        PinnedAppItem(
-                            appInfo = app,
-                            onClick = { viewModel.launchApp(app.packageName) },
-                            onLongClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                viewModel.unpinApp(app.packageName)
+                    // Always show Google search as first option
+                    item {
+                        GoogleSearchItem(
+                            query = searchQuery,
+                            onClick = {
+                                keyboardController?.hide()
+                                viewModel.performGoogleSearch(searchQuery)
                             }
                         )
                     }
+
+                    // Show app search results
+                    if (searchResults.isNotEmpty()) {
+                        items(searchResults, key = { it.packageName }) { app ->
+                            SearchResultItem(
+                                appInfo = app,
+                                onClick = {
+                                    keyboardController?.hide()
+                                    viewModel.launchApp(app.packageName)
+                                }
+                            )
+                        }
+                    } else if (searchQuery.isNotBlank()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.home_search_no_results),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(PrimerSpacing.md)
+                            )
+                        }
+                    }
                 }
             } else {
-                // Empty state - GitHub style
-                PrimerCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = PrimerSpacing.sm),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(PrimerSpacing.xl),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                // Pinned Apps Section
+                if (uiState.pinnedApps.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
                     ) {
-                        Text(
-                            text = "No pinned apps",
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(PrimerSpacing.sm))
-                        Text(
-                            text = "Swipe right to see all apps\nLong press any app to pin it here",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+                        items(uiState.pinnedApps, key = { it.packageName }) { app ->
+                            PinnedAppItem(
+                                appInfo = app,
+                                onClick = { viewModel.launchApp(app.packageName) },
+                                onLongClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.unpinApp(app.packageName)
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    // Empty state - GitHub style
+                    PrimerCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(horizontal = PrimerSpacing.sm),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(PrimerSpacing.xl),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "No pinned apps",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(PrimerSpacing.sm))
+                            Text(
+                                text = "Swipe right to see all apps\nLong press any app to pin it here",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }
@@ -250,13 +330,17 @@ fun HomeScreen(
         if (uiState.showTimeLimitDialog) {
             run {
                 val selectedPackage = uiState.selectedAppForTimeLimit ?: return@run
-                val appName = remember(selectedPackage) {
-                    try {
-                        val packageManager = context.packageManager
-                        val appInfo = packageManager.getApplicationInfo(selectedPackage, 0)
-                        packageManager.getApplicationLabel(appInfo).toString()
-                    } catch (e: Exception) {
-                        selectedPackage
+                var appName by remember(selectedPackage) { mutableStateOf(selectedPackage) }
+
+                LaunchedEffect(selectedPackage) {
+                    appName = withContext(Dispatchers.IO) {
+                        try {
+                            val packageManager = context.packageManager
+                            val appInfo = packageManager.getApplicationInfo(selectedPackage, 0)
+                            packageManager.getApplicationLabel(appInfo).toString()
+                        } catch (e: Exception) {
+                            selectedPackage
+                        }
                     }
                 }
 
@@ -358,13 +442,17 @@ fun FrictionDialog(
     }
 
     // Get app name for display
-    val appName = remember(appPackageName) {
-        try {
-            val packageManager = context.packageManager
-            val appInfo = packageManager.getApplicationInfo(appPackageName, 0)
-            packageManager.getApplicationLabel(appInfo).toString()
-        } catch (e: Exception) {
-            appPackageName
+    var appName by remember(appPackageName) { mutableStateOf(appPackageName) }
+
+    LaunchedEffect(appPackageName) {
+        appName = withContext(Dispatchers.IO) {
+            try {
+                val packageManager = context.packageManager
+                val appInfo = packageManager.getApplicationInfo(appPackageName, 0)
+                packageManager.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) {
+                appPackageName
+            }
         }
     }
 
@@ -445,6 +533,38 @@ fun FrictionDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         shape = PrimerShapes.medium
     )
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SearchResultItem(
+    appInfo: AppInfo,
+    onClick: () -> Unit
+) {
+    PrimerCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PrimerSpacing.md)
+                .heightIn(min = PrimerListItemDefaults.minHeight),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = appInfo.appName,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
