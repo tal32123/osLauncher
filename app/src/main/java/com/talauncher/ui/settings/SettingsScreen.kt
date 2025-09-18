@@ -90,6 +90,8 @@ fun SettingsScreen(
                 onToggleShowWhatsAppAction = viewModel::toggleShowWhatsAppAction,
                 weatherDisplay = uiState.weatherDisplay,
                 onUpdateWeatherDisplay = viewModel::updateWeatherDisplay,
+                weatherTemperatureUnit = uiState.weatherTemperatureUnit,
+                onUpdateWeatherTemperatureUnit = viewModel::updateWeatherTemperatureUnit,
                 permissionsHelper = viewModel.permissionsHelper
             )
             1 -> AppSelectionTab(
@@ -145,6 +147,8 @@ fun GeneralSettings(
     onToggleShowWhatsAppAction: () -> Unit,
     weatherDisplay: String,
     onUpdateWeatherDisplay: (String) -> Unit,
+    weatherTemperatureUnit: String,
+    onUpdateWeatherTemperatureUnit: (String) -> Unit,
     permissionsHelper: com.talauncher.utils.PermissionsHelper
 ) {
     LazyColumn(
@@ -350,6 +354,27 @@ fun GeneralSettings(
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.error
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Temperature Unit",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("celsius" to "°C", "fahrenheit" to "°F").forEach { (option, label) ->
+                            FilterChip(
+                                selected = weatherTemperatureUnit == option,
+                                onClick = { onUpdateWeatherTemperatureUnit(option) },
+                                label = { Text(label) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
                 }
             }

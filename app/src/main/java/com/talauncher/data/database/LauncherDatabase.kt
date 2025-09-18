@@ -12,7 +12,7 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -129,6 +129,14 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN weatherTemperatureUnit TEXT NOT NULL DEFAULT 'celsius'"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -142,7 +150,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_4_5,
                     MIGRATION_5_6,
                     MIGRATION_6_7,
-                    MIGRATION_7_8
+                    MIGRATION_7_8,
+                    MIGRATION_8_9
                 ).build()
                 INSTANCE = instance
                 instance

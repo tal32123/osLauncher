@@ -73,6 +73,12 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(weatherDisplay = display))
     }
 
+    suspend fun updateWeatherTemperatureUnit(unit: String) {
+        val normalizedUnit = if (unit.lowercase() == "fahrenheit") "fahrenheit" else "celsius"
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(weatherTemperatureUnit = normalizedUnit))
+    }
+
     suspend fun updateWeatherLocation(lat: Double?, lon: Double?) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(weatherLocationLat = lat, weatherLocationLon = lon))

@@ -182,7 +182,8 @@ class HomeViewModel(
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
                     showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && (contactHelper?.isWhatsAppInstalled() ?: false),
-                    weatherDisplay = settings?.weatherDisplay ?: "off"
+                    weatherDisplay = settings?.weatherDisplay ?: "off",
+                    weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius"
                 )
 
                 // Update weather data if needed
@@ -1117,5 +1118,6 @@ data class HomeUiState(
     val showWhatsAppAction: Boolean = true,
     val weatherDisplay: String = "off",
     val weatherData: com.talauncher.data.model.WeatherData? = null,
-    val weatherError: String? = null
+    val weatherError: String? = null,
+    val weatherTemperatureUnit: String = "celsius"
 )
