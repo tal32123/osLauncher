@@ -61,7 +61,7 @@ class AppDrawerViewModel(
                     recentAppsLimit = recentLimit,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
-                    showWhatsAppAction = settings?.showWhatsAppAction ?: true
+                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && contactHelper.isWhatsAppInstalled()
                 )
             }.collect { } 
         }
@@ -319,24 +319,11 @@ class AppDrawerViewModel(
     }
 
     fun whatsAppContact(contact: ContactInfo) {
-        val phoneNumber = contact.phoneNumber
-        if (phoneNumber == null) {
-            return
-        }
-        context?.let { ctx ->
-            try {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse("https://api.whatsapp.com/send?phone=$phoneNumber")
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                if (intent.resolveActivity(ctx.packageManager) != null) {
-                    ctx.startActivity(intent)
-                } else {
-                    Toast.makeText(ctx, "WhatsApp not installed", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Log.e("AppDrawerViewModel", "Failed to open WhatsApp", e)
-            }
-        }
+        contactHelper.whatsAppContact(contact)
+    }
+
+    fun openContact(contact: ContactInfo) {
+        contactHelper.openContact(contact)
     }
 }
 

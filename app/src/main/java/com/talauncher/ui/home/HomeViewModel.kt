@@ -158,7 +158,7 @@ class HomeViewModel(
                     searchResults = filtered,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
-                    showWhatsAppAction = settings?.showWhatsAppAction ?: true
+                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && (contactHelper?.isWhatsAppInstalled() ?: false)
                 )
             }.collect { } 
         }
@@ -927,6 +927,11 @@ class HomeViewModel(
 
     fun whatsAppContact(contact: ContactInfo) {
         contactHelper?.whatsAppContact(contact)
+        clearSearch()
+    }
+
+    fun openContact(contact: ContactInfo) {
+        contactHelper?.openContact(contact)
         clearSearch()
     }
 

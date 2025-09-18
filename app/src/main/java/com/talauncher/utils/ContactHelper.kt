@@ -127,6 +127,27 @@ class ContactHelper(
         }
     }
 
+    fun openContact(contact: ContactInfo) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_URI, contact.id)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("ContactHelper", "Error opening contact", e)
+        }
+    }
+
+    fun isWhatsAppInstalled(): Boolean {
+        return try {
+            context.packageManager.getPackageInfo("com.whatsapp", 0)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     fun whatsAppContact(contact: ContactInfo) {
         try {
             val phoneNumber = contact.phoneNumber

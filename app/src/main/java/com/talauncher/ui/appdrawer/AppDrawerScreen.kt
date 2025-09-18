@@ -484,6 +484,7 @@ fun AppDrawerScreen(
                                 onCall = { viewModel.callContact(contact) },
                                 onMessage = { viewModel.messageContact(contact) },
                                 onWhatsApp = { viewModel.whatsAppContact(contact) },
+                                onOpenContact = { viewModel.openContact(contact) },
                                 showPhoneAction = uiState.showPhoneAction,
                                 showMessageAction = uiState.showMessageAction,
                                 showWhatsAppAction = uiState.showWhatsAppAction

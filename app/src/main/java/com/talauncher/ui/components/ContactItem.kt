@@ -27,6 +27,7 @@ fun ContactItem(
     onCall: () -> Unit,
     onMessage: () -> Unit,
     onWhatsApp: () -> Unit,
+    onOpenContact: () -> Unit,
     showPhoneAction: Boolean,
     showMessageAction: Boolean,
     showWhatsAppAction: Boolean
@@ -34,7 +35,7 @@ fun ContactItem(
     PrimerCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCall() },
+            .clickable { onOpenContact() },
         colors = CardDefaults.cardColors(
             containerColor = PrimerGreen.copy(alpha = 0.05f)
         ),

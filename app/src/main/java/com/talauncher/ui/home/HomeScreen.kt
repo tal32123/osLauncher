@@ -237,6 +237,10 @@ fun HomeScreen(
                                     keyboardController?.hide()
                                     viewModel.whatsAppContact(contact)
                                 },
+                                onOpenContact = {
+                                    keyboardController?.hide()
+                                    viewModel.openContact(contact)
+                                },
                                 showPhoneAction = uiState.showPhoneAction,
                                 showMessageAction = uiState.showMessageAction,
                                 showWhatsAppAction = uiState.showWhatsAppAction
