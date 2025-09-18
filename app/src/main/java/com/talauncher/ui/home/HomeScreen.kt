@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.SessionExpiryActionDialog
@@ -49,6 +50,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery = uiState.searchQuery
     val searchResults = uiState.searchResults
+    val contactResults = uiState.contactResults
     val isSearching = searchQuery.isNotBlank()
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
@@ -216,7 +218,27 @@ fun HomeScreen(
                                 }
                             )
                         }
-                    } else if (searchQuery.isNotBlank()) {
+                    }
+
+                    // Show contact search results
+                    if (contactResults.isNotEmpty()) {
+                        items(contactResults, key = { it.id }) { contact ->
+                            ContactItem(
+                                contact = contact,
+                                onCall = {
+                                    keyboardController?.hide()
+                                    viewModel.callContact(contact)
+                                },
+                                onMessage = {
+                                    keyboardController?.hide()
+                                    viewModel.messageContact(contact)
+                                }
+                            )
+                        }
+                    }
+
+                    // Show no results message only if both app and contact results are empty
+                    if (searchResults.isEmpty() && contactResults.isEmpty() && searchQuery.isNotBlank()) {
                         item {
                             Text(
                                 text = stringResource(R.string.home_search_no_results),

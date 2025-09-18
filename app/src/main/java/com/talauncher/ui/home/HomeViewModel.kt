@@ -17,6 +17,8 @@ import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.service.OverlayService
 import com.talauncher.utils.BackgroundOverlayManager
+import com.talauncher.utils.ContactHelper
+import com.talauncher.utils.ContactInfo
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Job
@@ -59,6 +61,7 @@ class HomeViewModel(
     private var isReceiverRegistered = false
     private val sessionExpirationMutex = Mutex()
     private var backgroundOverlayManager: BackgroundOverlayManager? = null
+    private var contactHelper: ContactHelper? = null
 
     private val sessionExpiryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -96,6 +99,9 @@ class HomeViewModel(
         setupBroadcastReceiver()
         context?.let {
             backgroundOverlayManager = BackgroundOverlayManager.getInstance(it)
+            if (permissionsHelper != null) {
+                contactHelper = ContactHelper(it, permissionsHelper)
+            }
         }
     }
 
@@ -207,22 +213,33 @@ class HomeViewModel(
 
     fun updateSearchQuery(query: String) {
         val sanitized = query.trimStart()
-        val results = if (sanitized.isBlank()) {
+        val appResults = if (sanitized.isBlank()) {
             emptyList<AppInfo>()
         } else {
             filterApps(sanitized, allVisibleApps)
         }
+
         _uiState.value = _uiState.value.copy(
             searchQuery = sanitized,
-            searchResults = results
+            searchResults = appResults,
+            contactResults = emptyList()
         )
+
+        // Search contacts if query is not blank
+        if (sanitized.isNotBlank()) {
+            viewModelScope.launch {
+                val contacts = contactHelper?.searchContacts(sanitized) ?: emptyList()
+                _uiState.value = _uiState.value.copy(contactResults = contacts)
+            }
+        }
     }
 
     fun clearSearch() {
         if (_uiState.value.searchQuery.isNotEmpty()) {
             _uiState.value = _uiState.value.copy(
                 searchQuery = "",
-                searchResults = emptyList()
+                searchResults = emptyList(),
+                contactResults = emptyList()
             )
         }
     }
@@ -783,6 +800,16 @@ class HomeViewModel(
         helper?.requestSystemAlertWindowPermission()
     }
 
+    fun callContact(contact: ContactInfo) {
+        contactHelper?.callContact(contact)
+        clearSearch()
+    }
+
+    fun messageContact(contact: ContactInfo) {
+        contactHelper?.messageContact(contact)
+        clearSearch()
+    }
+
     override fun onCleared() {
         super.onCleared()
         if (isReceiverRegistered) {
@@ -812,6 +839,7 @@ data class HomeUiState(
     val backgroundColor: String = "system",
     val searchQuery: String = "",
     val searchResults: List<AppInfo> = emptyList(),
+    val contactResults: List<ContactInfo> = emptyList(),
     val showFrictionDialog: Boolean = false,
     val selectedAppForFriction: String? = null,
     val showTimeLimitDialog: Boolean = false,

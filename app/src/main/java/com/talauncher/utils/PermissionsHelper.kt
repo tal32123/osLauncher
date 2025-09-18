@@ -45,6 +45,37 @@ class PermissionsHelper(private val context: Context) {
         }
     }
 
+    fun hasContactsPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun hasCallPhonePermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CALL_PHONE
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun requestContactsPermission(activity: Activity) {
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.READ_CONTACTS),
+            CONTACTS_PERMISSION_REQUEST_CODE
+        )
+    }
+
+    fun requestCallPhonePermission(activity: Activity) {
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.CALL_PHONE),
+            CALL_PHONE_PERMISSION_REQUEST_CODE
+        )
+    }
+
+
     fun requestSystemAlertWindowPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
             val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
@@ -125,6 +156,8 @@ class PermissionsHelper(private val context: Context) {
     }
 
     companion object {
-        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
+        const val CONTACTS_PERMISSION_REQUEST_CODE = 1001
+        const val CALL_PHONE_PERMISSION_REQUEST_CODE = 1002
+        const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1003
     }
 }
