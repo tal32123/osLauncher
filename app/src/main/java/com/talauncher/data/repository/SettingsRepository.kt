@@ -52,4 +52,19 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(recentAppsLimit = limit.coerceIn(1, 50)))
     }
+
+    suspend fun updateShowPhoneAction(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(showPhoneAction = enabled))
+    }
+
+    suspend fun updateShowMessageAction(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(showMessageAction = enabled))
+    }
+
+    suspend fun updateShowWhatsAppAction(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(showWhatsAppAction = enabled))
+    }
 }

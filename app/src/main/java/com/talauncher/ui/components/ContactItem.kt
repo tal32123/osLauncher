@@ -12,8 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import com.talauncher.ui.theme.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Message
 import com.talauncher.utils.ContactInfo
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -21,17 +23,16 @@ import com.talauncher.utils.ContactInfo
 fun ContactItem(
     contact: ContactInfo,
     onCall: () -> Unit,
-    onMessage: () -> Unit
+    onMessage: () -> Unit,
+    onWhatsApp: () -> Unit,
+    showPhoneAction: Boolean,
+    showMessageAction: Boolean,
+    showWhatsAppAction: Boolean
 ) {
-    var showActions by remember { mutableStateOf(false) }
-
     PrimerCard(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = { onCall() },
-                onLongClick = { showActions = true }
-            ),
+            .clickable { onCall() },
         colors = CardDefaults.cardColors(
             containerColor = PrimerGreen.copy(alpha = 0.05f)
         ),
@@ -86,108 +87,35 @@ fun ContactItem(
                 }
             }
 
-            Surface(
-                color = PrimerGreen.copy(alpha = 0.1f),
-                shape = PrimerShapes.small,
-                border = BorderStroke(1.dp, PrimerGreen.copy(alpha = 0.3f))
-            ) {
-                Text(
-                    text = "Contact",
-                    modifier = Modifier.padding(
-                        horizontal = PrimerSpacing.xs,
-                        vertical = 2.dp
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = PrimerGreen
-                )
+            Row {
+                if (showPhoneAction) {
+                    IconButton(onClick = onCall) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "Call",
+                            tint = PrimerGreen
+                        )
+                    }
+                }
+                if (showMessageAction) {
+                    IconButton(onClick = onMessage) {
+                        Icon(
+                            imageVector = Icons.Default.Message,
+                            contentDescription = "Message",
+                            tint = PrimerGreen
+                        )
+                    }
+                }
+                if (showWhatsAppAction) {
+                    IconButton(onClick = onWhatsApp) {
+                        Icon(
+                            imageVector = Icons.Default.Chat,
+                            contentDescription = "WhatsApp",
+                            tint = PrimerGreen
+                        )
+                    }
+                }
             }
         }
     }
-
-    if (showActions) {
-        ContactActionDialog(
-            contact = contact,
-            onDismiss = { showActions = false },
-            onCall = {
-                onCall()
-                showActions = false
-            },
-            onMessage = {
-                onMessage()
-                showActions = false
-            }
-        )
-    }
-}
-
-@Composable
-fun ContactActionDialog(
-    contact: ContactInfo,
-    onDismiss: () -> Unit,
-    onCall: () -> Unit,
-    onMessage: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = contact.name,
-                style = MaterialTheme.typography.titleMedium
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
-            ) {
-                Text(
-                    text = "Choose an action:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                if (contact.phoneNumber != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
-                    ) {
-                        Button(
-                            onClick = onCall,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = PrimerGreen
-                            )
-                        ) {
-                            Text("Call")
-                        }
-
-                        OutlinedButton(
-                            onClick = onMessage,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = PrimerGreen
-                            ),
-                            border = BorderStroke(1.dp, PrimerGreen)
-                        ) {
-                            Text("Message")
-                        }
-                    }
-                } else {
-                    Text(
-                        text = "No phone number available",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = PrimerShapes.medium
-    )
 }

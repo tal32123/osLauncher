@@ -51,7 +51,9 @@ class SettingsViewModel(
                     mathDifficulty = settings?.mathDifficulty ?: "easy",
                     sessionExpiryCountdownSeconds = settings?.sessionExpiryCountdownSeconds ?: 5,
                     recentAppsLimit = settings?.recentAppsLimit ?: 5,
-
+                    showPhoneAction = settings?.showPhoneAction ?: true,
+                    showMessageAction = settings?.showMessageAction ?: true,
+                    showWhatsAppAction = settings?.showWhatsAppAction ?: true,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -122,6 +124,24 @@ class SettingsViewModel(
         }
     }
 
+    fun toggleShowPhoneAction() {
+        viewModelScope.launch {
+            settingsRepository.updateShowPhoneAction(!_uiState.value.showPhoneAction)
+        }
+    }
+
+    fun toggleShowMessageAction() {
+        viewModelScope.launch {
+            settingsRepository.updateShowMessageAction(!_uiState.value.showMessageAction)
+        }
+    }
+
+    fun toggleShowWhatsAppAction() {
+        viewModelScope.launch {
+            settingsRepository.updateShowWhatsAppAction(!_uiState.value.showWhatsAppAction)
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
@@ -160,5 +180,8 @@ data class SettingsUiState(
     val sessionExpiryCountdownSeconds: Int = 5,
     val recentAppsLimit: Int = 5,
     val isLoading: Boolean = false,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val showPhoneAction: Boolean = false,
+    val showMessageAction: Boolean = false,
+    val showWhatsAppAction: Boolean = false
 )

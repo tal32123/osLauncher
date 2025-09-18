@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
@@ -294,6 +295,25 @@ fun AppDrawerScreen(
                 )
             }
 
+            }
+
+            var selectedTab by remember { mutableStateOf(0) }
+            val tabs = listOf("Apps", "Contacts")
+
+            if (searchQuery.isNotBlank()) {
+                TabRow(selectedTabIndex = selectedTab) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            text = { Text(title) },
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index }
+                        )
+                    }
+                }
+            } else {
+                selectedTab = 0
+            }
+
             BoxWithConstraints(
                 modifier = Modifier.weight(1f)
             ) {
@@ -319,104 +339,106 @@ fun AppDrawerScreen(
                     }
                 }
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    state = listState,
-                    contentPadding = PaddingValues(
-                        start = PrimerSpacing.md,
-                        end = PrimerSpacing.md + 48.dp,
-                        top = PrimerSpacing.sm,
-                        bottom = PrimerSpacing.xl
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
-                ) {
-                    // Show Google search as first option when searching
-                    if (searchQuery.isNotBlank()) {
-                        item {
-                            GoogleSearchItem(
-                                query = searchQuery,
-                                onClick = {
-                                    keyboardController?.hide()
-                                    viewModel.performGoogleSearch(searchQuery)
-                                }
-                            )
+                if (selectedTab == 0) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState,
+                        contentPadding = PaddingValues(
+                            start = PrimerSpacing.md,
+                            end = PrimerSpacing.md + 48.dp,
+                            top = PrimerSpacing.sm,
+                            bottom = PrimerSpacing.xl
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                    ) {
+                        // Show Google search as first option when searching
+                        if (searchQuery.isNotBlank()) {
+                            item {
+                                GoogleSearchItem(
+                                    query = searchQuery,
+                                    onClick = {
+                                        keyboardController?.hide()
+                                        viewModel.performGoogleSearch(searchQuery)
+                                    }
+                                )
+                            }
                         }
-                    }
 
-                    sections.forEachIndexed { index, section ->
-                        item {
-                            SectionHeader(
-                                label = section.label,
-                                modifier = Modifier
-                                    .padding(
-                                        top = if (index == 0) PrimerSpacing.sm else PrimerSpacing.xs,
-                                        bottom = PrimerSpacing.xs
+                        sections.forEachIndexed { index, section ->
+                            item {
+                                SectionHeader(
+                                    label = section.label,
+                                    modifier = Modifier
+                                        .padding(
+                                            top = if (index == 0) PrimerSpacing.sm else PrimerSpacing.xs,
+                                            bottom = PrimerSpacing.xs
+                                        )
+                                )
+                            }
+
+                            if (section.key == RECENT_SECTION_KEY) {
+                                items(section.apps, key = { "recent_${it.packageName}" }) { app ->
+                                    RecentAppItem(
+                                        appInfo = app,
+                                        onClick = {
+                                            viewModel.launchApp(app.packageName)
+                                            keyboardController?.hide()
+                                        },
+                                        onLongClick = {
+                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewModel.showAppActionDialog(app)
+                                        }
                                     )
-                            )
-                        }
-
-                        if (section.key == RECENT_SECTION_KEY) {
-                            items(section.apps, key = { "recent_${it.packageName}" }) { app ->
-                                RecentAppItem(
-                                    appInfo = app,
-                                    onClick = {
-                                        viewModel.launchApp(app.packageName)
-                                        keyboardController?.hide()
-                                    },
-                                    onLongClick = {
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.showAppActionDialog(app)
-                                    }
-                                )
-                            }
-                        } else {
-                            items(section.apps, key = { it.packageName }) { app ->
-                                AppDrawerItem(
-                                    appInfo = app,
-                                    onClick = {
-                                        viewModel.launchApp(app.packageName)
-                                        keyboardController?.hide()
-                                    },
-                                    onLongClick = {
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.showAppActionDialog(app)
-                                    }
-                                )
+                                }
+                            } else {
+                                items(section.apps, key = { it.packageName }) { app ->
+                                    AppDrawerItem(
+                                        appInfo = app,
+                                        onClick = {
+                                            viewModel.launchApp(app.packageName)
+                                            keyboardController?.hide()
+                                        },
+                                        onLongClick = {
+                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewModel.showAppActionDialog(app)
+                                        }
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    if (uiState.hiddenApps.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(PrimerSpacing.lg))
+                        if (uiState.hiddenApps.isNotEmpty()) {
+                            item {
+                                Spacer(modifier = Modifier.height(PrimerSpacing.lg))
 
-                            PrimerCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = PrimerSpacing.sm),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                ),
-                                border = BorderStroke(1.dp, PrimerGray300)
-                            ) {
-                                TextButton(
-                                    onClick = {
-                                        showHiddenApps = !showHiddenApps
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    },
+                                PrimerCard(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(PrimerSpacing.sm)
+                                        .padding(vertical = PrimerSpacing.sm),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    ),
+                                    border = BorderStroke(1.dp, PrimerGray300)
                                 ) {
-                                    Text(
-                                        text = if (showHiddenApps) {
-                                            "Hide hidden apps (${uiState.hiddenApps.size})"
-                                        } else {
-                                            "Show hidden apps (${uiState.hiddenApps.size})"
+                                    TextButton(
+                                        onClick = {
+                                            showHiddenApps = !showHiddenApps
+                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         },
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = PrimerBlue
-                                    )
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(PrimerSpacing.sm)
+                                    ) {
+                                        Text(
+                                            text = if (showHiddenApps) {
+                                                "Hide hidden apps (${uiState.hiddenApps.size})"
+                                            } else {
+                                                "Show hidden apps (${uiState.hiddenApps.size})"
+                                            },
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = PrimerBlue
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -442,73 +464,39 @@ fun AppDrawerScreen(
                                 )
                             }
                         }
-                    }
 
-                    item {
-                        Spacer(modifier = Modifier.height(PrimerSpacing.xl))
-                    }
-                }
-
-                if (showIndex) {
-                    AlphabetIndex(
-                        entries = alphabetEntries,
-                        activeKey = previewEntry?.key,
-                        isEnabled = showIndex,
-                        modifier = Modifier
-                            .align(
-                                if (layoutDirection == LayoutDirection.Rtl) {
-                                    Alignment.CenterStart
-                                } else {
-                                    Alignment.CenterEnd
-                                }
-                            )
-                            .padding(horizontal = PrimerSpacing.sm),
-                        onEntryFocused = { entry, fraction ->
-                            previewEntry = entry
-                            previewFraction = fraction
-                            if (entry.hasApps && entry.key != lastScrubbedKey) {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            }
-                            if (entry.hasApps && entry.targetIndex != null) {
-                                coroutineScope.launch {
-                                    listState.scrollToItem(entry.targetIndex)
-                                }
-                            }
-                            lastScrubbedKey = entry.key
-                        },
-                        onScrubbingChanged = { active ->
-                            isScrubbing = active
-                            if (active) {
-                                keyboardController?.hide()
-                            } else {
-                                previewEntry = null
-                                previewFraction = 0f
-                                lastScrubbedKey = null
-                            }
+                        item {
+                            Spacer(modifier = Modifier.height(PrimerSpacing.xl))
                         }
-                    )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = PrimerSpacing.md,
+                            end = PrimerSpacing.md,
+                            top = PrimerSpacing.sm,
+                            bottom = PrimerSpacing.xl
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                    ) {
+                        items(uiState.contacts) { contact ->
+                            ContactItem(
+                                contact = contact,
+                                onCall = { viewModel.callContact(contact) },
+                                onMessage = { viewModel.messageContact(contact) },
+                                onWhatsApp = { viewModel.whatsAppContact(contact) },
+                                showPhoneAction = uiState.showPhoneAction,
+                                showMessageAction = uiState.showMessageAction,
+                                showWhatsAppAction = uiState.showWhatsAppAction
+                            )
+                        }
+                    }
                 }
 
-                if (isScrubbing && previewEntry != null && maxHeight != Dp.Unspecified) {
-                    ScrubPreviewBubble(
-                        letter = previewEntry!!.displayLabel,
-                        appName = previewEntry!!.previewAppName,
-                        modifier = Modifier
-                            .align(
-                                if (layoutDirection == LayoutDirection.Rtl) {
-                                    Alignment.TopStart
-                                } else {
-                                    Alignment.TopEnd
-                                }
-                            )
-                            .padding(
-                                start = if (layoutDirection == LayoutDirection.Rtl) 72.dp else 0.dp,
-                                end = if (layoutDirection == LayoutDirection.Rtl) 0.dp else 72.dp,
-                                top = previewOffsetY
-                            )
-                    )
-                }
-            }
+                if (showIndex && selectedTab == 0) {
+                    AlphabetIndex(
+
         }
 
         AppActionDialog(

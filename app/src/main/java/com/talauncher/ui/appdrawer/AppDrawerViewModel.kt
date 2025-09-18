@@ -21,11 +21,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+import com.talauncher.utils.ContactHelper
+import com.talauncher.utils.ContactInfo
+
 class AppDrawerViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
     private val usageStatsHelper: UsageStatsHelper,
     private val permissionsHelper: PermissionsHelper,
+    private val contactHelper: ContactHelper,
     private val context: Context? = null,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null
 ) : ViewModel() {
@@ -54,7 +58,10 @@ class AppDrawerViewModel(
                     hiddenApps = hiddenApps,
                     recentApps = recentApps,
                     mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
-                    recentAppsLimit = recentLimit
+                    recentAppsLimit = recentLimit,
+                    showPhoneAction = settings?.showPhoneAction ?: true,
+                    showMessageAction = settings?.showMessageAction ?: true,
+                    showWhatsAppAction = settings?.showWhatsAppAction ?: true
                 )
             }.collect { } 
         }
@@ -283,6 +290,10 @@ class AppDrawerViewModel(
 
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
+        viewModelScope.launch {
+            val contacts = contactHelper.searchContacts(query)
+            _uiState.value = _uiState.value.copy(contacts = contacts)
+        }
     }
 
     fun clearSearchOnNavigation() {
@@ -298,12 +309,42 @@ class AppDrawerViewModel(
             }
         }
     }
+
+    fun callContact(contact: ContactInfo) {
+        contactHelper.callContact(contact)
+    }
+
+    fun messageContact(contact: ContactInfo) {
+        contactHelper.messageContact(contact)
+    }
+
+    fun whatsAppContact(contact: ContactInfo) {
+        val phoneNumber = contact.phoneNumber
+        if (phoneNumber == null) {
+            return
+        }
+        context?.let { ctx ->
+            try {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse("https://api.whatsapp.com/send?phone=$phoneNumber")
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                if (intent.resolveActivity(ctx.packageManager) != null) {
+                    ctx.startActivity(intent)
+                } else {
+                    Toast.makeText(ctx, "WhatsApp not installed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e("AppDrawerViewModel", "Failed to open WhatsApp", e)
+            }
+        }
+    }
 }
 
 data class AppDrawerUiState(
     val allApps: List<AppInfo> = emptyList(),
     val hiddenApps: List<AppInfo> = emptyList(),
     val recentApps: List<AppInfo> = emptyList(), // Most used apps from past 48 hours respecting user limit
+    val contacts: List<ContactInfo> = emptyList(),
     val isLoading: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val appBeingRenamed: AppInfo? = null,
@@ -316,5 +357,8 @@ data class AppDrawerUiState(
     val selectedAppForMathChallenge: String? = null,
     val mathChallengeDifficulty: String = "easy",
     val recentAppsLimit: Int = 5,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val showPhoneAction: Boolean = true,
+    val showMessageAction: Boolean = true,
+    val showWhatsAppAction: Boolean = true
 )

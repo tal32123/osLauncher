@@ -81,7 +81,13 @@ fun SettingsScreen(
                 recentAppsLimit = uiState.recentAppsLimit,
                 onUpdateRecentAppsLimit = viewModel::updateRecentAppsLimit,
                 sessionExpiryCountdownSeconds = uiState.sessionExpiryCountdownSeconds,
-                onUpdateSessionExpiryCountdown = viewModel::updateSessionExpiryCountdown
+                onUpdateSessionExpiryCountdown = viewModel::updateSessionExpiryCountdown,
+                showPhoneAction = uiState.showPhoneAction,
+                onToggleShowPhoneAction = viewModel::toggleShowPhoneAction,
+                showMessageAction = uiState.showMessageAction,
+                onToggleShowMessageAction = viewModel::toggleShowMessageAction,
+                showWhatsAppAction = uiState.showWhatsAppAction,
+                onToggleShowWhatsAppAction = viewModel::toggleShowWhatsAppAction
             )
             1 -> AppSelectionTab(
                 title = "Essential Apps",
@@ -127,7 +133,13 @@ fun GeneralSettings(
     recentAppsLimit: Int,
     onUpdateRecentAppsLimit: (Int) -> Unit,
     sessionExpiryCountdownSeconds: Int,
-    onUpdateSessionExpiryCountdown: (Int) -> Unit
+    onUpdateSessionExpiryCountdown: (Int) -> Unit,
+    showPhoneAction: Boolean,
+    onToggleShowPhoneAction: () -> Unit,
+    showMessageAction: Boolean,
+    onToggleShowMessageAction: () -> Unit,
+    showWhatsAppAction: Boolean,
+    onToggleShowWhatsAppAction: () -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -225,6 +237,48 @@ fun GeneralSettings(
                         subtitle = "Solve math problems to close distracting apps",
                         checked = enableMathChallenge,
                         onCheckedChange = { onToggleMathChallenge() }
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Contact Actions",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    SettingItem(
+                        title = "Show Phone Action",
+                        subtitle = "Show a button to call the contact",
+                        checked = showPhoneAction,
+                        onCheckedChange = { onToggleShowPhoneAction() }
+                    )
+
+                    SettingItem(
+                        title = "Show Message Action",
+                        subtitle = "Show a button to message the contact",
+                        checked = showMessageAction,
+                        onCheckedChange = { onToggleShowMessageAction() }
+                    )
+
+                    SettingItem(
+                        title = "Show WhatsApp Action",
+                        subtitle = "Show a button to message the contact on WhatsApp",
+                        checked = showWhatsAppAction,
+                        onCheckedChange = { onToggleShowWhatsAppAction() }
                     )
                 }
             }
