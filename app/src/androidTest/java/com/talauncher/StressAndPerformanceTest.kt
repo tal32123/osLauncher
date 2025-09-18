@@ -76,7 +76,7 @@ class StressAndPerformanceTest {
             composeTestRule.waitForIdle()
 
             // Perform search operations
-            composeTestRule.onNodeWithText("Search apps...").performTextInput("test$it")
+            composeTestRule.onNodeWithText("Search").performTextInput("test$it")
             composeTestRule.waitForIdle()
 
             // Clear search
@@ -143,8 +143,8 @@ class StressAndPerformanceTest {
 
         val executionTime = measureTimeMillis {
             searchQueries.forEach { query ->
-                composeTestRule.onNodeWithText("Search apps...").performTextClearance()
-                composeTestRule.onNodeWithText("Search apps...").performTextInput(query)
+                composeTestRule.onNodeWithText("Search").performTextClearance()
+                composeTestRule.onNodeWithText("Search").performTextInput(query)
                 composeTestRule.waitForIdle()
 
                 // Wait for search results to stabilize
@@ -219,10 +219,10 @@ class StressAndPerformanceTest {
         val executionTime = measureTimeMillis {
             repeat(100) { index ->
                 val text = "rapid$index"
-                composeTestRule.onNodeWithText("Search apps...").performTextInput(text)
+                composeTestRule.onNodeWithText("Search").performTextInput(text)
                 composeTestRule.waitForIdle()
 
-                composeTestRule.onNodeWithText("Search apps...").performTextClearance()
+                composeTestRule.onNodeWithText("Search").performTextClearance()
                 composeTestRule.waitForIdle()
             }
         }
@@ -247,7 +247,7 @@ class StressAndPerformanceTest {
             composeTestRule.onNodeWithText("All Apps").performClick()
             composeTestRule.waitForIdle()
 
-            composeTestRule.onNodeWithText("Search apps...").performTextInput("test$it")
+            composeTestRule.onNodeWithText("Search").performTextInput("test$it")
             composeTestRule.waitForIdle()
 
             composeTestRule.onNodeWithContentDescription("Clear search").performClick()
@@ -277,7 +277,7 @@ class StressAndPerformanceTest {
         }
 
         val searchTime = measureTimeMillis {
-            composeTestRule.onNodeWithText("Search apps...").performTextInput("test")
+            composeTestRule.onNodeWithText("Search").performTextInput("test")
             composeTestRule.waitForIdle()
         }
 
@@ -311,7 +311,7 @@ class StressAndPerformanceTest {
                     composeTestRule.waitForIdle()
                 }
                 3 -> {
-                    composeTestRule.onNodeWithText("Search apps...").performTextInput("test")
+                    composeTestRule.onNodeWithText("Search").performTextInput("test")
                     composeTestRule.waitForIdle()
                 }
                 4 -> {

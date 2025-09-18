@@ -245,7 +245,7 @@ fun AppDrawerScreen(
                         .focusRequester(focusRequester),
                     placeholder = {
                         Text(
-                            text = "Search apps...",
+                            text = "Search",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     },

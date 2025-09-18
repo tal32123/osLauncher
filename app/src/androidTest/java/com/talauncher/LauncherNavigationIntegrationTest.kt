@@ -50,7 +50,7 @@ class LauncherNavigationIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Should be on app drawer
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Swipe right twice to get to settings
         composeTestRule.onRoot().performTouchInput {
@@ -90,7 +90,7 @@ class LauncherNavigationIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Verify we're on app drawer
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Press back button (simulated by device back)
         composeTestRule.activity.onBackPressed()
@@ -121,7 +121,7 @@ class LauncherNavigationIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Should be on app drawer
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Navigate back to home
         composeTestRule.onRoot().performTouchInput {
@@ -167,7 +167,7 @@ class LauncherNavigationIntegrationTest {
             composeTestRule.waitForIdle()
 
             // Should navigate back to app drawer after app launch
-            composeTestRule.onNodeWithText("Search apps...").assertExists()
+            composeTestRule.onNodeWithText("Search").assertExists()
         }
     }
 
@@ -247,7 +247,7 @@ class LauncherNavigationIntegrationTest {
         composeTestRule.onNodeWithText("All Apps").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("test")
+        composeTestRule.onNodeWithText("Search").performTextInput("test")
         composeTestRule.waitForIdle()
 
         // Navigate away and back
@@ -257,6 +257,6 @@ class LauncherNavigationIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Search text should be cleared (depending on implementation)
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
     }
 }

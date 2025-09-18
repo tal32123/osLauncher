@@ -87,17 +87,17 @@ class UserFlowIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Verify we're in app drawer
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Step 2: Search for apps
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("Settings")
+        composeTestRule.onNodeWithText("Search").performTextInput("Settings")
         composeTestRule.waitForIdle()
 
         // Wait for search results (if any)
         Thread.sleep(1000)
 
         // Step 3: Clear search and browse all apps
-        composeTestRule.onNodeWithText("Search apps...").performTextClearance()
+        composeTestRule.onNodeWithText("Search").performTextClearance()
         composeTestRule.waitForIdle()
 
         // Step 4: Wait for apps to load and verify app items exist
@@ -116,7 +116,7 @@ class UserFlowIntegrationTest {
             Thread.sleep(2000)
 
             // Return to launcher (app drawer should still be visible)
-            composeTestRule.onNodeWithText("Search apps...").assertExists()
+            composeTestRule.onNodeWithText("Search").assertExists()
         }
 
         // Step 6: Navigate back to home
@@ -239,12 +239,12 @@ class UserFlowIntegrationTest {
         composeTestRule.onNodeWithText("All Apps").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("test")
+        composeTestRule.onNodeWithText("Search").performTextInput("test")
         composeTestRule.waitForIdle()
         Thread.sleep(1000)
 
         // Clear search
-        composeTestRule.onNodeWithText("Search apps...").performTextClearance()
+        composeTestRule.onNodeWithText("Search").performTextClearance()
         composeTestRule.waitForIdle()
 
         // Step 3: Return to home
@@ -282,7 +282,7 @@ class UserFlowIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Step 4: Verify launcher state
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Navigate back to home
         composeTestRule.onRoot().performTouchInput { swipeRight() }
@@ -304,7 +304,7 @@ class UserFlowIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Step 2: Perform search
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("settings")
+        composeTestRule.onNodeWithText("Search").performTextInput("settings")
         composeTestRule.waitForIdle()
 
         // Step 3: Rotate device
@@ -322,7 +322,7 @@ class UserFlowIntegrationTest {
         composeTestRule.onRoot().assertExists()
 
         // Clear search and return to home
-        composeTestRule.onNodeWithText("Search apps...").performTextClearance()
+        composeTestRule.onNodeWithText("Search").performTextClearance()
         composeTestRule.waitForIdle()
 
         composeTestRule.onRoot().performTouchInput { swipeRight() }

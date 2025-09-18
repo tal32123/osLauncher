@@ -43,7 +43,7 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Verify app drawer is displayed
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
 
         // Wait for apps to load
         composeTestRule.waitUntil(timeoutMillis = 5000) {
@@ -65,7 +65,7 @@ class AppDrawerIntegrationTest {
         }
 
         // Perform search
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("settings")
+        composeTestRule.onNodeWithText("Search").performTextInput("settings")
         composeTestRule.waitForIdle()
 
         // Verify search results (Settings app should be found)
@@ -80,7 +80,7 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Perform search
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("nonexistentapp")
+        composeTestRule.onNodeWithText("Search").performTextInput("nonexistentapp")
         composeTestRule.waitForIdle()
 
         // Clear search
@@ -88,7 +88,7 @@ class AppDrawerIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Verify search is cleared and all apps are shown
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
         composeTestRule.waitUntil(timeoutMillis = 3000) {
             composeTestRule.onAllNodesWithTag("app_item").fetchSemanticsNodes().isNotEmpty() ||
             composeTestRule.onNodeWithText("No apps found").isDisplayed()
@@ -100,7 +100,7 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Test uppercase search
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("SETTINGS")
+        composeTestRule.onNodeWithText("Search").performTextInput("SETTINGS")
         composeTestRule.waitForIdle()
 
         // Should find settings app regardless of case
@@ -113,7 +113,7 @@ class AppDrawerIntegrationTest {
         composeTestRule.onNodeWithContentDescription("Clear search").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("settings")
+        composeTestRule.onNodeWithText("Search").performTextInput("settings")
         composeTestRule.waitForIdle()
 
         // Should still find the app
@@ -128,7 +128,7 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Test partial search
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("set")
+        composeTestRule.onNodeWithText("Search").performTextInput("set")
         composeTestRule.waitForIdle()
 
         // Should find apps containing "set" (like Settings)
@@ -163,7 +163,7 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Search for non-existent app
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("definitelynonexistentapp12345")
+        composeTestRule.onNodeWithText("Search").performTextInput("definitelynonexistentapp12345")
         composeTestRule.waitForIdle()
 
         // Should show "No apps found" message
@@ -222,7 +222,7 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Perform search
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("settings")
+        composeTestRule.onNodeWithText("Search").performTextInput("settings")
         composeTestRule.waitForIdle()
 
         // Navigate away from app drawer
@@ -234,7 +234,7 @@ class AppDrawerIntegrationTest {
         composeTestRule.waitForIdle()
 
         // Search should be cleared (depending on implementation)
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
     }
 
     @Test
@@ -242,19 +242,19 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Perform rapid search operations
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("a")
+        composeTestRule.onNodeWithText("Search").performTextInput("a")
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").performTextClearance()
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("b")
+        composeTestRule.onNodeWithText("Search").performTextClearance()
+        composeTestRule.onNodeWithText("Search").performTextInput("b")
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").performTextClearance()
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("settings")
+        composeTestRule.onNodeWithText("Search").performTextClearance()
+        composeTestRule.onNodeWithText("Search").performTextInput("settings")
         composeTestRule.waitForIdle()
 
         // App should handle rapid operations gracefully
-        composeTestRule.onNodeWithText("Search apps...").assertExists()
+        composeTestRule.onNodeWithText("Search").assertExists()
     }
 
     @Test
@@ -262,10 +262,10 @@ class AppDrawerIntegrationTest {
         navigateToAppDrawer()
 
         // Type and then clear search
-        composeTestRule.onNodeWithText("Search apps...").performTextInput("test")
+        composeTestRule.onNodeWithText("Search").performTextInput("test")
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Search apps...").performTextClearance()
+        composeTestRule.onNodeWithText("Search").performTextClearance()
         composeTestRule.waitForIdle()
 
         // Should show all apps when search is empty
