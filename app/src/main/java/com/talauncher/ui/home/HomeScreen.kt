@@ -232,7 +232,14 @@ fun HomeScreen(
                                 onMessage = {
                                     keyboardController?.hide()
                                     viewModel.messageContact(contact)
-                                }
+                                },
+                                onWhatsApp = {
+                                    keyboardController?.hide()
+                                    viewModel.whatsAppContact(contact)
+                                },
+                                showPhoneAction = uiState.showPhoneAction,
+                                showMessageAction = uiState.showMessageAction,
+                                showWhatsAppAction = uiState.showWhatsAppAction
                             )
                         }
                     }

@@ -295,9 +295,7 @@ fun AppDrawerScreen(
                 )
             }
 
-            }
-
-            var selectedTab by remember { mutableStateOf(0) }
+            var selectedTab by remember { mutableIntStateOf(0) }
             val tabs = listOf("Apps", "Contacts")
 
             if (searchQuery.isNotBlank()) {
@@ -496,7 +494,44 @@ fun AppDrawerScreen(
 
                 if (showIndex && selectedTab == 0) {
                     AlphabetIndex(
-
+                        entries = alphabetEntries,
+                        activeKey = previewEntry?.key,
+                        isEnabled = showIndex,
+                        modifier = Modifier
+                            .align(
+                                if (layoutDirection == LayoutDirection.Rtl) {
+                                    Alignment.CenterStart
+                                } else {
+                                    Alignment.CenterEnd
+                                }
+                            )
+                            .padding(horizontal = PrimerSpacing.sm),
+                        onEntryFocused = { entry, fraction ->
+                            previewEntry = entry
+                            previewFraction = fraction
+                            if (entry.hasApps && entry.key != lastScrubbedKey) {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            }
+                            if (entry.hasApps && entry.targetIndex != null) {
+                                coroutineScope.launch {
+                                    listState.scrollToItem(entry.targetIndex)
+                                }
+                            }
+                            lastScrubbedKey = entry.key
+                        },
+                        onScrubbingChanged = { active ->
+                            isScrubbing = active
+                            if (active) {
+                                keyboardController?.hide()
+                            } else {
+                                previewEntry = null
+                                previewFraction = 0f
+                                lastScrubbedKey = null
+                            }
+                        }
+                    )
+                }
+            }
         }
 
         AppActionDialog(

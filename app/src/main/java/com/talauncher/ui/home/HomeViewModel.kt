@@ -155,7 +155,10 @@ class HomeViewModel(
                     showWallpaper = settings?.showWallpaper ?: true,
                     backgroundColor = settings?.backgroundColor ?: "system",
                     mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
-                    searchResults = filtered
+                    searchResults = filtered,
+                    showPhoneAction = settings?.showPhoneAction ?: true,
+                    showMessageAction = settings?.showMessageAction ?: true,
+                    showWhatsAppAction = settings?.showWhatsAppAction ?: true
                 )
             }.collect { } 
         }
@@ -862,7 +865,7 @@ class HomeViewModel(
         Log.w("HomeViewModel", "Failed to show math challenge overlay, using service fallback")
         val ctx = context ?: return
         val intent = Intent(ctx, OverlayService::class.java).apply {
-            action = OverlayService.ACTION_SHOW_MATH_CHallenge
+            action = OverlayService.ACTION_SHOW_MATH_CHALLENGE
             putExtra(OverlayService.EXTRA_APP_NAME, appName)
             putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
             putExtra(OverlayService.EXTRA_DIFFICULTY, difficulty)
@@ -922,6 +925,11 @@ class HomeViewModel(
         clearSearch()
     }
 
+    fun whatsAppContact(contact: ContactInfo) {
+        contactHelper?.whatsAppContact(contact)
+        clearSearch()
+    }
+
     override fun onCleared() {
         super.onCleared()
         if (isReceiverRegistered) {
@@ -971,5 +979,8 @@ data class HomeUiState(
     val sessionExpiryCountdownRemaining: Int = 0,
     val sessionExpiryShowMathOption: Boolean = false,
     val isLoading: Boolean = false,
-    val showOverlayPermissionDialog: Boolean = false
+    val showOverlayPermissionDialog: Boolean = false,
+    val showPhoneAction: Boolean = true,
+    val showMessageAction: Boolean = true,
+    val showWhatsAppAction: Boolean = true
 )

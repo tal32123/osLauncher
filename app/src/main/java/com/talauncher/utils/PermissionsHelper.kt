@@ -104,14 +104,14 @@ class PermissionsHelper(
         }
     }
 
-    private fun hasContactsPermission(): Boolean {
+    fun hasContactsPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CONTACTS
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    private fun hasCallPhonePermission(): Boolean {
+    fun hasCallPhonePermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.CALL_PHONE

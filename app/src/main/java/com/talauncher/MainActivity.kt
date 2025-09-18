@@ -39,6 +39,7 @@ import com.talauncher.ui.onboarding.OnboardingViewModel
 import com.talauncher.ui.settings.SettingsScreen
 import com.talauncher.ui.settings.SettingsViewModel
 import com.talauncher.ui.theme.TALauncherTheme
+import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import com.talauncher.utils.ErrorHandler
@@ -54,6 +55,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var errorHandler: MainErrorHandler
     private lateinit var permissionsHelper: PermissionsHelper
     private lateinit var usageStatsHelper: UsageStatsHelper
+    private lateinit var contactHelper: ContactHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +67,7 @@ class MainActivity : ComponentActivity() {
             this.errorHandler = MainErrorHandler(this)
             this.permissionsHelper = PermissionsHelper(applicationContext)
             this.usageStatsHelper = UsageStatsHelper(applicationContext)
+            this.contactHelper = ContactHelper(applicationContext, this.permissionsHelper)
             this.appRepository = AppRepository(
                 database.appDao(),
                 this,
@@ -126,6 +129,7 @@ class MainActivity : ComponentActivity() {
                                 permissionsHelper = permissionsHelper,
                                 usageStatsHelper = usageStatsHelper,
                                 sessionRepository = sessionRepository,
+                                contactHelper = contactHelper,
                                 errorHandler = errorHandler,
                                 shouldNavigateToHome = shouldNavigateToHome,
                                 onNavigatedToHome = { shouldNavigateToHome = false }
@@ -192,6 +196,7 @@ fun TALauncherApp(
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
+    contactHelper: ContactHelper,
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
@@ -202,6 +207,7 @@ fun TALauncherApp(
         permissionsHelper = permissionsHelper,
         usageStatsHelper = usageStatsHelper,
         sessionRepository = sessionRepository,
+        contactHelper = contactHelper,
         errorHandler = errorHandler,
         shouldNavigateToHome = shouldNavigateToHome,
         onNavigatedToHome = onNavigatedToHome
@@ -215,6 +221,7 @@ fun LauncherNavigationPager(
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
+    contactHelper: ContactHelper,
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
@@ -261,7 +268,7 @@ fun LauncherNavigationPager(
             0 -> {
                 // Settings/Insights Screen
                 val settingsViewModel: SettingsViewModel = viewModel {
-                    SettingsViewModel(appRepository, settingsRepository, permissionsHelper)
+                    SettingsViewModel(appRepository, settingsRepository, permissionsHelper, usageStatsHelper)
                 }
                 SettingsScreen(
                     onNavigateBack = {},
@@ -294,7 +301,7 @@ fun LauncherNavigationPager(
                     viewModel = homeViewModel,
                     onNavigateToAppDrawer = {
                         coroutineScope.launch {
-                            pager.animateScrollToPage(2)
+                            pagerState.animateScrollToPage(2)
                         }
                     },
                     onNavigateToSettings = {
@@ -313,6 +320,7 @@ fun LauncherNavigationPager(
                         settingsRepository,
                         usageStatsHelper,
                         permissionsHelper,
+                        contactHelper,
                         context,
                         onLaunchApp
                     )

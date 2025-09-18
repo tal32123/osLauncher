@@ -7,6 +7,7 @@ import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
+import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,8 @@ import kotlinx.coroutines.withContext
 class SettingsViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
-    val permissionsHelper: PermissionsHelper
+    val permissionsHelper: PermissionsHelper,
+    val usageStatsHelper: UsageStatsHelper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())

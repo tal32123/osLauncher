@@ -126,4 +126,21 @@ class ContactHelper(
             Log.e("ContactHelper", "Error messaging contact", e)
         }
     }
+
+    fun whatsAppContact(contact: ContactInfo) {
+        try {
+            val phoneNumber = contact.phoneNumber
+            if (phoneNumber != null) {
+                // Remove any non-digit characters and ensure proper format
+                val cleanNumber = phoneNumber.replace(Regex("[^\\d]"), "")
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("https://wa.me/$cleanNumber")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+            }
+        } catch (e: Exception) {
+            Log.e("ContactHelper", "Error opening WhatsApp for contact", e)
+        }
+    }
 }

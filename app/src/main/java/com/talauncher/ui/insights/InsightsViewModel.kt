@@ -38,7 +38,7 @@ class InsightsViewModel(
             }
 
             val usageStats = withContext(Dispatchers.IO) {
-                usageStatsHelper.getTodayUsageStats()
+                usageStatsHelper.getTodayUsageStats(hasPermission = true)
             }
 
             val appUsageWithNames = withContext(Dispatchers.IO) {
