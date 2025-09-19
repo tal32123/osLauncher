@@ -188,10 +188,28 @@ class HomeViewModel(
 
                 // Update weather data if needed
                 val weatherDisplay = settings?.weatherDisplay ?: "off"
-                if (weatherDisplay != "off") {
-                    updateWeatherData(settings?.weatherLocationLat, settings?.weatherLocationLon)
+                _uiState.value = when (weatherDisplay) {
+                    "off" -> _uiState.value.copy(
+                        weatherData = null,
+                        weatherDailyHigh = null,
+                        weatherDailyLow = null,
+                        weatherError = null
+                    )
+                    "daily" -> _uiState.value
+                    else -> _uiState.value.copy(
+                        weatherDailyHigh = null,
+                        weatherDailyLow = null
+                    )
                 }
-            }.collect { } 
+
+                if (weatherDisplay != "off") {
+                    updateWeatherData(
+                        savedLat = settings?.weatherLocationLat,
+                        savedLon = settings?.weatherLocationLon,
+                        display = weatherDisplay
+                    )
+                }
+            }.collect { }
         }
     }
 
@@ -1010,7 +1028,7 @@ class HomeViewModel(
         clearSearch()
     }
 
-    private fun updateWeatherData(savedLat: Double?, savedLon: Double?) {
+    private fun updateWeatherData(savedLat: Double?, savedLon: Double?, display: String) {
         weatherUpdateJob?.cancel()
         weatherUpdateJob = viewModelScope.launch {
             try {
@@ -1046,16 +1064,54 @@ class HomeViewModel(
                             )
                         }
                     )
+
+                    if (display == "daily") {
+                        val dailyResult = weatherService?.getDailyWeather(location.first, location.second)
+                        if (dailyResult != null) {
+                            dailyResult.fold(
+                                onSuccess = { dailyData ->
+                                    val today = dailyData.firstOrNull()
+                                    val shouldClearError = _uiState.value.weatherData != null
+                                    _uiState.value = _uiState.value.copy(
+                                        weatherDailyHigh = today?.temperatureMax,
+                                        weatherDailyLow = today?.temperatureMin,
+                                        weatherError = if (shouldClearError) null else _uiState.value.weatherError
+                                    )
+                                },
+                                onFailure = { error ->
+                                    _uiState.value = _uiState.value.copy(
+                                        weatherDailyHigh = null,
+                                        weatherDailyLow = null,
+                                        weatherError = "Failed to get daily weather: ${error.message}"
+                                    )
+                                }
+                            )
+                        } else {
+                            _uiState.value = _uiState.value.copy(
+                                weatherDailyHigh = null,
+                                weatherDailyLow = null
+                            )
+                        }
+                    } else {
+                        _uiState.value = _uiState.value.copy(
+                            weatherDailyHigh = null,
+                            weatherDailyLow = null
+                        )
+                    }
                 } else {
                     _uiState.value = _uiState.value.copy(
                         weatherData = null,
-                        weatherError = "Location permission required"
+                        weatherError = "Location permission required",
+                        weatherDailyHigh = null,
+                        weatherDailyLow = null
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     weatherData = null,
-                    weatherError = "Weather update failed: ${e.message}"
+                    weatherError = "Weather update failed: ${e.message}",
+                    weatherDailyHigh = null,
+                    weatherDailyLow = null
                 )
             }
         }
@@ -1119,5 +1175,7 @@ data class HomeUiState(
     val weatherDisplay: String = "off",
     val weatherData: com.talauncher.data.model.WeatherData? = null,
     val weatherError: String? = null,
-    val weatherTemperatureUnit: String = "celsius"
+    val weatherTemperatureUnit: String = "celsius",
+    val weatherDailyHigh: Double? = null,
+    val weatherDailyLow: Double? = null
 )
