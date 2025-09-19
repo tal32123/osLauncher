@@ -6,6 +6,8 @@
     <string name="essential_apps">Essential Apps</string>
     <string name="distracting_apps">Distracting Apps</string>
     <string name="search_apps">Search apps...</string>
+    <string name="search_icon_content_description">Search</string>
+    <string name="clear_search_content_description">Clear search query</string>
     <string name="time_spent_today">Time spent today</string>
     <string name="enable_focus_mode">Enable Focus Mode</string>
     <string name="disable_focus_mode">Disable Focus Mode</string>

@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.AppSearchBar
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.theme.*
@@ -225,47 +226,14 @@ fun AppDrawerScreen(
                 ),
                 border = BorderStroke(2.dp, PrimerBlue.copy(alpha = 0.3f))
             ) {
-                OutlinedTextField(
+                AppSearchBar(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester),
-                    placeholder = {
-                        Text(
-                            text = "Search apps...",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    leadingIcon = {
-                        Text(
-                            text = "Search",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = PrimerGray600,
-                            modifier = Modifier.padding(start = PrimerSpacing.xs)
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            TextButton(
-                                onClick = {
-                                    searchQuery = ""
-                                    keyboardController?.hide()
-                                },
-                                colors = ButtonDefaults.textButtonColors(
-                                    contentColor = PrimerGray600
-                                ),
-                                contentPadding = PaddingValues(
-                                    horizontal = PrimerSpacing.xs,
-                                    vertical = 0.dp
-                                )
-                            ) {
-                                Text(
-                                    text = "Clear",
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-                        }
+                    modifier = Modifier.fillMaxWidth(),
+                    focusRequester = focusRequester,
+                    onClear = {
+                        searchQuery = ""
+                        keyboardController?.hide()
                     },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
@@ -273,7 +241,6 @@ fun AppDrawerScreen(
                             keyboardController?.hide()
                         }
                     ),
-                    singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PrimerBlue,
                         unfocusedBorderColor = PrimerGray300,

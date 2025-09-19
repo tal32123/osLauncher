@@ -4,9 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +13,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.talauncher.ui.components.AppSearchBar
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
 import com.talauncher.utils.UsageStatsHelper
@@ -262,7 +260,6 @@ fun SettingItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppSelectionTab(
     title: String,
@@ -282,28 +279,11 @@ fun AppSelectionTab(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        OutlinedTextField(
+        AppSearchBar(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search apps...") },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search"
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { onSearchQueryChange("") }) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear"
-                        )
-                    }
-                }
-            },
-            singleLine = true,
+            onClear = { onSearchQueryChange("") },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
         )
 
