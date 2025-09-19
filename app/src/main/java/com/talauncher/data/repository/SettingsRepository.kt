@@ -86,54 +86,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(showWhatsAppAction = enabled))
     }
 
-    suspend fun updateShowWallpaper(enabled: Boolean) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(showWallpaper = enabled))
-    }
 
-    suspend fun updateBackgroundColor(color: String) {
-        val normalizedColor = when (color.lowercase(Locale.ROOT)) {
-            "system", "black", "white" -> color.lowercase(Locale.ROOT)
-            else -> color
-        }
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(backgroundColor = normalizedColor))
-    }
-
-    suspend fun updateColorPalette(palette: String) {
-        val allowedPalettes = setOf("default", "warm", "cool", "monochrome", "nature")
-        val normalizedPalette = palette.lowercase(Locale.ROOT)
-        val settings = getSettingsSync()
-        updateSettings(
-            settings.copy(colorPalette = if (normalizedPalette in allowedPalettes) normalizedPalette else settings.colorPalette)
-        )
-    }
-
-    suspend fun updateWallpaperBlurAmount(amount: Float) {
-        val settings = getSettingsSync()
-        updateSettings(
-            settings.copy(wallpaperBlurAmount = amount.coerceIn(0f, 1f))
-        )
-    }
-
-    suspend fun updateGlassmorphism(enabled: Boolean) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(enableGlassmorphism = enabled))
-    }
-
-    suspend fun updateUiDensity(density: String) {
-        val allowedDensity = setOf("compact", "comfortable", "spacious")
-        val normalizedDensity = density.lowercase(Locale.ROOT)
-        val settings = getSettingsSync()
-        updateSettings(
-            settings.copy(uiDensity = if (normalizedDensity in allowedDensity) normalizedDensity else settings.uiDensity)
-        )
-    }
-
-    suspend fun updateAnimationsEnabled(enabled: Boolean) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(enableAnimations = enabled))
-    }
 
     suspend fun updateWeatherDisplay(display: String) {
         val settings = getSettingsSync()
