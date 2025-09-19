@@ -217,7 +217,9 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         if (::sessionRepository.isInitialized) {
-            sessionRepository.cleanup()
+            lifecycleScope.launch {
+                sessionRepository.cleanup()
+            }
         }
     }
 }
