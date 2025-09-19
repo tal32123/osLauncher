@@ -48,6 +48,8 @@ class SettingsViewModel(
                 _uiState.value = _uiState.value.copy(
                     pinnedApps = pinnedApps,
                     distractingApps = distractingApps,
+                    backgroundColor = settings?.backgroundColor ?: "system",
+                    showWallpaper = settings?.showWallpaper ?: true,
                     enableTimeLimitPrompt = settings?.enableTimeLimitPrompt ?: false,
                     enableMathChallenge = settings?.enableMathChallenge ?: false,
                     mathDifficulty = settings?.mathDifficulty ?: "easy",
@@ -63,6 +65,11 @@ class SettingsViewModel(
                     buildCommitDate = settings?.buildCommitDate,
                     buildBranch = settings?.buildBranch,
                     buildTime = settings?.buildTime,
+                    colorPalette = settings?.colorPalette ?: "default",
+                    wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
+                    enableGlassmorphism = settings?.enableGlassmorphism ?: false,
+                    uiDensity = settings?.uiDensity ?: "comfortable",
+                    enableAnimations = settings?.enableAnimations ?: true,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -168,6 +175,48 @@ class SettingsViewModel(
         }
     }
 
+    fun updateBackgroundColor(color: String) {
+        viewModelScope.launch {
+            settingsRepository.updateBackgroundColor(color)
+        }
+    }
+
+    fun updateShowWallpaper(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateShowWallpaper(show)
+        }
+    }
+
+    fun updateColorPalette(palette: String) {
+        viewModelScope.launch {
+            settingsRepository.updateColorPalette(palette)
+        }
+    }
+
+    fun updateWallpaperBlur(amount: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateWallpaperBlurAmount(amount)
+        }
+    }
+
+    fun updateGlassmorphism(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateGlassmorphism(enabled)
+        }
+    }
+
+    fun updateUiDensity(density: String) {
+        viewModelScope.launch {
+            settingsRepository.updateUiDensity(density)
+        }
+    }
+
+    fun updateAnimationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateAnimationsEnabled(enabled)
+        }
+    }
+
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
     }
@@ -200,6 +249,8 @@ data class SettingsUiState(
     val pinnedApps: List<AppInfo> = emptyList(),
     val distractingApps: List<AppInfo> = emptyList(),
     val availableApps: List<InstalledApp> = emptyList(),
+    val backgroundColor: String = "system",
+    val showWallpaper: Boolean = true,
     val enableTimeLimitPrompt: Boolean = false,
     val enableMathChallenge: Boolean = false,
     val mathDifficulty: String = "easy",
@@ -216,5 +267,10 @@ data class SettingsUiState(
     val buildCommitMessage: String? = null,
     val buildCommitDate: String? = null,
     val buildBranch: String? = null,
-    val buildTime: String? = null
+    val buildTime: String? = null,
+    val colorPalette: String = "default",
+    val wallpaperBlurAmount: Float = 0f,
+    val enableGlassmorphism: Boolean = false,
+    val uiDensity: String = "comfortable",
+    val enableAnimations: Boolean = true
 )

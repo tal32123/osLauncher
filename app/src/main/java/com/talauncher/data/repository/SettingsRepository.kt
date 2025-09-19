@@ -67,7 +67,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     suspend fun updateRecentAppsLimit(limit: Int) {
         val settings = getSettingsSync()
-        updateSettings(settings.copy(recentAppsLimit = limit.coerceIn(1, 50)))
+        updateSettings(settings.copy(recentAppsLimit = limit.coerceIn(0, 50)))
     }
 
     suspend fun updateShowPhoneAction(enabled: Boolean) {
@@ -87,7 +87,10 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
 
     suspend fun updateWeatherDisplay(display: String) {
         val settings = getSettingsSync()
-        updateSettings(settings.copy(weatherDisplay = display))
+        val allowedValues = setOf("off", "daily", "hourly")
+        val normalized = display.lowercase().takeIf { it in allowedValues }
+            ?: settings.weatherDisplay
+        updateSettings(settings.copy(weatherDisplay = normalized))
     }
 
     suspend fun updateWeatherTemperatureUnit(unit: String) {
@@ -99,5 +102,50 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun updateWeatherLocation(lat: Double?, lon: Double?) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(weatherLocationLat = lat, weatherLocationLon = lon))
+    }
+
+    suspend fun updateBackgroundColor(color: String) {
+        val settings = getSettingsSync()
+        val normalized = when (color.lowercase()) {
+            "system", "black", "white" -> color.lowercase()
+            else -> settings.backgroundColor
+        }
+        updateSettings(settings.copy(backgroundColor = normalized))
+    }
+
+    suspend fun updateShowWallpaper(show: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(showWallpaper = show))
+    }
+
+    suspend fun updateColorPalette(palette: String) {
+        val settings = getSettingsSync()
+        val allowedPalettes = setOf("default", "warm", "cool", "monochrome", "nature")
+        val normalized = palette.lowercase().takeIf { it in allowedPalettes }
+            ?: settings.colorPalette
+        updateSettings(settings.copy(colorPalette = normalized))
+    }
+
+    suspend fun updateWallpaperBlurAmount(blur: Float) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(wallpaperBlurAmount = blur.coerceIn(0f, 1f)))
+    }
+
+    suspend fun updateGlassmorphism(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(enableGlassmorphism = enabled))
+    }
+
+    suspend fun updateUiDensity(density: String) {
+        val settings = getSettingsSync()
+        val allowedDensity = setOf("compact", "comfortable", "spacious")
+        val normalized = density.lowercase().takeIf { it in allowedDensity }
+            ?: settings.uiDensity
+        updateSettings(settings.copy(uiDensity = normalized))
+    }
+
+    suspend fun updateAnimationsEnabled(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(enableAnimations = enabled))
     }
 }

@@ -20,7 +20,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
-import com.talauncher.utils.UsageStatsHelper
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,20 +97,20 @@ fun SettingsScreen(
                 buildTime = uiState.buildTime
             )
             1 -> UIThemeSettings(
-                backgroundColor = "system", // TODO: get from settings
-                onUpdateBackgroundColor = { /* TODO: implement */ },
-                showWallpaper = true, // TODO: get from settings
-                onToggleShowWallpaper = { /* TODO: implement */ },
-                colorPalette = "default", // TODO: get from uiState
-                onUpdateColorPalette = { /* TODO: implement */ },
-                wallpaperBlurAmount = 0f, // TODO: get from uiState
-                onUpdateWallpaperBlur = { /* TODO: implement */ },
-                enableGlassmorphism = false, // TODO: get from uiState
-                onToggleGlassmorphism = { /* TODO: implement */ },
-                uiDensity = "comfortable", // TODO: get from uiState
-                onUpdateUiDensity = { /* TODO: implement */ },
-                enableAnimations = true, // TODO: get from uiState
-                onToggleAnimations = { /* TODO: implement */ }
+                backgroundColor = uiState.backgroundColor,
+                onUpdateBackgroundColor = viewModel::updateBackgroundColor,
+                showWallpaper = uiState.showWallpaper,
+                onToggleShowWallpaper = viewModel::updateShowWallpaper,
+                colorPalette = uiState.colorPalette,
+                onUpdateColorPalette = viewModel::updateColorPalette,
+                wallpaperBlurAmount = uiState.wallpaperBlurAmount,
+                onUpdateWallpaperBlur = viewModel::updateWallpaperBlur,
+                enableGlassmorphism = uiState.enableGlassmorphism,
+                onToggleGlassmorphism = viewModel::updateGlassmorphism,
+                uiDensity = uiState.uiDensity,
+                onUpdateUiDensity = viewModel::updateUiDensity,
+                enableAnimations = uiState.enableAnimations,
+                onToggleAnimations = viewModel::updateAnimationsEnabled
             )
             2 -> AppSelectionTab(
                 title = "Essential Apps",
