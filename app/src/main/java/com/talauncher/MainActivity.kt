@@ -24,8 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.talauncher.data.database.LauncherDatabase
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SessionRepository
@@ -56,82 +58,103 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        try {
-            val database = LauncherDatabase.getDatabase(this)
-            val settingsRepository = SettingsRepository(database.settingsDao())
-            this.sessionRepository = SessionRepository(database.appSessionDao())
-            this.errorHandler = MainErrorHandler(this)
-            this.appRepository = AppRepository(
-                database.appDao(),
-                this,
-                settingsRepository,
-                this.sessionRepository,
-                this.errorHandler
-            )
-            val permissionsHelper = PermissionsHelper(applicationContext)
-            val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
-
-            lifecycleScope.launch {
-                sessionRepository.initialize()
-                sessionRepository.emitExpiredSessions()
-            }
-
-            lifecycleScope.launch {
-                sessionRepository.observeSessionExpirations().collect {
-                    shouldNavigateToHome = true
+        setContent {
+            TALauncherTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    LoadingScreen()
                 }
             }
+        }
 
-            setContent {
-                TALauncherTheme {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        val mainViewModel: MainViewModel = viewModel {
-                            MainViewModel(settingsRepository, appRepository)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val database = LauncherDatabase.getDatabase(this@MainActivity)
+                val settingsRepository = SettingsRepository(database.settingsDao())
+                val sessionRepository = SessionRepository(database.appSessionDao())
+                val errorHandler = MainErrorHandler(this@MainActivity)
+                val appRepository = AppRepository(
+                    database.appDao(),
+                    this@MainActivity,
+                    settingsRepository,
+                    sessionRepository,
+                    errorHandler
+                )
+                val permissionsHelper = PermissionsHelper(applicationContext)
+                val usageStatsHelper = UsageStatsHelper(applicationContext, permissionsHelper)
+
+                withContext(Dispatchers.Main) {
+                    this@MainActivity.sessionRepository = sessionRepository
+                    this@MainActivity.errorHandler = errorHandler
+                    this@MainActivity.appRepository = appRepository
+
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        sessionRepository.initialize()
+                        sessionRepository.emitExpiredSessions()
+                    }
+
+                    lifecycleScope.launch {
+                        sessionRepository.observeSessionExpirations().collect {
+                            shouldNavigateToHome = true
                         }
-                        val mainUiState by mainViewModel.uiState.collectAsState()
-                        val errorState by errorHandler.errorState.collectAsState()
+                    }
 
-                        // Show error dialog if there's an error
-                        if (errorState.isVisible) {
-                            ErrorDialog(
-                                title = errorState.title,
-                                message = errorState.message,
-                                stackTrace = errorState.stackTrace,
-                                onDismiss = { errorHandler.dismissError() },
-                                onRetry = errorState.onRetry
-                            )
-                        }
+                    setContent {
+                        TALauncherTheme {
+                            Surface(
+                                modifier = Modifier.fillMaxSize(),
+                                color = MaterialTheme.colorScheme.background
+                            ) {
+                                val mainViewModel: MainViewModel = viewModel {
+                                    MainViewModel(settingsRepository, appRepository)
+                                }
+                                val mainUiState by mainViewModel.uiState.collectAsState()
+                                val errorState by errorHandler.errorState.collectAsState()
 
-                        if (mainUiState.isLoading) {
-                            LoadingScreen()
-                        } else if (!mainUiState.isOnboardingCompleted) {
-                            val onboardingViewModel: OnboardingViewModel = viewModel {
-                                OnboardingViewModel(permissionsHelper, usageStatsHelper, settingsRepository)
+                                // Show error dialog if there's an error
+                                if (errorState.isVisible) {
+                                    ErrorDialog(
+                                        title = errorState.title,
+                                        message = errorState.message,
+                                        stackTrace = errorState.stackTrace,
+                                        onDismiss = { errorHandler.dismissError() },
+                                        onRetry = errorState.onRetry
+                                    )
+                                }
+
+                                if (mainUiState.isLoading) {
+                                    LoadingScreen()
+                                } else if (!mainUiState.isOnboardingCompleted) {
+                                    val onboardingViewModel: OnboardingViewModel = viewModel {
+                                        OnboardingViewModel(permissionsHelper, usageStatsHelper, settingsRepository)
+                                    }
+                                    OnboardingScreen(
+                                        onOnboardingComplete = mainViewModel::onOnboardingCompleted,
+                                        viewModel = onboardingViewModel
+                                    )
+                                } else {
+                                    TALauncherApp(
+                                        appRepository = appRepository,
+                                        settingsRepository = settingsRepository,
+                                        permissionsHelper = permissionsHelper,
+                                        usageStatsHelper = usageStatsHelper,
+                                        sessionRepository = sessionRepository,
+                                        shouldNavigateToHome = shouldNavigateToHome,
+                                        onNavigatedToHome = { shouldNavigateToHome = false }
+                                    )
+                                }
                             }
-                            OnboardingScreen(
-                                onOnboardingComplete = mainViewModel::onOnboardingCompleted,
-                                viewModel = onboardingViewModel
-                            )
-                        } else {
-                            TALauncherApp(
-                                appRepository = appRepository,
-                                settingsRepository = settingsRepository,
-                                permissionsHelper = permissionsHelper,
-                                usageStatsHelper = usageStatsHelper,
-                                sessionRepository = sessionRepository,
-                                shouldNavigateToHome = shouldNavigateToHome,
-                                onNavigatedToHome = { shouldNavigateToHome = false }
-                            )
                         }
                     }
                 }
+            } catch (error: Throwable) {
+                withContext(Dispatchers.Main) {
+                    Log.e(TAG, "Error starting ${getString(R.string.app_name)}", error)
+                    reportStartupError(error)
+                }
             }
-        } catch (error: Throwable) {
-            Log.e(TAG, "Error starting ${getString(R.string.app_name)}", error)
-            reportStartupError(error)
         }
     }
 
