@@ -517,7 +517,7 @@ fun HomeScreen(
             run {
                 val selectedPackage = uiState.selectedAppForMathChallenge ?: return@run
                 MathChallengeDialog(
-                    difficulty = "medium", // Could be made configurable
+                    difficulty = uiState.mathChallengeDifficulty,
                     onCorrect = {
                         viewModel.onMathChallengeCompleted(selectedPackage)
                     },
