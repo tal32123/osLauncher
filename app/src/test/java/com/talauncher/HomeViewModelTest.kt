@@ -81,8 +81,8 @@ class HomeViewModelTest {
     @Test
     fun `pinned apps load correctly`() = runTest {
         val pinnedApps = listOf(
-            AppInfo("com.test.app1", "App 1", isPinned = true, pinnedOrder = 1, customName = null, isDistracting = false, isHidden = false),
-            AppInfo("com.test.app2", "App 2", isPinned = true, pinnedOrder = 2, customName = null, isDistracting = false, isHidden = false)
+            AppInfo("com.test.app1", "App 1", isPinned = true, pinnedOrder = 1, isDistracting = false, isHidden = false),
+            AppInfo("com.test.app2", "App 2", isPinned = true, pinnedOrder = 2, isDistracting = false, isHidden = false)
         )
         whenever(appRepository.getPinnedApps()).thenReturn(flowOf(pinnedApps))
 

@@ -266,6 +266,11 @@ class OverlayService : Service() {
     override fun onDestroy() {
         hideOverlay()
         stopForegroundIfNeeded()
+
+        // Clear references to prevent memory leaks
+        windowManager = null
+        notificationManager = null
+
         super.onDestroy()
     }
 

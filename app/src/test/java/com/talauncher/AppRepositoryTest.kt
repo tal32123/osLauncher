@@ -103,8 +103,7 @@ class AppRepositoryTest {
         isHidden = isHidden,
         isPinned = isPinned,
         pinnedOrder = pinnedOrder,
-        isDistracting = isDistracting,
-        customName = null
+        isDistracting = isDistracting
     )
 
     private fun createMockResolveInfo(packageName: String, label: String): ResolveInfo {

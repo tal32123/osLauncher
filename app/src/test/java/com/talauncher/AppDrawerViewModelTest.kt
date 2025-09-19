@@ -9,9 +9,11 @@ import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.ui.appdrawer.AppDrawerViewModel
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.PermissionsHelper
+import com.talauncher.utils.PermissionState
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.*
 import org.junit.After
@@ -54,10 +56,10 @@ class AppDrawerViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val testApps = listOf(
-        AppInfo("com.example.calculator", "Calculator", isPinned = false),
-        AppInfo("com.example.browser", "Browser", isPinned = false),
-        AppInfo("com.example.camera", "Camera", isPinned = false),
-        AppInfo("com.example.maps", "Maps", isPinned = false)
+        AppInfo("com.example.calculator", "Calculator", isPinned = false, customName = null, isDistracting = false, isHidden = false),
+        AppInfo("com.example.browser", "Browser", isPinned = false, customName = null, isDistracting = false, isHidden = false),
+        AppInfo("com.example.camera", "Camera", isPinned = false, customName = null, isDistracting = false, isHidden = false),
+        AppInfo("com.example.maps", "Maps", isPinned = false, customName = null, isDistracting = false, isHidden = false)
     )
 
     @Before
@@ -68,7 +70,7 @@ class AppDrawerViewModelTest {
         whenever(appRepository.getAllVisibleApps()).thenReturn(flowOf(testApps))
         whenever(appRepository.getHiddenApps()).thenReturn(flowOf(emptyList()))
         whenever(settingsRepository.getSettings()).thenReturn(flowOf(LauncherSettings()))
-        whenever(permissionsHelper.permissionState).thenReturn(flowOf(PermissionsHelper.PermissionState()))
+        whenever(permissionsHelper.permissionState).thenReturn(MutableStateFlow(PermissionState()))
     }
 
     @After
