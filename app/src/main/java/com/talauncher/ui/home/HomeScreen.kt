@@ -157,10 +157,14 @@ fun HomeScreen(
                         // Weather display next to time
                         if (uiState.weatherDisplay != "off" && uiState.weatherData != null) {
                             Spacer(modifier = Modifier.width(12.dp))
+                            val shouldShowTemperature = uiState.weatherDisplay != "daily" ||
+                                uiState.weatherDailyHigh == null || uiState.weatherDailyLow == null
                             com.talauncher.ui.components.WeatherDisplay(
                                 weatherData = uiState.weatherData,
-                                showTemperature = true,
-                                temperatureUnit = uiState.weatherTemperatureUnit
+                                showTemperature = shouldShowTemperature,
+                                temperatureUnit = uiState.weatherTemperatureUnit,
+                                dailyHigh = if (uiState.weatherDisplay == "daily") uiState.weatherDailyHigh else null,
+                                dailyLow = if (uiState.weatherDisplay == "daily") uiState.weatherDailyLow else null
                             )
                         }
                     }

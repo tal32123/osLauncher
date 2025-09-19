@@ -5,7 +5,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,11 +17,16 @@ fun WeatherDisplay(
     weatherData: WeatherData?,
     modifier: Modifier = Modifier,
     showTemperature: Boolean = true,
-    temperatureUnit: String = "celsius"
+    temperatureUnit: String = "celsius",
+    dailyHigh: Double? = null,
+    dailyLow: Double? = null
 ) {
     if (weatherData != null) {
         val convertedTemperature = convertTemperature(weatherData.temperature, temperatureUnit)
         val unitSuffix = getTemperatureSuffix(temperatureUnit)
+        val showDailyRange = dailyHigh != null && dailyLow != null
+        val convertedHigh = dailyHigh?.let { convertTemperature(it, temperatureUnit).roundToInt() }
+        val convertedLow = dailyLow?.let { convertTemperature(it, temperatureUnit).roundToInt() }
         Row(
             modifier = modifier,
             verticalAlignment = Alignment.CenterVertically,
@@ -35,7 +39,14 @@ fun WeatherDisplay(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            if (showTemperature) {
+            if (showDailyRange && convertedHigh != null && convertedLow != null) {
+                Text(
+                    text = "H ${convertedHigh}°$unitSuffix  L ${convertedLow}°$unitSuffix",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            } else if (showTemperature) {
                 Text(
                     text = "${convertedTemperature.roundToInt()}°$unitSuffix",
                     fontSize = 14.sp,
