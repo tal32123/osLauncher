@@ -20,10 +20,6 @@ import org.mockito.kotlin.*
 import org.robolectric.RobolectricTestRunner
 import org.junit.Assert.*
 
-/**
- * Unit tests for MainViewModel
- * Tests initialization, onboarding flow, and loading states
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class MainViewModelTest {
@@ -45,7 +41,6 @@ class MainViewModelTest {
         MockitoAnnotations.openMocks(this)
         Dispatchers.setMain(testDispatcher)
 
-        // Setup default mocks
         whenever(settingsRepository.getSettings()).thenReturn(
             flowOf(LauncherSettings(isOnboardingCompleted = false))
         )
@@ -96,7 +91,7 @@ class MainViewModelTest {
 
         viewModel.onOnboardingCompleted()
 
-        verify(settingsRepository).updateOnboardingCompleted(true)
+        verify(settingsRepository).completeOnboarding()
     }
 
     @Test
@@ -110,7 +105,6 @@ class MainViewModelTest {
         viewModel = MainViewModel(settingsRepository, appRepository)
         advanceUntilIdle()
 
-        // Should reflect the latest settings
         assertTrue(viewModel.uiState.value.isOnboardingCompleted)
     }
 
@@ -121,7 +115,6 @@ class MainViewModelTest {
         viewModel = MainViewModel(settingsRepository, appRepository)
         advanceUntilIdle()
 
-        // Should not crash and maintain loading state
         assertTrue(viewModel.uiState.value.isLoading)
     }
 }

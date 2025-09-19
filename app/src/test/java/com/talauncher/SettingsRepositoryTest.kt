@@ -15,10 +15,6 @@ import org.mockito.kotlin.*
 import org.robolectric.RobolectricTestRunner
 import org.junit.Assert.*
 
-/**
- * Unit tests for SettingsRepository
- * Tests settings persistence, validation, and default value handling
- */
 @RunWith(RobolectricTestRunner::class)
 class SettingsRepositoryTest {
 
@@ -27,332 +23,102 @@ class SettingsRepositoryTest {
 
     private lateinit var repository: SettingsRepository
 
-    private val defaultSettings = LauncherSettings(
-        id = 1,
-        darkMode = false,
-        showAppCounts = true,
-        gridSize = 4,
-        autoHideNavigationBar = false,
-        showRecentApps = true,
-        enableTimeLimitPrompt = false,
-        enableMathChallenge = false,
-        mathDifficulty = "easy",
-        sessionExpiryCountdownSeconds = 5,
-        recentAppsLimit = 10
-    )
+    private val defaultSettings = LauncherSettings()
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         repository = SettingsRepository(settingsDao)
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
     }
 
     @Test
     fun `getSettings returns settings from dao`() = runTest {
-        // Given
-        val settings = defaultSettings.copy(darkMode = true, gridSize = 5)
+        val settings = defaultSettings.copy(backgroundColor = "black")
         whenever(settingsDao.getSettings()).thenReturn(flowOf(settings))
 
-        // When
         val result = repository.getSettings().first()
 
-        // Then
         assertEquals(settings, result)
     }
 
     @Test
     fun `getSettingsSync returns settings synchronously`() = runTest {
-        // Given
-        val settings = defaultSettings.copy(showAppCounts = false)
+        val settings = defaultSettings.copy(showWallpaper = false)
         whenever(settingsDao.getSettingsSync()).thenReturn(settings)
 
-        // When
         val result = repository.getSettingsSync()
 
-        // Then
         assertEquals(settings, result)
     }
 
     @Test
     fun `getSettingsSync returns default settings when dao returns null`() = runTest {
-        // Given
         whenever(settingsDao.getSettingsSync()).thenReturn(null)
 
-        // When
         val result = repository.getSettingsSync()
 
-        // Then
-        assertEquals(defaultSettings, result)
+        assertEquals(LauncherSettings(), result)
+        verify(settingsDao).insertSettings(LauncherSettings())
     }
 
     @Test
-    fun `updateSettings calls dao upsert`() = runTest {
-        // Given
+    fun `updateSettings calls dao update`() = runTest {
         val newSettings = defaultSettings.copy(
-            darkMode = true,
-            gridSize = 6,
             enableMathChallenge = true
         )
 
-        // When
         repository.updateSettings(newSettings)
 
-        // Then
-        verify(settingsDao).upsertSettings(newSettings)
+        verify(settingsDao).updateSettings(newSettings)
     }
 
     @Test
-    fun `updateDarkMode toggles dark mode setting`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(darkMode = false)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
+    fun `updateBackgroundColor updates background color`() = runTest {
+        repository.updateBackgroundColor("white")
 
-        // When
-        repository.updateDarkMode(true)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.darkMode == true
-        })
+        verify(settingsDao).updateSettings(argThat { it.backgroundColor == "white" })
     }
 
     @Test
-    fun `updateGridSize validates and updates grid size`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(gridSize = 4)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
+    fun `updateShowWallpaper updates wallpaper visibility`() = runTest {
+        repository.updateShowWallpaper(false)
 
-        // When
-        repository.updateGridSize(5)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.gridSize == 5
-        })
+        verify(settingsDao).updateSettings(argThat { it.showWallpaper == false })
     }
 
     @Test
-    fun `updateGridSize clamps grid size to valid range`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(gridSize = 4)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
+    fun `updateColorPalette updates color palette`() = runTest {
+        repository.updateColorPalette("warm")
 
-        // When - Test upper bound
-        repository.updateGridSize(10)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.gridSize == 8 // Should be clamped to max
-        })
-
-        // When - Test lower bound
-        repository.updateGridSize(1)
-
-        // Then
-        verify(settingsDao, times(2)).upsertSettings(argThat { settings ->
-            settings.gridSize == 2 // Should be clamped to min
-        })
+        verify(settingsDao).updateSettings(argThat { it.colorPalette == "warm" })
     }
 
     @Test
-    fun `updateShowAppCounts updates app count visibility`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(showAppCounts = true)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
+    fun `updateWallpaperBlurAmount updates blur amount`() = runTest {
+        repository.updateWallpaperBlurAmount(0.5f)
 
-        // When
-        repository.updateShowAppCounts(false)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.showAppCounts == false
-        })
+        verify(settingsDao).updateSettings(argThat { it.wallpaperBlurAmount == 0.5f })
     }
 
     @Test
-    fun `updateAutoHideNavigationBar updates navigation bar setting`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(autoHideNavigationBar = false)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
+    fun `updateGlassmorphism updates glassmorphism`() = runTest {
+        repository.updateGlassmorphism(true)
 
-        // When
-        repository.updateAutoHideNavigationBar(true)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.autoHideNavigationBar == true
-        })
+        verify(settingsDao).updateSettings(argThat { it.enableGlassmorphism == true })
     }
 
     @Test
-    fun `updateShowRecentApps updates recent apps visibility`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(showRecentApps = true)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
+    fun `updateUiDensity updates ui density`() = runTest {
+        repository.updateUiDensity("compact")
 
-        // When
-        repository.updateShowRecentApps(false)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.showRecentApps == false
-        })
+        verify(settingsDao).updateSettings(argThat { it.uiDensity == "compact" })
     }
 
     @Test
-    fun `updateEnableTimeLimitPrompt updates time limit prompt setting`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(enableTimeLimitPrompt = false)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
+    fun `updateAnimationsEnabled updates animations`() = runTest {
+        repository.updateAnimationsEnabled(false)
 
-        // When
-        repository.updateEnableTimeLimitPrompt(true)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.enableTimeLimitPrompt == true
-        })
-    }
-
-    @Test
-    fun `updateEnableMathChallenge updates math challenge setting`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(enableMathChallenge = false)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
-
-        // When
-        repository.updateEnableMathChallenge(true)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.enableMathChallenge == true
-        })
-    }
-
-    @Test
-    fun `updateMathDifficulty updates math difficulty with valid values`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(mathDifficulty = "easy")
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
-
-        // When - Test valid difficulties
-        repository.updateMathDifficulty("medium")
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.mathDifficulty == "medium"
-        })
-
-        repository.updateMathDifficulty("hard")
-        verify(settingsDao, times(2)).upsertSettings(argThat { settings ->
-            settings.mathDifficulty == "hard"
-        })
-    }
-
-    @Test
-    fun `updateMathDifficulty defaults to easy for invalid values`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(mathDifficulty = "easy")
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
-
-        // When - Test invalid difficulty
-        repository.updateMathDifficulty("invalid")
-
-        // Then - Should default to "easy"
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.mathDifficulty == "easy"
-        })
-    }
-
-    @Test
-    fun `updateSessionExpiryCountdown validates and clamps countdown seconds`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(sessionExpiryCountdownSeconds = 5)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
-
-        // When - Test valid value
-        repository.updateSessionExpiryCountdown(10)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.sessionExpiryCountdownSeconds == 10
-        })
-
-        // When - Test upper bound clamping
-        repository.updateSessionExpiryCountdown(50)
-
-        // Then - Should be clamped to 30
-        verify(settingsDao, times(2)).upsertSettings(argThat { settings ->
-            settings.sessionExpiryCountdownSeconds == 30
-        })
-
-        // When - Test lower bound clamping
-        repository.updateSessionExpiryCountdown(-5)
-
-        // Then - Should be clamped to 0
-        verify(settingsDao, times(3)).upsertSettings(argThat { settings ->
-            settings.sessionExpiryCountdownSeconds == 0
-        })
-    }
-
-    @Test
-    fun `updateRecentAppsLimit validates and clamps recent apps limit`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(recentAppsLimit = 10)
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
-
-        // When - Test valid value
-        repository.updateRecentAppsLimit(20)
-
-        // Then
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.recentAppsLimit == 20
-        })
-
-        // When - Test upper bound clamping
-        repository.updateRecentAppsLimit(100)
-
-        // Then - Should be clamped to 50
-        verify(settingsDao, times(2)).upsertSettings(argThat { settings ->
-            settings.recentAppsLimit == 50
-        })
-
-        // When - Test lower bound clamping
-        repository.updateRecentAppsLimit(0)
-
-        // Then - Should be clamped to 1
-        verify(settingsDao, times(3)).upsertSettings(argThat { settings ->
-            settings.recentAppsLimit == 1
-        })
-    }
-
-    @Test
-    fun `multiple setting updates preserve other settings`() = runTest {
-        // Given
-        val currentSettings = defaultSettings.copy(
-            darkMode = false,
-            gridSize = 4,
-            enableMathChallenge = false
-        )
-        whenever(settingsDao.getSettingsSync()).thenReturn(currentSettings)
-
-        // When - Update dark mode
-        repository.updateDarkMode(true)
-
-        // Then - Other settings should be preserved
-        verify(settingsDao).upsertSettings(argThat { settings ->
-            settings.darkMode == true &&
-            settings.gridSize == 4 &&
-            settings.enableMathChallenge == false &&
-            settings.mathDifficulty == "easy"
-        })
-
-        // When - Update grid size
-        repository.updateGridSize(6)
-
-        // Then - Previous dark mode change should be preserved
-        verify(settingsDao, times(2)).upsertSettings(argThat { settings ->
-            settings.gridSize == 6 &&
-            settings.enableMathChallenge == false &&
-            settings.mathDifficulty == "easy"
-        })
+        verify(settingsDao).updateSettings(argThat { it.enableAnimations == false })
     }
 }
