@@ -92,7 +92,10 @@ fun SettingsScreen(
                 onUpdateWeatherDisplay = viewModel::updateWeatherDisplay,
                 weatherTemperatureUnit = uiState.weatherTemperatureUnit,
                 onUpdateWeatherTemperatureUnit = viewModel::updateWeatherTemperatureUnit,
-                permissionsHelper = viewModel.permissionsHelper
+                permissionsHelper = viewModel.permissionsHelper,
+                buildCommitHash = uiState.buildCommitHash,
+                buildBranch = uiState.buildBranch,
+                buildTime = uiState.buildTime
             )
             1 -> AppSelectionTab(
                 title = "Essential Apps",
@@ -149,7 +152,10 @@ fun GeneralSettings(
     onUpdateWeatherDisplay: (String) -> Unit,
     weatherTemperatureUnit: String,
     onUpdateWeatherTemperatureUnit: (String) -> Unit,
-    permissionsHelper: com.talauncher.utils.PermissionsHelper
+    permissionsHelper: com.talauncher.utils.PermissionsHelper,
+    buildCommitHash: String?,
+    buildBranch: String?,
+    buildTime: String?
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -424,47 +430,49 @@ fun GeneralSettings(
             }
         }
 
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Build Information",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+        if (buildCommitHash != null || buildBranch != null || buildTime != null) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     )
-
-                    uiState.buildCommitHash?.let { hash ->
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Text(
-                            text = "Commit: ${hash.take(8)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                        )
-                    }
-
-                    uiState.buildBranch?.let { branch ->
-                        Text(
-                            text = "Branch: $branch",
-                            style = MaterialTheme.typography.bodySmall,
+                            text = "Build Information",
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
 
-                    uiState.buildTime?.let { buildTime ->
-                        Text(
-                            text = "Built: $buildTime",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        buildCommitHash?.let { hash ->
+                            Text(
+                                text = "Commit: ${hash.take(8)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        }
+
+                        buildBranch?.let { branch ->
+                            Text(
+                                text = "Branch: $branch",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        buildTime?.let { time ->
+                            Text(
+                                text = "Built: $time",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
