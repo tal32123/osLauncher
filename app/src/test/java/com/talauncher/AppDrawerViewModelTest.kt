@@ -56,10 +56,10 @@ class AppDrawerViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val testApps = listOf(
-        AppInfo("com.example.calculator", "Calculator", isPinned = false, customName = null, isDistracting = false, isHidden = false),
-        AppInfo("com.example.browser", "Browser", isPinned = false, customName = null, isDistracting = false, isHidden = false),
-        AppInfo("com.example.camera", "Camera", isPinned = false, customName = null, isDistracting = false, isHidden = false),
-        AppInfo("com.example.maps", "Maps", isPinned = false, customName = null, isDistracting = false, isHidden = false)
+        AppInfo("com.example.calculator", "Calculator", isPinned = false, isDistracting = false, isHidden = false),
+        AppInfo("com.example.browser", "Browser", isPinned = false, isDistracting = false, isHidden = false),
+        AppInfo("com.example.camera", "Camera", isPinned = false, isDistracting = false, isHidden = false),
+        AppInfo("com.example.maps", "Maps", isPinned = false, isDistracting = false, isHidden = false)
     )
 
     @Before

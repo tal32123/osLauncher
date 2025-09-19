@@ -2,6 +2,7 @@ package com.talauncher
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.talauncher.data.model.AppInfo
+import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SessionRepository
@@ -13,6 +14,8 @@ import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Before
@@ -61,7 +64,7 @@ class HomeViewModelTest {
 
         whenever(settingsRepository.getSettings()).thenReturn(flowOf(LauncherSettings()))
         whenever(appRepository.getPinnedApps()).thenReturn(flowOf(emptyList()))
-        whenever(sessionRepository.observeSessionExpirations()).thenReturn(flowOf())
+        whenever(sessionRepository.observeSessionExpirations()).thenReturn(MutableSharedFlow<AppSession>().asSharedFlow())
 
         viewModel = HomeViewModel(
             appRepository = appRepository,
