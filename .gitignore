@@ -95,3 +95,6 @@ crashlytics-build.properties
 .kotlin/
 
 node_modules/
+
+# Auto-generated commit info
+app/src/main/assets/commit_info.json
