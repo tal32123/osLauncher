@@ -686,7 +686,9 @@ class HomeViewModel(
             }
 
             val appName = appRepository.getAppDisplayName(packageName)
-            val settings = settingsRepository.getSettingsSync()
+            val settings = withContext(Dispatchers.IO) {
+                settingsRepository.getSettingsSync()
+            }
 
             // Only show math challenge if it's enabled in settings
             if (settings.enableMathChallenge) {
@@ -752,7 +754,9 @@ class HomeViewModel(
                 }
             }
 
-            val settings = settingsRepository.getSettingsSync()
+            val settings = withContext(Dispatchers.IO) {
+                settingsRepository.getSettingsSync()
+            }
             val countdownSeconds = settings.sessionExpiryCountdownSeconds.coerceAtLeast(0)
             val appName = appRepository.getAppDisplayName(session.packageName)
 

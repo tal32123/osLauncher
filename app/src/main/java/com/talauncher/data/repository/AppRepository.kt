@@ -333,26 +333,24 @@ class AppRepository(
         }
     }
 
-    suspend fun shouldShowTimeLimitPrompt(packageName: String): Boolean {
+    suspend fun shouldShowTimeLimitPrompt(packageName: String): Boolean = withContext(Dispatchers.IO) {
         val settings = settingsRepository.getSettingsSync()
         if (!settings.enableTimeLimitPrompt) {
-            return false
+            return@withContext false
         }
 
         val app = getApp(packageName)
         if (app?.isDistracting == true || app?.isHidden == true) {
-            return true
+            return@withContext true
         }
 
-        return withContext(Dispatchers.IO) {
-            isDistractingCategory(packageName)
-        }
+        return@withContext isDistractingCategory(packageName)
     }
 
-    suspend fun shouldShowMathChallenge(packageName: String): Boolean {
+    suspend fun shouldShowMathChallenge(packageName: String): Boolean = withContext(Dispatchers.IO) {
         val settings = settingsRepository.getSettingsSync()
         val app = getApp(packageName)
-        return settings.enableMathChallenge && app?.isDistracting == true
+        return@withContext settings.enableMathChallenge && app?.isDistracting == true
     }
 
     suspend fun getActiveSessionForApp(packageName: String) = sessionRepository?.getActiveSessionForApp(packageName)

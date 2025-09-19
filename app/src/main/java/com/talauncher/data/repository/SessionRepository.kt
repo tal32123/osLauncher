@@ -13,18 +13,23 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class SessionRepository(private val appSessionDao: AppSessionDao) {
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-    fun cleanup() {
-        expirationJobs.values.forEach { it.cancel() }
-        expirationJobs.clear()
-    }
     private val expirationEvents = MutableSharedFlow<AppSession>(extraBufferCapacity = 16)
     private val expirationJobs = mutableMapOf<Long, Job>()
+    private val jobsMutex = Mutex()
+
+    suspend fun cleanup() {
+        jobsMutex.withLock {
+            expirationJobs.values.forEach { it.cancel() }
+            expirationJobs.clear()
+        }
+    }
 
     fun getActiveSessions(): Flow<List<AppSession>> = appSessionDao.getActiveSessions()
 
@@ -93,15 +98,19 @@ class SessionRepository(private val appSessionDao: AppSessionDao) {
     }
 
     private fun scheduleExpiration(session: AppSession) {
-        cancelExpirationJob(session.id)
-        val job = coroutineScope.launch {
-            val remainingTime = getRemainingTime(session)
-            if (remainingTime > 0) {
-                delay(remainingTime)
+        coroutineScope.launch {
+            cancelExpirationJob(session.id)
+            val job = coroutineScope.launch {
+                val remainingTime = getRemainingTime(session)
+                if (remainingTime > 0) {
+                    delay(remainingTime)
+                }
+                triggerExpiration(session)
             }
-            triggerExpiration(session)
+            jobsMutex.withLock {
+                expirationJobs[session.id] = job
+            }
         }
-        expirationJobs[session.id] = job
     }
 
     private suspend fun triggerExpiration(session: AppSession) {
@@ -119,8 +128,10 @@ class SessionRepository(private val appSessionDao: AppSessionDao) {
         sessionForEvent?.let { expirationEvents.emit(it) }
     }
 
-    private fun cancelExpirationJob(sessionId: Long) {
-        expirationJobs.remove(sessionId)?.cancel()
+    private suspend fun cancelExpirationJob(sessionId: Long) {
+        jobsMutex.withLock {
+            expirationJobs.remove(sessionId)?.cancel()
+        }
     }
 }
 
