@@ -58,6 +58,13 @@ class SettingsViewModel(
                     showWhatsAppAction = settings?.showWhatsAppAction ?: true,
                     weatherDisplay = settings?.weatherDisplay ?: "off",
                     weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius",
+                    backgroundColor = settings?.backgroundColor ?: "system",
+                    showWallpaper = settings?.showWallpaper ?: true,
+                    colorPalette = settings?.colorPalette ?: "default",
+                    wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
+                    enableGlassmorphism = settings?.enableGlassmorphism ?: false,
+                    uiDensity = settings?.uiDensity ?: "comfortable",
+                    enableAnimations = settings?.enableAnimations ?: true,
                     buildCommitHash = settings?.buildCommitHash,
                     buildCommitMessage = settings?.buildCommitMessage,
                     buildCommitDate = settings?.buildCommitDate,
@@ -151,6 +158,48 @@ class SettingsViewModel(
         }
     }
 
+    fun updateShowWallpaper(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateShowWallpaper(enabled)
+        }
+    }
+
+    fun updateBackgroundColor(color: String) {
+        viewModelScope.launch {
+            settingsRepository.updateBackgroundColor(color)
+        }
+    }
+
+    fun updateColorPalette(palette: String) {
+        viewModelScope.launch {
+            settingsRepository.updateColorPalette(palette)
+        }
+    }
+
+    fun updateWallpaperBlur(amount: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateWallpaperBlurAmount(amount)
+        }
+    }
+
+    fun updateGlassmorphism(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateGlassmorphism(enabled)
+        }
+    }
+
+    fun updateUiDensity(density: String) {
+        viewModelScope.launch {
+            settingsRepository.updateUiDensity(density)
+        }
+    }
+
+    fun updateAnimationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updateAnimationsEnabled(enabled)
+        }
+    }
+
     fun updateWeatherDisplay(display: String) {
         viewModelScope.launch {
             settingsRepository.updateWeatherDisplay(display)
@@ -212,6 +261,13 @@ data class SettingsUiState(
     val showWhatsAppAction: Boolean = false,
     val weatherDisplay: String = "off",
     val weatherTemperatureUnit: String = "celsius",
+    val backgroundColor: String = "system",
+    val showWallpaper: Boolean = true,
+    val colorPalette: String = "default",
+    val wallpaperBlurAmount: Float = 0f,
+    val enableGlassmorphism: Boolean = false,
+    val uiDensity: String = "comfortable",
+    val enableAnimations: Boolean = true,
     val buildCommitHash: String? = null,
     val buildCommitMessage: String? = null,
     val buildCommitDate: String? = null,
