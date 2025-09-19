@@ -115,7 +115,7 @@ fun ContactItem(
                         Icon(
                             imageVector = Icons.Default.Send,
                             contentDescription = "WhatsApp",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = PrimerGreen
                         )
                     }
                 }
