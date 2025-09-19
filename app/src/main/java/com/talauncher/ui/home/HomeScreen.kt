@@ -114,12 +114,13 @@ fun HomeScreen(
         opacity = 1f, // TODO: Get from settings
         modifier = Modifier.systemBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             // Time and Date Section - GitHub clean typography
             if (uiState.showTime || uiState.showDate) {
                 Spacer(modifier = Modifier.height(PrimerSpacing.xxxl))
@@ -322,7 +323,6 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
         }
 
-
         // Gesture Detection Overlays - Invisible areas for reliable gesture capture
 
         // Top area swipe down for notifications
@@ -496,6 +496,7 @@ fun HomeScreen(
                 )
             }
         }
+        } // End Box
     }
 }
 

@@ -27,6 +27,7 @@ import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

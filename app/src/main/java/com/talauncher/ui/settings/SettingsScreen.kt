@@ -98,9 +98,9 @@ fun SettingsScreen(
                 buildTime = uiState.buildTime
             )
             1 -> UIThemeSettings(
-                backgroundColor = uiState.backgroundColor,
+                backgroundColor = "system", // TODO: get from settings
                 onUpdateBackgroundColor = { /* TODO: implement */ },
-                showWallpaper = uiState.showWallpaper,
+                showWallpaper = true, // TODO: get from settings
                 onToggleShowWallpaper = { /* TODO: implement */ },
                 colorPalette = "default", // TODO: get from uiState
                 onUpdateColorPalette = { /* TODO: implement */ },
