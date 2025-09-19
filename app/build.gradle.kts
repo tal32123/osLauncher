@@ -1,8 +1,67 @@
+import java.util.Date
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("kotlin-kapt")
+}
+
+tasks.register("checkGitStatus") {
+    doLast {
+        val gitStatus = providers.exec {
+            commandLine("git", "status", "--porcelain")
+        }.standardOutput.asText.get().trim()
+
+        if (gitStatus.isNotEmpty()) {
+            throw GradleException("Build failed: Uncommitted changes detected. Please commit your changes before building.\n$gitStatus")
+        }
+
+        println("✓ Git status clean - proceeding with build")
+    }
+}
+
+tasks.register("generateCommitInfo") {
+    dependsOn("checkGitStatus")
+    doLast {
+        val commitHash = providers.exec {
+            commandLine("git", "rev-parse", "HEAD")
+        }.standardOutput.asText.get().trim()
+
+        val commitMessage = providers.exec {
+            commandLine("git", "log", "-1", "--pretty=format:%s")
+        }.standardOutput.asText.get().trim()
+
+        val commitDate = providers.exec {
+            commandLine("git", "log", "-1", "--pretty=format:%ci")
+        }.standardOutput.asText.get().trim()
+
+        val branch = providers.exec {
+            commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
+        }.standardOutput.asText.get().trim()
+
+        val buildTime = Date().toString()
+        val commitInfoJson = """
+{
+    "commit": "$commitHash",
+    "message": "$commitMessage",
+    "date": "$commitDate",
+    "branch": "$branch",
+    "buildTime": "$buildTime"
+}
+        """.trimIndent()
+
+        val assetsDir = file("src/main/assets")
+        assetsDir.mkdirs()
+        val commitInfoFile = file("src/main/assets/commit_info.json")
+        commitInfoFile.writeText(commitInfoJson)
+
+        println("✓ Generated commit info: $commitHash")
+    }
+}
+
+tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("bundle") }.configureEach {
+    dependsOn("generateCommitInfo")
 }
 
 android {

@@ -12,7 +12,7 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -137,6 +137,26 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN buildCommitHash TEXT"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN buildCommitMessage TEXT"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN buildCommitDate TEXT"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN buildBranch TEXT"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN buildTime TEXT"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -151,7 +171,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_5_6,
                     MIGRATION_6_7,
                     MIGRATION_7_8,
-                    MIGRATION_8_9
+                    MIGRATION_8_9,
+                    MIGRATION_9_10
                 ).build()
                 INSTANCE = instance
                 instance

@@ -23,5 +23,10 @@ data class LauncherSettings(
     val weatherDisplay: String = "off", // "off", "daily", "hourly"
     val weatherTemperatureUnit: String = "celsius", // "celsius" or "fahrenheit"
     val weatherLocationLat: Double? = null,
-    val weatherLocationLon: Double? = null
+    val weatherLocationLon: Double? = null,
+    val buildCommitHash: String? = null,
+    val buildCommitMessage: String? = null,
+    val buildCommitDate: String? = null,
+    val buildBranch: String? = null,
+    val buildTime: String? = null
 )

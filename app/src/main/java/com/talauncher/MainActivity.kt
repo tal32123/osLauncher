@@ -44,6 +44,7 @@ import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.MainErrorHandler
+import com.talauncher.utils.CommitInfoReader
 import com.talauncher.ui.components.ErrorDialog
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -79,6 +80,20 @@ class MainActivity : ComponentActivity() {
             lifecycleScope.launch {
                 sessionRepository.initialize()
                 sessionRepository.emitExpiredSessions()
+            }
+
+            // Read and store commit info
+            lifecycleScope.launch {
+                val commitInfo = CommitInfoReader.readCommitInfo(this@MainActivity)
+                commitInfo?.let {
+                    settingsRepository.updateBuildInfo(
+                        commitHash = it.commit,
+                        commitMessage = it.message,
+                        commitDate = it.date,
+                        branch = it.branch,
+                        buildTime = it.buildTime
+                    )
+                }
             }
 
             lifecycleScope.launch {

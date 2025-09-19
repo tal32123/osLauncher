@@ -48,6 +48,23 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(sessionExpiryCountdownSeconds = seconds.coerceIn(0, 30)))
     }
 
+    suspend fun updateBuildInfo(
+        commitHash: String?,
+        commitMessage: String?,
+        commitDate: String?,
+        branch: String?,
+        buildTime: String?
+    ) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(
+            buildCommitHash = commitHash,
+            buildCommitMessage = commitMessage,
+            buildCommitDate = commitDate,
+            buildBranch = branch,
+            buildTime = buildTime
+        ))
+    }
+
     suspend fun updateRecentAppsLimit(limit: Int) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(recentAppsLimit = limit.coerceIn(1, 50)))

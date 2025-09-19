@@ -58,6 +58,11 @@ class SettingsViewModel(
                     showWhatsAppAction = settings?.showWhatsAppAction ?: true,
                     weatherDisplay = settings?.weatherDisplay ?: "off",
                     weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius",
+                    buildCommitHash = settings?.buildCommitHash,
+                    buildCommitMessage = settings?.buildCommitMessage,
+                    buildCommitDate = settings?.buildCommitDate,
+                    buildBranch = settings?.buildBranch,
+                    buildTime = settings?.buildTime,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -206,5 +211,10 @@ data class SettingsUiState(
     val showMessageAction: Boolean = false,
     val showWhatsAppAction: Boolean = false,
     val weatherDisplay: String = "off",
-    val weatherTemperatureUnit: String = "celsius"
+    val weatherTemperatureUnit: String = "celsius",
+    val buildCommitHash: String? = null,
+    val buildCommitMessage: String? = null,
+    val buildCommitDate: String? = null,
+    val buildBranch: String? = null,
+    val buildTime: String? = null
 )
