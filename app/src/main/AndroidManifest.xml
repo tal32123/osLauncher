@@ -48,20 +48,12 @@
         <service
             android:name=".service.OverlayService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="specialUse">
 
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="session_overlay_management" />
-
-            <intent-filter>
-                <action android:name="show_countdown" />
-                <action android:name="show_decision" />
-                <action android:name="show_math_challenge" />
-                <action android:name="hide_overlay" />
-            </intent-filter>
-
         </service>
 
     </application>
