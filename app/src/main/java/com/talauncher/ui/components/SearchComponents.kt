@@ -1,0 +1,161 @@
+package com.talauncher.ui.components
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.talauncher.R
+import com.talauncher.ui.home.SearchItem
+import com.talauncher.ui.theme.PrimerSpacing
+
+@Composable
+fun UnifiedSearchResults(
+    searchQuery: String,
+    searchResults: List<SearchItem>,
+    onAppClick: (String) -> Unit,
+    onAppLongClick: (SearchItem.App) -> Unit,
+    onContactCall: (SearchItem.Contact) -> Unit,
+    onContactMessage: (SearchItem.Contact) -> Unit,
+    onContactWhatsApp: (SearchItem.Contact) -> Unit,
+    onContactOpen: (SearchItem.Contact) -> Unit,
+    showPhoneAction: Boolean,
+    showMessageAction: Boolean,
+    showWhatsAppAction: Boolean,
+    onGoogleSearch: (String) -> Unit,
+    showContactsPermissionMissing: Boolean,
+    onGrantContactsPermission: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val hapticFeedback = LocalHapticFeedback.current
+
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+    ) {
+        // Always show Google search as first option
+        item {
+            GoogleSearchItem(
+                query = searchQuery,
+                onClick = {
+                    keyboardController?.hide()
+                    onGoogleSearch(searchQuery)
+                }
+            )
+        }
+
+        // Show unified search results (apps and contacts ordered by relevance)
+        if (searchResults.isNotEmpty()) {
+            items(searchResults, key = {
+                when (it) {
+                    is SearchItem.App -> "app_${it.appInfo.packageName}"
+                    is SearchItem.Contact -> "contact_${it.contactInfo.id}"
+                }
+            }) { searchItem ->
+                when (searchItem) {
+                    is SearchItem.App -> {
+                        ModernAppItem(
+                            appName = searchItem.appInfo.appName,
+                            onClick = {
+                                keyboardController?.hide()
+                                onAppClick(searchItem.appInfo.packageName)
+                            },
+                            onLongClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onAppLongClick(searchItem)
+                            },
+                            enableGlassmorphism = false, // TODO: Get from settings
+                            uiDensity = UiDensity.Comfortable // TODO: Get from settings
+                        )
+                    }
+                    is SearchItem.Contact -> {
+                        ContactItem(
+                            contact = searchItem.contactInfo,
+                            onCall = {
+                                keyboardController?.hide()
+                                onContactCall(searchItem)
+                            },
+                            onMessage = {
+                                keyboardController?.hide()
+                                onContactMessage(searchItem)
+                            },
+                            onWhatsApp = {
+                                keyboardController?.hide()
+                                onContactWhatsApp(searchItem)
+                            },
+                            onOpenContact = {
+                                keyboardController?.hide()
+                                onContactOpen(searchItem)
+                            },
+                            showPhoneAction = showPhoneAction,
+                            showMessageAction = showMessageAction,
+                            showWhatsAppAction = showWhatsAppAction
+                        )
+                    }
+                }
+            }
+        }
+
+        if (showContactsPermissionMissing && searchQuery.isNotBlank()) {
+            item {
+                ContactPermissionCallout(
+                    onGrantAccess = {
+                        keyboardController?.hide()
+                        onGrantContactsPermission()
+                    }
+                )
+            }
+        }
+
+        // Show no results message only if unified results are empty
+        if (searchResults.isEmpty() && searchQuery.isNotBlank() && !showContactsPermissionMissing) {
+            item {
+                Text(
+                    text = stringResource(R.string.home_search_no_results),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(PrimerSpacing.md)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ContactPermissionCallout(
+    onGrantAccess: () -> Unit
+) {
+    ModernGlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        enableGlassmorphism = false, // TODO: Get from settings
+        cornerRadius = 12,
+        elevation = 1
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PrimerSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
+        ) {
+            Text(
+                text = stringResource(R.string.contact_permission_missing_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            OutlinedButton(
+                onClick = onGrantAccess,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+            ) {
+                Text(stringResource(R.string.contact_permission_required_confirm))
+            }
+        }
+    }
+}

@@ -41,6 +41,7 @@ import com.talauncher.ui.components.ModernSearchField
 import com.talauncher.ui.components.ModernAppItem
 import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
+import com.talauncher.ui.components.UnifiedSearchResults
 import com.talauncher.ui.home.MotivationalQuotesProvider
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.*
@@ -178,92 +179,43 @@ fun HomeScreen(
             )
 
             if (isSearching) {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
-                ) {
-                    // Always show Google search as first option
-                    item {
-                        GoogleSearchItem(
-                            query = searchQuery,
-                            onClick = {
-                                keyboardController?.hide()
-                                viewModel.performGoogleSearch(searchQuery)
-                            }
-                        )
-                    }
-
-                    // Show unified search results (apps and contacts ordered by relevance)
-                    if (unifiedSearchResults.isNotEmpty()) {
-                        items(unifiedSearchResults, key = {
-                            when (it) {
-                                is SearchItem.App -> "app_${it.appInfo.packageName}"
-                                is SearchItem.Contact -> "contact_${it.contactInfo.id}"
-                            }
-                        }) { searchItem ->
-                            when (searchItem) {
-                                is SearchItem.App -> {
-                                    ModernAppItem(
-                                        appName = searchItem.appInfo.appName,
-                                        onClick = {
-                                            keyboardController?.hide()
-                                            viewModel.launchApp(searchItem.appInfo.packageName)
-                                        },
-                                        enableGlassmorphism = false, // TODO: Get from settings
-                                        uiDensity = UiDensity.Comfortable // TODO: Get from settings
-                                    )
-                                }
-                                is SearchItem.Contact -> {
-                                    ContactItem(
-                                        contact = searchItem.contactInfo,
-                                        onCall = {
-                                            keyboardController?.hide()
-                                            viewModel.callContact(searchItem.contactInfo)
-                                        },
-                                        onMessage = {
-                                            keyboardController?.hide()
-                                            viewModel.messageContact(searchItem.contactInfo)
-                                        },
-                                        onWhatsApp = {
-                                            keyboardController?.hide()
-                                            viewModel.whatsAppContact(searchItem.contactInfo)
-                                        },
-                                        onOpenContact = {
-                                            keyboardController?.hide()
-                                            viewModel.openContact(searchItem.contactInfo)
-                                        },
-                                        showPhoneAction = uiState.showPhoneAction,
-                                        showMessageAction = uiState.showMessageAction,
-                                        showWhatsAppAction = uiState.showWhatsAppAction
-                                    )
-                                }
-                            }
+                UnifiedSearchResults(
+                    searchQuery = searchQuery,
+                    searchResults = unifiedSearchResults,
+                    onAppClick = { packageName ->
+                        viewModel.launchApp(packageName)
+                    },
+                    onAppLongClick = { searchItem ->
+                        if (searchItem.appInfo.isPinned) {
+                            viewModel.unpinApp(searchItem.appInfo.packageName)
+                        } else {
+                            viewModel.pinApp(searchItem.appInfo.packageName)
                         }
-                    }
-
-                    if (uiState.isContactsPermissionMissing && searchQuery.isNotBlank()) {
-                        item {
-                            ContactPermissionCallout(
-                                onGrantAccess = {
-                                    keyboardController?.hide()
-                                    viewModel.showContactsPermissionPrompt()
-                                }
-                            )
-                        }
-                    }
-
-                    // Show no results message only if unified results are empty
-                    if (unifiedSearchResults.isEmpty() && searchQuery.isNotBlank() && !uiState.isContactsPermissionMissing) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.home_search_no_results),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(PrimerSpacing.md)
-                            )
-                        }
-                    }
-                }
+                    },
+                    onContactCall = { searchItem ->
+                        viewModel.callContact(searchItem.contactInfo)
+                    },
+                    onContactMessage = { searchItem ->
+                        viewModel.messageContact(searchItem.contactInfo)
+                    },
+                    onContactWhatsApp = { searchItem ->
+                        viewModel.whatsAppContact(searchItem.contactInfo)
+                    },
+                    onContactOpen = { searchItem ->
+                        viewModel.openContact(searchItem.contactInfo)
+                    },
+                    showPhoneAction = uiState.showPhoneAction,
+                    showMessageAction = uiState.showMessageAction,
+                    showWhatsAppAction = uiState.showWhatsAppAction,
+                    onGoogleSearch = { query ->
+                        viewModel.performGoogleSearch(query)
+                    },
+                    showContactsPermissionMissing = uiState.isContactsPermissionMissing,
+                    onGrantContactsPermission = {
+                        viewModel.showContactsPermissionPrompt()
+                    },
+                    modifier = Modifier.weight(1f)
+                )
             } else {
                 // Pinned Apps Section
                 if (uiState.pinnedApps.isNotEmpty()) {
@@ -675,34 +627,3 @@ fun PinnedAppItem(
     }
 }
 
-@Composable
-fun ContactPermissionCallout(
-    onGrantAccess: () -> Unit
-) {
-    ModernGlassCard(
-        modifier = Modifier.fillMaxWidth(),
-        enableGlassmorphism = false, // TODO: Get from settings
-        cornerRadius = 12,
-        elevation = 1
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PrimerSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
-        ) {
-            Text(
-                text = stringResource(R.string.contact_permission_missing_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            OutlinedButton(
-                onClick = onGrantAccess,
-                shape = PrimerShapes.small,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-            ) {
-                Text(stringResource(R.string.contact_permission_required_confirm))
-            }
-        }
-    }
-}

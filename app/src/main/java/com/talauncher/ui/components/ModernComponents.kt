@@ -1,7 +1,9 @@
 package com.talauncher.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -153,6 +155,7 @@ enum class ButtonVariant {
 /**
  * Modern app item with updated styling
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ModernAppItem(
     appName: String,
@@ -176,7 +179,11 @@ fun ModernAppItem(
     }
 
     ModernGlassCard(
-        modifier = modifier,
+        modifier = modifier
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         enableGlassmorphism = enableGlassmorphism,
         cornerRadius = cornerRadius
     ) {
