@@ -95,16 +95,6 @@ class OverlayService : Service() {
             return
         }
 
-        val notificationMessage = getString(
-            R.string.overlay_notification_countdown,
-            appName,
-            remainingSeconds.coerceAtLeast(0)
-        )
-        if (!startForegroundWithMessage(notificationMessage)) {
-            Log.w(TAG, "Unable to show countdown overlay without notification permission")
-            return
-        }
-
         hideOverlay()
 
         val composeView = ComposeView(this).apply {
@@ -122,21 +112,28 @@ class OverlayService : Service() {
         val layoutParams = createLayoutParams()
 
         try {
+            windowManager?.addView(composeView, layoutParams)
             overlayView = composeView
-            windowManager?.addView(overlayView, layoutParams)
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to attach countdown overlay", e)
             e.printStackTrace()
+            return
+        }
+
+        val notificationMessage = getString(
+            R.string.overlay_notification_countdown,
+            appName,
+            remainingSeconds.coerceAtLeast(0)
+        )
+        if (!startForegroundWithMessage(notificationMessage)) {
+            Log.w(TAG, "Unable to show countdown overlay without notification permission")
+            hideOverlay()
+            stopSelf()
         }
     }
 
     private fun showDecisionOverlay(appName: String, packageName: String, showMathOption: Boolean) {
         if (!Settings.canDrawOverlays(this)) {
-            return
-        }
-
-        val notificationMessage = getString(R.string.overlay_notification_decision, appName)
-        if (!startForegroundWithMessage(notificationMessage)) {
-            Log.w(TAG, "Unable to show decision overlay without notification permission")
             return
         }
 
@@ -182,22 +179,25 @@ class OverlayService : Service() {
         val layoutParams = createLayoutParams()
 
         try {
+            windowManager?.addView(composeView, layoutParams)
             overlayView = composeView
-            windowManager?.addView(overlayView, layoutParams)
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to attach decision overlay", e)
             e.printStackTrace()
+            return
+        }
+
+        val notificationMessage = getString(R.string.overlay_notification_decision, appName)
+        if (!startForegroundWithMessage(notificationMessage)) {
+            Log.w(TAG, "Unable to show decision overlay without notification permission")
+            hideOverlay()
+            stopSelf()
         }
     }
 
     private fun showMathChallengeOverlay(appName: String, packageName: String, difficulty: String) {
         if (!Settings.canDrawOverlays(this)) {
             Log.w(TAG, "Cannot show math challenge overlay without SYSTEM_ALERT_WINDOW permission")
-            return
-        }
-
-        val notificationMessage = getString(R.string.overlay_notification_default)
-        if (!startForegroundWithMessage(notificationMessage)) {
-            Log.w(TAG, "Unable to show math challenge overlay without notification permission")
             return
         }
 
@@ -231,12 +231,20 @@ class OverlayService : Service() {
         val layoutParams = createLayoutParams()
 
         try {
+            windowManager?.addView(composeView, layoutParams)
             overlayView = composeView
-            windowManager?.addView(overlayView, layoutParams)
             Log.d(TAG, "Math challenge overlay displayed successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show math challenge overlay", e)
             e.printStackTrace()
+            return
+        }
+
+        val notificationMessage = getString(R.string.overlay_notification_default)
+        if (!startForegroundWithMessage(notificationMessage)) {
+            Log.w(TAG, "Unable to show math challenge overlay without notification permission")
+            hideOverlay()
+            stopSelf()
         }
     }
 
@@ -341,7 +349,7 @@ class OverlayService : Service() {
         }
 
         // For Android 15+: Must have visible overlay before starting foreground service
-        if (Build.VERSION.SDK_INT >= 35 && overlayView == null) {
+        if (Build.VERSION.SDK_INT >= 35 && overlayView?.isAttachedToWindow != true) {
             Log.w(TAG, "Cannot start foreground service on Android 15+ without visible overlay")
             return false
         }
