@@ -1,7 +1,7 @@
 {
-    "commit": "1ccc5bd9cfcc48073feeccf1273dc26fb398f4e9",
-    "message": "Add commit info tracking to build",
-    "date": "2025-09-19 08:42:36 +0300",
+    "commit": "5c4ac5a7642dac363d8bffff6efd61d77012dbf0",
+    "message": "Fix build info display in settings screen",
+    "date": "2025-09-19 08:43:48 +0300",
     "branch": "master",
-    "buildTime": "Fri Sep 19 08:42:42 IDT 2025"
+    "buildTime": "Fri Sep 19 08:43:54 IDT 2025"
 }

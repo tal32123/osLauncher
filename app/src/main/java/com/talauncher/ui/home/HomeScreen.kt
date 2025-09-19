@@ -36,6 +36,11 @@ import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.SessionExpiryActionDialog
 import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.TimeLimitDialog
+import com.talauncher.ui.components.ModernGlassCard
+import com.talauncher.ui.components.ModernSearchField
+import com.talauncher.ui.components.ModernAppItem
+import com.talauncher.ui.components.ModernBackdrop
+import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.home.MotivationalQuotesProvider
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.*
@@ -101,35 +106,13 @@ fun HomeScreen(
     }
 
 
-    // Determine background modifier based on settings
-    val backgroundModifier = if (uiState.showWallpaper) {
-        // Show wallpaper - transparent background to allow wallpaper to show through
-        Modifier
-            .fillMaxSize()
-            .systemBarsPadding()
-    } else {
-        // Show solid background color
-        val backgroundColor = when (uiState.backgroundColor) {
-            "black" -> Color.Black
-            "white" -> Color.White
-            "system" -> MaterialTheme.colorScheme.background
-            else -> {
-                // Try to parse as hex color, fallback to system background
-                try {
-                    Color(android.graphics.Color.parseColor(uiState.backgroundColor))
-                } catch (e: Exception) {
-                    MaterialTheme.colorScheme.background
-                }
-            }
-        }
-        Modifier
-            .fillMaxSize()
-            .background(backgroundColor)
-            .systemBarsPadding()
-    }
-
-    Box(
-        modifier = backgroundModifier
+    // Use modern backdrop with new design system
+    ModernBackdrop(
+        showWallpaper = uiState.showWallpaper,
+        blurAmount = 0f, // TODO: Get from settings
+        backgroundColor = uiState.backgroundColor,
+        opacity = 1f, // TODO: Get from settings
+        modifier = Modifier.systemBarsPadding()
     ) {
         Column(
             modifier = Modifier
@@ -183,34 +166,14 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
 
-            OutlinedTextField(
+            ModernSearchField(
                 value = searchQuery,
                 onValueChange = viewModel::updateSearchQuery,
+                placeholder = stringResource(R.string.home_search_placeholder),
+                enableGlassmorphism = false, // TODO: Get from settings
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = PrimerSpacing.lg),
-                placeholder = { Text(stringResource(R.string.home_search_placeholder)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        if (searchQuery.isNotBlank()) {
-                            // Search Google as the primary action
-                            viewModel.performGoogleSearch(searchQuery)
-                            keyboardController?.hide()
-                        }
-                    }
-                ),
-                trailingIcon = {
-                    if (searchQuery.isNotBlank()) {
-                        TextButton(onClick = {
-                            viewModel.clearSearch()
-                            keyboardController?.hide()
-                        }) {
-                            Text(stringResource(R.string.home_search_clear))
-                        }
-                    }
-                }
+                    .padding(bottom = PrimerSpacing.lg)
             )
 
             if (isSearching) {
@@ -239,12 +202,14 @@ fun HomeScreen(
                         }) { searchItem ->
                             when (searchItem) {
                                 is SearchItem.App -> {
-                                    SearchResultItem(
-                                        appInfo = searchItem.appInfo,
+                                    ModernAppItem(
+                                        appName = searchItem.appInfo.appName,
                                         onClick = {
                                             keyboardController?.hide()
                                             viewModel.launchApp(searchItem.appInfo.packageName)
-                                        }
+                                        },
+                                        enableGlassmorphism = false, // TODO: Get from settings
+                                        uiDensity = UiDensity.Comfortable // TODO: Get from settings
                                     )
                                 }
                                 is SearchItem.Contact -> {
@@ -306,27 +271,28 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
                     ) {
                         items(uiState.pinnedApps, key = { it.packageName }) { app ->
-                            PinnedAppItem(
-                                appInfo = app,
+                            ModernAppItem(
+                                appName = app.appName,
                                 onClick = { viewModel.launchApp(app.packageName) },
                                 onLongClick = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.unpinApp(app.packageName)
-                                }
+                                },
+                                enableGlassmorphism = false, // TODO: Get from settings
+                                uiDensity = UiDensity.Comfortable // TODO: Get from settings
                             )
                         }
                     }
                 } else {
-                    // Empty state - GitHub style
-                    PrimerCard(
+                    // Empty state - Modern minimalist style
+                    ModernGlassCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
                             .padding(horizontal = PrimerSpacing.sm),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        ),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                        enableGlassmorphism = false, // TODO: Get from settings
+                        cornerRadius = 16,
+                        elevation = 1
                     ) {
                         Column(
                             modifier = Modifier
@@ -712,12 +678,11 @@ fun PinnedAppItem(
 fun ContactPermissionCallout(
     onGrantAccess: () -> Unit
 ) {
-    PrimerCard(
+    ModernGlassCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        enableGlassmorphism = false, // TODO: Get from settings
+        cornerRadius = 12,
+        elevation = 1
     ) {
         Column(
             modifier = Modifier

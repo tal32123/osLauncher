@@ -18,6 +18,11 @@ import kotlinx.coroutines.withContext
 class SessionRepository(private val appSessionDao: AppSessionDao) {
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    fun cleanup() {
+        expirationJobs.values.forEach { it.cancel() }
+        expirationJobs.clear()
+    }
     private val expirationEvents = MutableSharedFlow<AppSession>(extraBufferCapacity = 16)
     private val expirationJobs = mutableMapOf<Long, Job>()
 

@@ -28,5 +28,19 @@ data class LauncherSettings(
     val buildCommitMessage: String? = null,
     val buildCommitDate: String? = null,
     val buildBranch: String? = null,
-    val buildTime: String? = null
+    val buildTime: String? = null,
+
+    // New 2025 minimalist UI customization options
+    val colorPalette: String = "default", // "default", "warm", "cool", "monochrome", "nature"
+    val wallpaperBlurAmount: Float = 0f, // 0.0 (no blur) to 1.0 (max blur)
+    val enableGlassmorphism: Boolean = false, // Enable glass-like translucent effects
+    val uiDensity: String = "comfortable", // "compact", "comfortable", "spacious"
+    val cardCornerRadius: Int = 12, // Corner radius for cards in dp (8-24)
+    val enableDynamicColors: Boolean = false, // Use Material You dynamic colors when available
+    val backgroundOpacity: Float = 1.0f, // Background opacity when wallpaper is shown (0.0-1.0)
+    val customWallpaperPath: String? = null, // Path to custom wallpaper image
+    val accentColor: String? = null, // Custom accent color override (hex)
+    val fontScale: Float = 1.0f, // Text size scaling factor (0.8-1.4)
+    val enableAnimations: Boolean = true, // Enable smooth UI animations
+    val cardElevation: Int = 2 // Card elevation in dp (0-8)
 )

@@ -32,9 +32,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.ArrayDeque
 import java.util.Date
@@ -91,6 +93,8 @@ class HomeViewModel(
     private var hasShownContactsPermissionPrompt = false
     private var weatherService: WeatherService? = null
     private var weatherUpdateJob: Job? = null
+    private var contactSearchJob: Job? = null
+    private val searchQueryFlow = MutableStateFlow("")
 
 
     private val sessionExpiryReceiver = object : BroadcastReceiver() {
@@ -127,6 +131,7 @@ class HomeViewModel(
         observeSessionExpirations()
         checkExpiredSessions()
         setupBroadcastReceiver()
+        setupDebouncedContactSearch()
         context?.let {
             backgroundOverlayManager = BackgroundOverlayManager.getInstance(it)
             if (permissionsHelper != null) {
@@ -168,46 +173,54 @@ class HomeViewModel(
                 appRepository.getAllVisibleApps(),
                 settingsRepository.getSettings()
             ) { pinnedApps, allApps, settings ->
-                allVisibleApps = allApps
-                val currentQuery = _uiState.value.searchQuery
-                val filtered = if (currentQuery.isNotBlank()) filterApps(currentQuery, allApps) else emptyList()
-                _uiState.value = _uiState.value.copy(
-                    pinnedApps = pinnedApps,
-                    showTime = settings?.showTimeOnHomeScreen ?: true,
-                    showDate = settings?.showDateOnHomeScreen ?: true,
-                    showWallpaper = settings?.showWallpaper ?: true,
-                    backgroundColor = settings?.backgroundColor ?: "system",
-                    mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
-                    searchResults = filtered,
-                    showPhoneAction = settings?.showPhoneAction ?: true,
-                    showMessageAction = settings?.showMessageAction ?: true,
-                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && (contactHelper?.isWhatsAppInstalled() ?: false),
-                    weatherDisplay = settings?.weatherDisplay ?: "off",
-                    weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius"
-                )
+                withContext(Dispatchers.Default) {
+                    allVisibleApps = allApps
+                    val currentQuery = _uiState.value.searchQuery
+                    val filtered = if (currentQuery.isNotBlank()) filterApps(currentQuery, allApps) else emptyList()
 
-                // Update weather data if needed
-                val weatherDisplay = settings?.weatherDisplay ?: "off"
-                _uiState.value = when (weatherDisplay) {
-                    "off" -> _uiState.value.copy(
-                        weatherData = null,
-                        weatherDailyHigh = null,
-                        weatherDailyLow = null,
-                        weatherError = null
-                    )
-                    "daily" -> _uiState.value
-                    else -> _uiState.value.copy(
-                        weatherDailyHigh = null,
-                        weatherDailyLow = null
-                    )
-                }
+                    // Cache expensive operations
+                    val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
+                    val weatherDisplay = settings?.weatherDisplay ?: "off"
 
-                if (weatherDisplay != "off") {
-                    updateWeatherData(
-                        savedLat = settings?.weatherLocationLat,
-                        savedLon = settings?.weatherLocationLon,
-                        display = weatherDisplay
-                    )
+                    withContext(Dispatchers.Main.immediate) {
+                        _uiState.value = _uiState.value.copy(
+                            pinnedApps = pinnedApps,
+                            showTime = settings?.showTimeOnHomeScreen ?: true,
+                            showDate = settings?.showDateOnHomeScreen ?: true,
+                            showWallpaper = settings?.showWallpaper ?: true,
+                            backgroundColor = settings?.backgroundColor ?: "system",
+                            mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
+                            searchResults = filtered,
+                            showPhoneAction = settings?.showPhoneAction ?: true,
+                            showMessageAction = settings?.showMessageAction ?: true,
+                            showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
+                            weatherDisplay = weatherDisplay,
+                            weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius"
+                        )
+
+                        // Update weather data if needed
+                        _uiState.value = when (weatherDisplay) {
+                            "off" -> _uiState.value.copy(
+                                weatherData = null,
+                                weatherDailyHigh = null,
+                                weatherDailyLow = null,
+                                weatherError = null
+                            )
+                            "daily" -> _uiState.value
+                            else -> _uiState.value.copy(
+                                weatherDailyHigh = null,
+                                weatherDailyLow = null
+                            )
+                        }
+                    }
+
+                    if (weatherDisplay != "off") {
+                        updateWeatherData(
+                            savedLat = settings?.weatherLocationLat,
+                            savedLon = settings?.weatherLocationLon,
+                            display = weatherDisplay
+                        )
+                    }
                 }
             }.collect { }
         }
@@ -304,6 +317,8 @@ class HomeViewModel(
 
     fun updateSearchQuery(query: String) {
         val sanitized = query.trimStart()
+        searchQueryFlow.value = sanitized
+
         val appResults = if (sanitized.isBlank()) {
             emptyList<AppInfo>()
         } else {
@@ -319,6 +334,7 @@ class HomeViewModel(
         )
 
         if (sanitized.isBlank()) {
+            contactSearchJob?.cancel()
             pendingContactQuery = null
             hasShownContactsPermissionPrompt = false
             _uiState.value = _uiState.value.copy(
@@ -353,21 +369,40 @@ class HomeViewModel(
         }
 
         hasShownContactsPermissionPrompt = false
-        launchContactSearch(sanitized)
+        // Contact search will be handled by the debounced flow
+    }
+
+    private fun setupDebouncedContactSearch() {
+        viewModelScope.launch {
+            searchQueryFlow
+                .debounce(300) // 300ms debounce
+                .collect { query ->
+                    if (query.isNotBlank() && contactHelper != null &&
+                        permissionsHelper?.permissionState?.value?.hasContacts == true) {
+                        launchContactSearch(query)
+                    }
+                }
+        }
     }
 
     private fun launchContactSearch(query: String) {
-        pendingContactQuery = query
-        viewModelScope.launch {
-            val contacts = contactHelper?.searchContacts(query) ?: emptyList()
-            val currentAppResults = _uiState.value.searchResults
-            val unifiedResults = createUnifiedSearchResults(query, currentAppResults, contacts)
+        contactSearchJob?.cancel()
+        contactSearchJob = viewModelScope.launch {
+            try {
+                val contacts = withContext(Dispatchers.IO) {
+                    contactHelper?.searchContacts(query) ?: emptyList()
+                }
+                val currentAppResults = _uiState.value.searchResults
+                val unifiedResults = createUnifiedSearchResults(query, currentAppResults, contacts)
 
-            _uiState.value = _uiState.value.copy(
-                contactResults = contacts,
-                unifiedSearchResults = unifiedResults,
-                isContactsPermissionMissing = false
-            )
+                _uiState.value = _uiState.value.copy(
+                    contactResults = contacts,
+                    unifiedSearchResults = unifiedResults,
+                    isContactsPermissionMissing = false
+                )
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error searching contacts", e)
+            }
         }
     }
 
@@ -1134,6 +1169,7 @@ class HomeViewModel(
         hideOverlay()
         countdownJob?.cancel()
         weatherUpdateJob?.cancel()
+        contactSearchJob?.cancel()
     }
 }
 

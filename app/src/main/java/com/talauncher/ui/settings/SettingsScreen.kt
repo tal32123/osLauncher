@@ -31,11 +31,11 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("General", "Essential Apps", "Distracting Apps", "Usage Insights")
+    val tabs = listOf("General", "UI & Theme", "Essential Apps", "Distracting Apps", "Usage Insights")
 
     // Clear search when navigating away from app selection tabs
     LaunchedEffect(selectedTab) {
-        if (selectedTab != 1 && selectedTab != 2) {
+        if (selectedTab != 2 && selectedTab != 3) {
             viewModel.clearSearchQuery()
         }
     }
@@ -97,7 +97,23 @@ fun SettingsScreen(
                 buildBranch = uiState.buildBranch,
                 buildTime = uiState.buildTime
             )
-            1 -> AppSelectionTab(
+            1 -> UIThemeSettings(
+                backgroundColor = uiState.backgroundColor,
+                onUpdateBackgroundColor = { /* TODO: implement */ },
+                showWallpaper = uiState.showWallpaper,
+                onToggleShowWallpaper = { /* TODO: implement */ },
+                colorPalette = "default", // TODO: get from uiState
+                onUpdateColorPalette = { /* TODO: implement */ },
+                wallpaperBlurAmount = 0f, // TODO: get from uiState
+                onUpdateWallpaperBlur = { /* TODO: implement */ },
+                enableGlassmorphism = false, // TODO: get from uiState
+                onToggleGlassmorphism = { /* TODO: implement */ },
+                uiDensity = "comfortable", // TODO: get from uiState
+                onUpdateUiDensity = { /* TODO: implement */ },
+                enableAnimations = true, // TODO: get from uiState
+                onToggleAnimations = { /* TODO: implement */ }
+            )
+            2 -> AppSelectionTab(
                 title = "Essential Apps",
                 subtitle = "Apps that will appear on your home screen",
                 apps = viewModel.getFilteredApps(),
@@ -107,7 +123,7 @@ fun SettingsScreen(
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 isLoading = uiState.isLoading
             )
-            2 -> AppSelectionTab(
+            3 -> AppSelectionTab(
                 title = "Distracting Apps",
                 subtitle = "Apps that require friction barriers and prompts",
                 apps = viewModel.getFilteredApps(),
@@ -117,7 +133,7 @@ fun SettingsScreen(
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 isLoading = uiState.isLoading
             )
-            3 -> {
+            4 -> {
                 val insightsViewModel: InsightsViewModel = viewModel {
                     InsightsViewModel(viewModel.usageStatsHelper, viewModel.permissionsHelper)
                 }
@@ -125,6 +141,246 @@ fun SettingsScreen(
                     onNavigateBack = onNavigateBack,
                     viewModel = insightsViewModel
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun UIThemeSettings(
+    backgroundColor: String,
+    onUpdateBackgroundColor: (String) -> Unit,
+    showWallpaper: Boolean,
+    onToggleShowWallpaper: (Boolean) -> Unit,
+    colorPalette: String,
+    onUpdateColorPalette: (String) -> Unit,
+    wallpaperBlurAmount: Float,
+    onUpdateWallpaperBlur: (Float) -> Unit,
+    enableGlassmorphism: Boolean,
+    onToggleGlassmorphism: (Boolean) -> Unit,
+    uiDensity: String,
+    onUpdateUiDensity: (String) -> Unit,
+    enableAnimations: Boolean,
+    onToggleAnimations: (Boolean) -> Unit
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Color Palette",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = "Choose your preferred color scheme",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf(
+                            "default" to "Default",
+                            "warm" to "Warm",
+                            "cool" to "Cool",
+                            "monochrome" to "Mono"
+                        ).forEach { (value, label) ->
+                            FilterChip(
+                                selected = colorPalette == value,
+                                onClick = { onUpdateColorPalette(value) },
+                                label = { Text(label) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        FilterChip(
+                            selected = colorPalette == "nature",
+                            onClick = { onUpdateColorPalette("nature") },
+                            label = { Text("Nature") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.weight(3f))
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Wallpaper & Background",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    SettingItem(
+                        title = "Show Device Wallpaper",
+                        subtitle = "Display your device wallpaper as background",
+                        checked = showWallpaper,
+                        onCheckedChange = onToggleShowWallpaper
+                    )
+
+                    if (showWallpaper) {
+                        var blurValue by remember(wallpaperBlurAmount) {
+                            mutableStateOf(wallpaperBlurAmount)
+                        }
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Wallpaper Blur",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Slider(
+                                value = blurValue,
+                                onValueChange = { blurValue = it },
+                                valueRange = 0f..1f,
+                                onValueChangeFinished = {
+                                    onUpdateWallpaperBlur(blurValue)
+                                }
+                            )
+                            Text(
+                                text = "${(blurValue * 100).toInt()}% blur",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "Background Color",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                "system" to "System",
+                                "black" to "Black",
+                                "white" to "White"
+                            ).forEach { (value, label) ->
+                                FilterChip(
+                                    selected = backgroundColor == value,
+                                    onClick = { onUpdateBackgroundColor(value) },
+                                    label = { Text(label) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Visual Effects",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    SettingItem(
+                        title = "Glassmorphism Effects",
+                        subtitle = "Enable translucent glass-like surfaces",
+                        checked = enableGlassmorphism,
+                        onCheckedChange = onToggleGlassmorphism
+                    )
+
+                    SettingItem(
+                        title = "Smooth Animations",
+                        subtitle = "Enable fluid UI transitions and animations",
+                        checked = enableAnimations,
+                        onCheckedChange = onToggleAnimations
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Layout & Density",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Text(
+                        text = "UI Density",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            "compact" to "Compact",
+                            "comfortable" to "Comfortable",
+                            "spacious" to "Spacious"
+                        ).forEach { (value, label) ->
+                            FilterChip(
+                                selected = uiDensity == value,
+                                onClick = { onUpdateUiDensity(value) },
+                                label = { Text(label) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
             }
         }
     }

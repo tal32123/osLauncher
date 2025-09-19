@@ -19,7 +19,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
@@ -36,9 +40,12 @@ class AppDrawerViewModel(
 
     private val _uiState = MutableStateFlow(AppDrawerUiState())
     val uiState: StateFlow<AppDrawerUiState> = _uiState.asStateFlow()
+    private val searchQueryFlow = MutableStateFlow("")
+    private var contactSearchJob: Job? = null
 
     init {
         observeData()
+        setupDebouncedContactSearch()
     }
 
     private fun observeData() {
@@ -67,20 +74,20 @@ class AppDrawerViewModel(
         }
     }
 
-    private suspend fun getRecentApps(allApps: List<AppInfo>, limit: Int, hasPermission: Boolean): List<AppInfo> {
+    private suspend fun getRecentApps(allApps: List<AppInfo>, limit: Int, hasPermission: Boolean): List<AppInfo> = withContext(Dispatchers.Default) {
         if (!hasPermission) {
-            return emptyList()
+            return@withContext emptyList()
         }
 
         val sanitizedLimit = limit.coerceAtLeast(0)
         if (sanitizedLimit == 0) {
-            return emptyList()
+            return@withContext emptyList()
         }
 
         val topUsedApps = usageStatsHelper.getTopUsedApps(hasPermission, sanitizedLimit)
         val appMap = allApps.associateBy { it.packageName }
 
-        return topUsedApps.mapNotNull { usageApp ->
+        topUsedApps.mapNotNull { usageApp ->
             appMap[usageApp.packageName]
         }
     }
@@ -288,16 +295,49 @@ class AppDrawerViewModel(
         }
     }
 
-    fun updateSearchQuery(query: String) {
-        _uiState.value = _uiState.value.copy(searchQuery = query)
+    private fun setupDebouncedContactSearch() {
         viewModelScope.launch {
-            val contacts = contactHelper.searchContacts(query)
-            _uiState.value = _uiState.value.copy(contacts = contacts)
+            searchQueryFlow
+                .debounce(300) // 300ms debounce
+                .collect { query ->
+                    if (query.isNotBlank()) {
+                        searchContacts(query)
+                    } else {
+                        _uiState.value = _uiState.value.copy(contacts = emptyList())
+                    }
+                }
         }
     }
 
+    private fun searchContacts(query: String) {
+        contactSearchJob?.cancel()
+        contactSearchJob = viewModelScope.launch {
+            try {
+                val contacts = withContext(Dispatchers.IO) {
+                    contactHelper.searchContacts(query)
+                }
+                _uiState.value = _uiState.value.copy(contacts = contacts)
+            } catch (e: Exception) {
+                Log.e("AppDrawerViewModel", "Error searching contacts", e)
+                _uiState.value = _uiState.value.copy(contacts = emptyList())
+            }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+        searchQueryFlow.value = query
+    }
+
     fun clearSearchOnNavigation() {
-        _uiState.value = _uiState.value.copy(searchQuery = "")
+        contactSearchJob?.cancel()
+        searchQueryFlow.value = ""
+        _uiState.value = _uiState.value.copy(searchQuery = "", contacts = emptyList())
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        contactSearchJob?.cancel()
     }
 
     fun refreshApps() {

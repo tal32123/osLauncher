@@ -14,6 +14,7 @@ import com.talauncher.data.model.InstalledApp
 import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.ErrorUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 
@@ -394,26 +395,33 @@ class AppRepository(
 
     suspend fun syncInstalledApps() = withContext(Dispatchers.IO) {
         try {
-            val installedApps = getInstalledApps()
-            val existingApps = getAllAppsSync()
+            // Fetch data in parallel for better performance
+            val installedAppsDeferred = async { getInstalledApps() }
+            val existingAppsDeferred = async { getAllAppsSync() }
 
-            // Create a map of existing apps for quick lookup
+            val installedApps = installedAppsDeferred.await()
+            val existingApps = existingAppsDeferred.await()
+
+            // Create optimized lookups
             val existingAppMap = existingApps.associateBy { it.packageName }
-            val installedPackages = installedApps.map { it.packageName }.toSet()
+            val installedPackages = installedApps.mapTo(mutableSetOf()) { it.packageName }
 
-            // Prepare batches for database operations
+            // Process in chunks to avoid large memory allocations
+            val chunkSize = 50
             val appsToInsert = mutableListOf<AppInfo>()
             val appsToDelete = mutableListOf<AppInfo>()
 
-            // Collect new apps that don't exist in database
-            installedApps.forEach { installedApp ->
-                if (!existingAppMap.containsKey(installedApp.packageName)) {
-                    appsToInsert.add(
-                        AppInfo(
-                            packageName = installedApp.packageName,
-                            appName = installedApp.appName
+            // Collect new apps in chunks
+            installedApps.chunked(chunkSize).forEach { chunk ->
+                chunk.forEach { installedApp ->
+                    if (!existingAppMap.containsKey(installedApp.packageName)) {
+                        appsToInsert.add(
+                            AppInfo(
+                                packageName = installedApp.packageName,
+                                appName = installedApp.appName
+                            )
                         )
-                    )
+                    }
                 }
             }
 
@@ -428,20 +436,26 @@ class AppRepository(
                 )
             }
 
-            // Collect apps that are no longer installed (excluding Device Settings shortcut)
+            // Collect apps that are no longer installed
             val packagesToKeep = installedPackages + deviceSettingsPackage
-            existingApps.forEach { storedApp ->
-                if (!packagesToKeep.contains(storedApp.packageName)) {
-                    appsToDelete.add(storedApp)
+            existingApps.chunked(chunkSize).forEach { chunk ->
+                chunk.forEach { storedApp ->
+                    if (!packagesToKeep.contains(storedApp.packageName)) {
+                        appsToDelete.add(storedApp)
+                    }
                 }
             }
 
-            // Perform batch operations
+            // Perform batch operations with chunking for large datasets
             if (appsToInsert.isNotEmpty()) {
-                appDao.insertApps(appsToInsert)
+                appsToInsert.chunked(chunkSize).forEach { chunk ->
+                    appDao.insertApps(chunk)
+                }
             }
             if (appsToDelete.isNotEmpty()) {
-                appDao.deleteApps(appsToDelete)
+                appsToDelete.chunked(chunkSize).forEach { chunk ->
+                    appDao.deleteApps(chunk)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing installed apps", e)

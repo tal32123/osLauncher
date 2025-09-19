@@ -77,28 +77,39 @@ class MainActivity : ComponentActivity() {
                 this.errorHandler
             )
 
+            // Initialize session repository and observe expirations in a single coroutine
             lifecycleScope.launch {
-                sessionRepository.initialize()
-                sessionRepository.emitExpiredSessions()
-            }
+                try {
+                    sessionRepository.initialize()
+                    sessionRepository.emitExpiredSessions()
 
-            // Read and store commit info
-            lifecycleScope.launch {
-                val commitInfo = CommitInfoReader.readCommitInfo(this@MainActivity)
-                commitInfo?.let {
-                    settingsRepository.updateBuildInfo(
-                        commitHash = it.commit,
-                        commitMessage = it.message,
-                        commitDate = it.date,
-                        branch = it.branch,
-                        buildTime = it.buildTime
+                    // Start observing session expirations
+                    launch {
+                        sessionRepository.observeSessionExpirations().collect {
+                            shouldNavigateToHome = true
+                        }
+                    }
+
+                    // Read and store commit info
+                    launch {
+                        val commitInfo = CommitInfoReader.readCommitInfo(this@MainActivity)
+                        commitInfo?.let {
+                            settingsRepository.updateBuildInfo(
+                                commitHash = it.commit,
+                                commitMessage = it.message,
+                                commitDate = it.date,
+                                branch = it.branch,
+                                buildTime = it.buildTime
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error during initialization", e)
+                    errorHandler.showError(
+                        "Initialization Error",
+                        "Failed to initialize app components: ${e.localizedMessage ?: e.message}",
+                        e
                     )
-                }
-            }
-
-            lifecycleScope.launch {
-                sessionRepository.observeSessionExpirations().collect {
-                    shouldNavigateToHome = true
                 }
             }
 
@@ -200,6 +211,13 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             sessionRepository.emitExpiredSessions()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::sessionRepository.isInitialized) {
+            sessionRepository.cleanup()
         }
     }
 }

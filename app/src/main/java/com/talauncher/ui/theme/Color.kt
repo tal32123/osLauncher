@@ -2,40 +2,101 @@ package com.talauncher.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// GitHub Primer-inspired color palette
-// Based on GitHub's design system: https://primer.style/foundations/color
+// Modern 2025 Minimalist Color Palette
+// Inspired by Material Design 3 and contemporary minimalist trends
 
-// Primary colors - GitHub's signature blues and grays
-val PrimerBlue = Color(0xFF0969da)         // GitHub blue (primary action)
-val PrimerGray900 = Color(0xFF24292f)      // Dark text (high contrast)
-val PrimerGray800 = Color(0xFF32383f)      // Medium dark text
-val PrimerGray700 = Color(0xFF424a53)      // Body text
-val PrimerGray600 = Color(0xFF656d76)      // Muted text
-val PrimerGray500 = Color(0xFF848d97)      // Placeholder text
-val PrimerGray300 = Color(0xFFd0d7de)      // Borders
-val PrimerGray200 = Color(0xFFd8dee4)      // Subtle borders
-val PrimerGray100 = Color(0xFFf6f8fa)      // Canvas subtle
-val PrimerGray50 = Color(0xFFfafbfc)       // Canvas default
+// Core minimalist colors - sophisticated and refined
+val MinimalPrimary = Color(0xFF1a1a1a)        // Deep charcoal
+val MinimalSecondary = Color(0xFF6366f1)      // Modern indigo
+val MinimalAccent = Color(0xFF06b6d4)         // Cyan accent
+val MinimalNeutral900 = Color(0xFF111827)     // Almost black
+val MinimalNeutral800 = Color(0xFF1f2937)     // Dark slate
+val MinimalNeutral700 = Color(0xFF374151)     // Slate
+val MinimalNeutral600 = Color(0xFF4b5563)     // Cool gray
+val MinimalNeutral500 = Color(0xFF6b7280)     // Medium gray
+val MinimalNeutral400 = Color(0xFF9ca3af)     // Light gray
+val MinimalNeutral300 = Color(0xFFd1d5db)     // Pale gray
+val MinimalNeutral200 = Color(0xFFe5e7eb)     // Very pale gray
+val MinimalNeutral100 = Color(0xFFf3f4f6)     // Off white
+val MinimalNeutral50 = Color(0xFFf9fafb)      // Pure white base
 
-// Dark mode colors
-val PrimerBlueDark = Color(0xFF58a6ff)     // Blue for dark mode
-val PrimerGray900Dark = Color(0xFFf0f6fc)  // Light text on dark
-val PrimerGray800Dark = Color(0xFFe6edf3)  // Medium light text
-val PrimerGray700Dark = Color(0xFFb1bac4)  // Body text dark
-val PrimerGray600Dark = Color(0xFF8b949e)  // Muted text dark
-val PrimerGray500Dark = Color(0xFF6e7681)  // Placeholder dark
-val PrimerGray300Dark = Color(0xFF484f58)  // Borders dark
-val PrimerGray200Dark = Color(0xFF30363d)  // Subtle borders dark
-val PrimerGray100Dark = Color(0xFF21262d)  // Canvas subtle dark
-val PrimerGray50Dark = Color(0xFF0d1117)   // Canvas default dark
+// Light theme colors - clean and airy
+val MinimalPrimaryLight = Color(0xFF6366f1)   // Indigo primary
+val MinimalSurfaceLight = Color(0xFFffffff)   // Pure white
+val MinimalBackgroundLight = Color(0xFFfafafa) // Subtle warm white
+val MinimalOnSurfaceLight = Color(0xFF1a1a1a) // Deep text
 
-// Status colors - GitHub's semantic colors
-val PrimerGreen = Color(0xFF1a7f37)        // Success
-val PrimerGreenDark = Color(0xFF3fb950)    // Success dark
-val PrimerRed = Color(0xFFd1242f)          // Danger
-val PrimerRedDark = Color(0xFFf85149)      // Danger dark
-val PrimerYellow = Color(0xFFbf8700)       // Warning
-val PrimerYellowDark = Color(0xFFd29922)   // Warning dark
+// Dark theme colors - sophisticated and deep
+val MinimalPrimaryDark = Color(0xFF818cf8)    // Lighter indigo for dark
+val MinimalSurfaceDark = Color(0xFF0f0f0f)    // Deep black
+val MinimalBackgroundDark = Color(0xFF080808) // Ultra deep black
+val MinimalOnSurfaceDark = Color(0xFFfafafa)  // Pure white text
+
+// Preset color palette options for user customization
+object ColorPalettes {
+    // Warm minimalist palette
+    val WarmMinimal = mapOf(
+        "primary" to Color(0xFFf59e0b),      // Warm amber
+        "surface" to Color(0xFFfffbeb),      // Warm white
+        "background" to Color(0xFFfef3c7),   // Cream
+        "onSurface" to Color(0xFF92400e)     // Warm brown
+    )
+
+    // Cool minimalist palette
+    val CoolMinimal = mapOf(
+        "primary" to Color(0xFF0ea5e9),      // Sky blue
+        "surface" to Color(0xFFf0f9ff),      // Cool white
+        "background" to Color(0xFFe0f2fe),   // Pale blue
+        "onSurface" to Color(0xFF0c4a6e)     // Deep blue
+    )
+
+    // Monochrome palette
+    val Monochrome = mapOf(
+        "primary" to Color(0xFF000000),      // Pure black
+        "surface" to Color(0xFFffffff),      // Pure white
+        "background" to Color(0xFFf5f5f5),   // Light gray
+        "onSurface" to Color(0xFF000000)     // Black text
+    )
+
+    // Nature palette
+    val Nature = mapOf(
+        "primary" to Color(0xFF059669),      // Emerald
+        "surface" to Color(0xFFf0fdf4),      // Mint white
+        "background" to Color(0xFFdcfce7),   // Pale green
+        "onSurface" to Color(0xFF064e3b)     // Forest green
+    )
+}
+
+// GitHub Primer colors (legacy support)
+val PrimerBlue = MinimalSecondary
+val PrimerGray900 = MinimalNeutral900
+val PrimerGray800 = MinimalNeutral800
+val PrimerGray700 = MinimalNeutral700
+val PrimerGray600 = MinimalNeutral600
+val PrimerGray500 = MinimalNeutral500
+val PrimerGray300 = MinimalNeutral300
+val PrimerGray200 = MinimalNeutral200
+val PrimerGray100 = MinimalNeutral100
+val PrimerGray50 = MinimalNeutral50
+
+val PrimerBlueDark = Color(0xFF818cf8)
+val PrimerGray900Dark = MinimalNeutral50
+val PrimerGray800Dark = MinimalNeutral100
+val PrimerGray700Dark = MinimalNeutral300
+val PrimerGray600Dark = MinimalNeutral400
+val PrimerGray500Dark = MinimalNeutral500
+val PrimerGray300Dark = MinimalNeutral600
+val PrimerGray200Dark = MinimalNeutral700
+val PrimerGray100Dark = MinimalNeutral800
+val PrimerGray50Dark = MinimalNeutral900
+
+// Status colors
+val PrimerGreen = Color(0xFF059669)
+val PrimerGreenDark = Color(0xFF10b981)
+val PrimerRed = Color(0xFFdc2626)
+val PrimerRedDark = Color(0xFFef4444)
+val PrimerYellow = Color(0xFFf59e0b)
+val PrimerYellowDark = Color(0xFFfbbf24)
 
 
 // Legacy colors for backward compatibility
