@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.SystemClock
 import android.os.IBinder
 import android.provider.Settings
 import android.view.Gravity
@@ -34,6 +35,10 @@ class OverlayService : Service() {
     private var notificationManager: NotificationManager? = null
     private var isForegroundService = false
     private var currentNotificationMessage: String? = null
+    private var pendingForegroundStart: Runnable? = null
+    private var pendingForegroundView: View? = null
+    private var pendingForegroundMessage: String? = null
+    private var pendingForegroundStartTime: Long = 0L
 
     companion object {
         const val ACTION_SHOW_COUNTDOWN = "show_countdown"
@@ -249,6 +254,7 @@ class OverlayService : Service() {
     }
 
     private fun hideOverlay(shouldStopService: Boolean = false) {
+        cancelPendingForegroundStart()
         overlayView?.let { view ->
             try {
                 windowManager?.removeViewImmediate(view)
@@ -353,12 +359,88 @@ class OverlayService : Service() {
             return false
         }
 
-        // For Android 15+: Must have visible overlay before starting foreground service
-        if (Build.VERSION.SDK_INT >= 35 && overlayView?.isAttachedToWindow != true) {
-            Log.w(TAG, "Cannot start foreground service on Android 15+ without visible overlay")
-            return false
+        val sanitizedMessage = message.ifBlank { getString(R.string.overlay_notification_default) }
+
+        if (!isForegroundService && Build.VERSION.SDK_INT >= 35) {
+            val view = overlayView
+            if (view == null) {
+                Log.w(TAG, "Cannot start foreground service on Android 15+ without overlay view")
+                return false
+            }
+
+            if (!view.isAttachedToWindow) {
+                Log.d(TAG, "Overlay view not yet attached; waiting before starting foreground service")
+                scheduleForegroundStart(view, sanitizedMessage)
+                return true
+            }
+
+            if (view.windowVisibility != View.VISIBLE || !view.isShown) {
+                Log.d(TAG, "Overlay not visible yet; waiting before starting foreground service")
+                scheduleForegroundStart(view, sanitizedMessage)
+                return true
+            }
         }
 
+        cancelPendingForegroundStart()
+        return startForegroundInternal(sanitizedMessage)
+    }
+
+    private fun scheduleForegroundStart(view: View, message: String) {
+        if (pendingForegroundView !== view) {
+            cancelPendingForegroundStart()
+        }
+
+        pendingForegroundMessage = message
+        if (pendingForegroundStart != null) {
+            return
+        }
+
+        pendingForegroundView = view
+        pendingForegroundStartTime = SystemClock.uptimeMillis()
+        val runnable = object : Runnable {
+            override fun run() {
+                val currentView = pendingForegroundView
+                if (currentView == null || overlayView !== currentView) {
+                    cancelPendingForegroundStart()
+                    return
+                }
+
+                if (currentView.windowVisibility == View.VISIBLE && currentView.isShown) {
+                    val messageToUse = pendingForegroundMessage ?: message
+                    cancelPendingForegroundStart()
+                    startForegroundInternal(messageToUse)
+                    return
+                }
+
+                val elapsed = SystemClock.uptimeMillis() - pendingForegroundStartTime
+                if (elapsed > 4000L) {
+                    Log.w(TAG, "Overlay not visible after waiting; stopping overlay service")
+                    cancelPendingForegroundStart()
+                    hideOverlay(shouldStopService = true)
+                    return
+                }
+
+                currentView.postDelayed(this, 50L)
+            }
+        }
+
+        pendingForegroundStart = runnable
+        view.post(runnable)
+    }
+
+    private fun cancelPendingForegroundStart() {
+        val view = pendingForegroundView
+        val runnable = pendingForegroundStart
+        if (view != null && runnable != null) {
+            view.removeCallbacks(runnable)
+        }
+        pendingForegroundStart = null
+        pendingForegroundView = null
+        pendingForegroundMessage = null
+        pendingForegroundStartTime = 0L
+    }
+
+    private fun startForegroundInternal(message: String): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel()
         }
