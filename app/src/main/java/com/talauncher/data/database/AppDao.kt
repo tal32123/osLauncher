@@ -45,6 +45,9 @@ interface AppDao {
     @Query("UPDATE app_info SET isDistracting = :isDistracting WHERE packageName = :packageName")
     suspend fun updateDistractingStatus(packageName: String, isDistracting: Boolean)
 
+    @Query("UPDATE app_info SET timeLimitMinutes = :timeLimit WHERE packageName = :packageName")
+    suspend fun updateTimeLimit(packageName: String, timeLimit: Int?)
+
     @Query("SELECT MAX(pinnedOrder) FROM app_info WHERE isPinned = 1")
     suspend fun getMaxPinnedOrder(): Int?
 

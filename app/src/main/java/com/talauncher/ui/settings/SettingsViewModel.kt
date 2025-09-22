@@ -55,6 +55,7 @@ class SettingsViewModel(
                     mathDifficulty = settings?.mathDifficulty ?: "easy",
                     sessionExpiryCountdownSeconds = settings?.sessionExpiryCountdownSeconds ?: 5,
                     recentAppsLimit = settings?.recentAppsLimit ?: 5,
+                    defaultTimeLimitMinutes = settings?.defaultTimeLimitMinutes ?: 30,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
                     showWhatsAppAction = settings?.showWhatsAppAction ?: true,
@@ -123,6 +124,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateDefaultTimeLimit(minutes: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateDefaultTimeLimit(minutes)
+        }
+    }
+
     fun updateMathDifficulty(difficulty: String) {
         viewModelScope.launch {
             settingsRepository.updateMathDifficulty(difficulty)
@@ -138,6 +145,12 @@ class SettingsViewModel(
     fun updateRecentAppsLimit(limit: Int) {
         viewModelScope.launch {
             settingsRepository.updateRecentAppsLimit(limit)
+        }
+    }
+
+    fun updateAppTimeLimit(packageName: String, minutes: Int?) {
+        viewModelScope.launch {
+            appRepository.updateAppTimeLimit(packageName, minutes)
         }
     }
 
@@ -259,6 +272,7 @@ data class SettingsUiState(
     val mathDifficulty: String = "easy",
     val sessionExpiryCountdownSeconds: Int = 5,
     val recentAppsLimit: Int = 5,
+    val defaultTimeLimitMinutes: Int = 30,
     val isLoading: Boolean = false,
     val searchQuery: String = "",
     val showPhoneAction: Boolean = false,

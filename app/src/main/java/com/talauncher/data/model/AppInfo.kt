@@ -10,7 +10,8 @@ data class AppInfo(
     val isPinned: Boolean = false,
     val isHidden: Boolean = false,
     val pinnedOrder: Int = 0,
-    val isDistracting: Boolean = false
+    val isDistracting: Boolean = false,
+    val timeLimitMinutes: Int? = null
 )
 
 data class InstalledApp(

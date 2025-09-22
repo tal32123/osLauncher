@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import java.util.concurrent.TimeUnit
 
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
@@ -96,9 +97,14 @@ class AppDrawerViewModel(
         viewModelScope.launch {
             // Check if we should show time limit prompt first
             if (appRepository.shouldShowTimeLimitPrompt(packageName)) {
+                val promptInfo = buildTimeLimitPromptState(packageName)
                 _uiState.value = _uiState.value.copy(
                     showTimeLimitDialog = true,
-                    selectedAppForTimeLimit = packageName
+                    selectedAppForTimeLimit = packageName,
+                    timeLimitDialogAppName = promptInfo.appName,
+                    timeLimitDialogUsageMinutes = promptInfo.usageMinutes,
+                    timeLimitDialogTimeLimitMinutes = promptInfo.limitMinutes,
+                    timeLimitDialogUsesDefaultLimit = promptInfo.usesDefaultLimit
                 )
                 return@launch
             }
@@ -139,8 +145,35 @@ class AppDrawerViewModel(
     fun dismissTimeLimitDialog() {
         _uiState.value = _uiState.value.copy(
             showTimeLimitDialog = false,
-            selectedAppForTimeLimit = null
+            selectedAppForTimeLimit = null,
+            timeLimitDialogAppName = null,
+            timeLimitDialogUsageMinutes = null,
+            timeLimitDialogTimeLimitMinutes = 0,
+            timeLimitDialogUsesDefaultLimit = true
         )
+    }
+
+    private suspend fun buildTimeLimitPromptState(packageName: String): TimeLimitPromptState {
+        val appName = appRepository.getAppDisplayName(packageName)
+        val timeLimitInfo = appRepository.getAppTimeLimitInfo(packageName)
+        val usageMinutes = getUsageMinutesForApp(packageName)
+        return TimeLimitPromptState(
+            appName = appName,
+            usageMinutes = usageMinutes,
+            limitMinutes = timeLimitInfo.minutes,
+            usesDefaultLimit = timeLimitInfo.usesDefault
+        )
+    }
+
+    private suspend fun getUsageMinutesForApp(packageName: String): Int? {
+        val hasPermission = permissionsHelper.permissionState.value.hasUsageStats
+        if (!hasPermission) {
+            return null
+        }
+
+        val usageStats = usageStatsHelper.getTodayUsageStats(true)
+        val usageMillis = usageStats.firstOrNull { it.packageName == packageName }?.timeInForeground ?: 0
+        return TimeUnit.MILLISECONDS.toMinutes(usageMillis).toInt()
     }
 
     fun launchAppWithTimeLimit(packageName: String, durationMinutes: Int) {
@@ -367,6 +400,13 @@ class AppDrawerViewModel(
     }
 }
 
+private data class TimeLimitPromptState(
+    val appName: String,
+    val usageMinutes: Int?,
+    val limitMinutes: Int,
+    val usesDefaultLimit: Boolean
+)
+
 data class AppDrawerUiState(
     val allApps: List<AppInfo> = emptyList(),
     val hiddenApps: List<AppInfo> = emptyList(),
@@ -380,6 +420,10 @@ data class AppDrawerUiState(
     val selectedAppForFriction: String? = null,
     val showTimeLimitDialog: Boolean = false,
     val selectedAppForTimeLimit: String? = null,
+    val timeLimitDialogAppName: String? = null,
+    val timeLimitDialogUsageMinutes: Int? = null,
+    val timeLimitDialogTimeLimitMinutes: Int = 0,
+    val timeLimitDialogUsesDefaultLimit: Boolean = true,
     val showMathChallengeDialog: Boolean = false,
     val selectedAppForMathChallenge: String? = null,
     val mathChallengeDifficulty: String = "easy",
