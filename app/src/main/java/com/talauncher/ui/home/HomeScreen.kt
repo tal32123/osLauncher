@@ -320,24 +320,16 @@ fun HomeScreen(
         if (uiState.showTimeLimitDialog) {
             run {
                 val selectedPackage = uiState.selectedAppForTimeLimit ?: return@run
-                var appName by remember(selectedPackage) { mutableStateOf(selectedPackage) }
-
-                LaunchedEffect(selectedPackage) {
-                    appName = withContext(Dispatchers.IO) {
-                        try {
-                            val packageManager = context.packageManager
-                            val appInfo = packageManager.getApplicationInfo(selectedPackage, 0)
-                            packageManager.getApplicationLabel(appInfo).toString()
-                        } catch (e: Exception) {
-                            selectedPackage
-                        }
-                    }
-                }
-
                 TimeLimitDialog(
-                    appName = appName,
-                    onConfirm = { durationMinutes ->
-                        viewModel.launchAppWithTimeLimit(selectedPackage, durationMinutes)
+                    appName = uiState.timeLimitDialogAppName ?: selectedPackage,
+                    usageMinutes = uiState.timeLimitDialogUsageMinutes,
+                    timeLimitMinutes = uiState.timeLimitDialogTimeLimitMinutes,
+                    isUsingDefaultLimit = uiState.timeLimitDialogUsesDefaultLimit,
+                    onConfirm = {
+                        viewModel.launchAppWithTimeLimit(
+                            selectedPackage,
+                            uiState.timeLimitDialogTimeLimitMinutes
+                        )
                     },
                     onDismiss = { viewModel.dismissTimeLimitDialog() }
                 )

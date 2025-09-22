@@ -3,9 +3,7 @@ package com.talauncher.data.repository
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import com.talauncher.data.database.AppDao
@@ -17,6 +15,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+
+data class AppTimeLimitInfo(
+    val minutes: Int,
+    val usesDefault: Boolean
+)
 
 /**
  * Repository providing app data and launch helpers.
@@ -33,14 +36,6 @@ class AppRepository(
 ) {
     companion object {
         private const val TAG = "AppRepository"
-        private val DISTRACTING_CATEGORIES = setOf(
-            ApplicationInfo.CATEGORY_GAME,
-            ApplicationInfo.CATEGORY_NEWS,
-            ApplicationInfo.CATEGORY_VIDEO,
-            ApplicationInfo.CATEGORY_AUDIO,
-            ApplicationInfo.CATEGORY_IMAGE,
-            ApplicationInfo.CATEGORY_SOCIAL
-        )
     }
     fun getAllApps(): Flow<List<AppInfo>> = appDao.getAllApps()
 
@@ -340,11 +335,33 @@ class AppRepository(
         }
 
         val app = getApp(packageName)
-        if (app?.isDistracting == true || app?.isHidden == true) {
-            return@withContext true
-        }
+        return@withContext app?.isDistracting == true || app?.isHidden == true
+    }
 
-        return@withContext isDistractingCategory(packageName)
+    suspend fun getAppTimeLimitInfo(packageName: String): AppTimeLimitInfo = withContext(Dispatchers.IO) {
+        val settings = settingsRepository.getSettingsSync()
+        val app = appDao.getApp(packageName)
+        val override = app?.timeLimitMinutes
+        val minutes = override ?: settings.defaultTimeLimitMinutes
+        AppTimeLimitInfo(minutes = minutes, usesDefault = override == null)
+    }
+
+    suspend fun updateAppTimeLimit(packageName: String, minutes: Int?) = withContext(Dispatchers.IO) {
+        val settings = settingsRepository.getSettingsSync()
+        val sanitized = minutes?.coerceIn(5, 480)
+        val effectiveValue = sanitized?.takeIf { it != settings.defaultTimeLimitMinutes }
+
+        val existingApp = appDao.getApp(packageName)
+        if (existingApp != null) {
+            appDao.updateTimeLimit(packageName, effectiveValue)
+        } else {
+            val baseInfo = getAppInfoFromPackage(packageName)
+            if (baseInfo != null) {
+                insertApp(
+                    baseInfo.copy(timeLimitMinutes = effectiveValue)
+                )
+            }
+        }
     }
 
     suspend fun shouldShowMathChallenge(packageName: String): Boolean = withContext(Dispatchers.IO) {
@@ -465,25 +482,5 @@ class AppRepository(
         }
     }
 
-    private fun isDistractingCategory(packageName: String): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return false
-        }
-
-        return try {
-            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
-            val category = appInfo.category
-            category != ApplicationInfo.CATEGORY_UNDEFINED && DISTRACTING_CATEGORIES.contains(category)
-        } catch (e: PackageManager.NameNotFoundException) {
-            Log.w(TAG, "Package not found when checking distracting category: $packageName")
-            false
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Security exception checking distracting category: $packageName", e)
-            false
-        } catch (e: Exception) {
-            Log.e(TAG, "Unexpected error checking distracting category: $packageName", e)
-            false
-        }
-    }
 }
 

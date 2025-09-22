@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +32,9 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("General", "UI & Theme", "Essential Apps", "Distracting Apps", "Usage Insights")
+    var editingApp by remember { mutableStateOf<com.talauncher.data.model.InstalledApp?>(null) }
+    var editingTimeLimit by remember { mutableStateOf(uiState.defaultTimeLimitMinutes) }
+    var editingUsesDefault by remember { mutableStateOf(true) }
 
     // Clear search when navigating away from app selection tabs
     LaunchedEffect(selectedTab) {
@@ -122,16 +126,48 @@ fun SettingsScreen(
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 isLoading = uiState.isLoading
             )
-            3 -> AppSelectionTab(
-                title = "Distracting Apps",
-                subtitle = "Apps that require friction barriers and prompts",
-                apps = viewModel.getFilteredApps(),
-                selectedApps = uiState.distractingApps.map { it.packageName }.toSet(),
-                onToggleApp = viewModel::toggleDistractingApp,
-                searchQuery = uiState.searchQuery,
-                onSearchQueryChange = viewModel::updateSearchQuery,
-                isLoading = uiState.isLoading
-            )
+            3 -> {
+                val distractingAppMap = remember(uiState.distractingApps) {
+                    uiState.distractingApps.associateBy { it.packageName }
+                }
+                var defaultLimitSlider by remember(uiState.defaultTimeLimitMinutes) {
+                    mutableStateOf(uiState.defaultTimeLimitMinutes.toFloat())
+                }
+
+                AppSelectionTab(
+                    title = "Distracting Apps",
+                    subtitle = "Apps that require friction barriers and prompts",
+                    apps = viewModel.getFilteredApps(),
+                    selectedApps = uiState.distractingApps.map { it.packageName }.toSet(),
+                    onToggleApp = viewModel::toggleDistractingApp,
+                    searchQuery = uiState.searchQuery,
+                    onSearchQueryChange = viewModel::updateSearchQuery,
+                    isLoading = uiState.isLoading,
+                    headerContent = {
+                        DefaultTimeLimitCard(
+                            sliderValue = defaultLimitSlider,
+                            displayedMinutes = defaultLimitSlider.roundToInt(),
+                            onSliderValueChange = { defaultLimitSlider = it },
+                            onSliderChangeFinished = {
+                                viewModel.updateDefaultTimeLimit(defaultLimitSlider.roundToInt())
+                            }
+                        )
+                    },
+                    timeLimitInfoProvider = { app ->
+                        val info = distractingAppMap[app.packageName]
+                        val override = info?.timeLimitMinutes
+                        val usesDefault = override == null
+                        (override ?: uiState.defaultTimeLimitMinutes) to usesDefault
+                    },
+                    onEditTimeLimit = { app ->
+                        val info = distractingAppMap[app.packageName]
+                        val override = info?.timeLimitMinutes
+                        editingTimeLimit = override ?: uiState.defaultTimeLimitMinutes
+                        editingUsesDefault = override == null
+                        editingApp = app
+                    }
+                )
+            }
             4 -> {
                 val insightsViewModel: InsightsViewModel = viewModel {
                     InsightsViewModel(viewModel.usageStatsHelper, viewModel.permissionsHelper)
@@ -141,6 +177,24 @@ fun SettingsScreen(
                     viewModel = insightsViewModel
                 )
             }
+        }
+
+        editingApp?.let { app ->
+            EditTimeLimitDialog(
+                appName = app.appName,
+                defaultMinutes = uiState.defaultTimeLimitMinutes,
+                initialMinutes = editingTimeLimit,
+                isUsingDefault = editingUsesDefault,
+                onUseDefault = {
+                    viewModel.updateAppTimeLimit(app.packageName, null)
+                    editingApp = null
+                },
+                onConfirm = { minutes ->
+                    viewModel.updateAppTimeLimit(app.packageName, minutes)
+                    editingApp = null
+                },
+                onDismiss = { editingApp = null }
+            )
         }
     }
 }
@@ -736,6 +790,149 @@ fun GeneralSettings(
 }
 
 @Composable
+fun DefaultTimeLimitCard(
+    sliderValue: Float,
+    displayedMinutes: Int,
+    onSliderValueChange: (Float) -> Unit,
+    onSliderChangeFinished: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Default Time Limit",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Text(
+                text = "This limit applies to every distracting app unless you set a custom value.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = formatMinutesLabel(displayedMinutes),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Slider(
+                value = sliderValue,
+                onValueChange = onSliderValueChange,
+                valueRange = 5f..180f,
+                onValueChangeFinished = onSliderChangeFinished
+            )
+
+            Text(
+                text = "Tap the stopwatch icon next to an app to set a custom limit.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun EditTimeLimitDialog(
+    appName: String,
+    defaultMinutes: Int,
+    initialMinutes: Int,
+    isUsingDefault: Boolean,
+    onUseDefault: () -> Unit,
+    onConfirm: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var minutesText by remember(initialMinutes) { mutableStateOf(initialMinutes.toString()) }
+    var isError by remember { mutableStateOf(false) }
+    var isCurrentlyUsingDefault by remember(initialMinutes, isUsingDefault) { mutableStateOf(isUsingDefault) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Time limit for $appName") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Choose how long you'll allow yourself in this app before TALauncher reminds you.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                OutlinedTextField(
+                    value = minutesText,
+                    onValueChange = {
+                        minutesText = it
+                        if (isError) {
+                            isError = false
+                        }
+                        val parsed = it.toIntOrNull()
+                        isCurrentlyUsingDefault = parsed == defaultMinutes
+                    },
+                    label = { Text("Minutes") },
+                    singleLine = true,
+                    isError = isError,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
+                TextButton(onClick = onUseDefault) {
+                    Text("Use default (${formatMinutesLabel(defaultMinutes)})")
+                }
+
+                if (isError) {
+                    Text(
+                        text = "Enter a number between 5 and 480.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else if (isCurrentlyUsingDefault) {
+                    Text(
+                        text = "Currently using the default limit.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val minutes = minutesText.toIntOrNull()
+                    if (minutes != null && minutes in 5..480) {
+                        onConfirm(minutes)
+                    } else {
+                        isError = true
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+private fun formatMinutesLabel(totalMinutes: Int): String {
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return when {
+        hours > 0 && minutes > 0 -> "$hours hr ${minutes} min"
+        hours > 0 -> if (hours == 1) "1 hour" else "$hours hours"
+        else -> "$minutes min"
+    }
+}
+
+@Composable
 fun SettingItem(
     title: String,
     subtitle: String,
@@ -783,7 +980,10 @@ fun AppSelectionTab(
     onToggleApp: (String) -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
+    headerContent: (@Composable ColumnScope.() -> Unit)? = null,
+    timeLimitInfoProvider: ((com.talauncher.data.model.InstalledApp) -> Pair<Int, Boolean>)? = null,
+    onEditTimeLimit: ((com.talauncher.data.model.InstalledApp) -> Unit)? = null
 ) {
     Column {
         Text(
@@ -792,6 +992,11 @@ fun AppSelectionTab(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             modifier = Modifier.padding(bottom = 16.dp)
         )
+
+        headerContent?.let {
+            it()
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         OutlinedTextField(
             value = searchQuery,
@@ -832,10 +1037,18 @@ fun AppSelectionTab(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(apps) { app ->
+                    val info = timeLimitInfoProvider?.invoke(app)
+                    val minutes = info?.first
+                    val usesDefault = info?.second ?: true
                     AppSelectionItem(
                         app = app,
                         isSelected = selectedApps.contains(app.packageName),
-                        onToggle = { onToggleApp(app.packageName) }
+                        onToggle = { onToggleApp(app.packageName) },
+                        timeLimitMinutes = minutes,
+                        usesDefaultTimeLimit = usesDefault,
+                        onEditTimeLimit = onEditTimeLimit?.let { handler ->
+                            { handler(app) }
+                        }
                     )
                 }
             }
@@ -848,7 +1061,10 @@ fun AppSelectionTab(
 fun AppSelectionItem(
     app: com.talauncher.data.model.InstalledApp,
     isSelected: Boolean,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    timeLimitMinutes: Int? = null,
+    usesDefaultTimeLimit: Boolean = true,
+    onEditTimeLimit: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -858,14 +1074,37 @@ fun AppSelectionItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = app.appName,
-                fontSize = 16.sp,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = app.appName,
+                    fontSize = 16.sp
+                )
+                if (isSelected && timeLimitMinutes != null) {
+                    val limitLabel = buildString {
+                        append("Limit: $timeLimitMinutes min")
+                        if (usesDefaultTimeLimit) {
+                            append(" (default)")
+                        }
+                    }
+                    Text(
+                        text = limitLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (isSelected && timeLimitMinutes != null && onEditTimeLimit != null) {
+                IconButton(onClick = onEditTimeLimit) {
+                    Icon(
+                        imageVector = Icons.Outlined.Timer,
+                        contentDescription = "Edit time limit"
+                    )
+                }
+            }
             Checkbox(
                 checked = isSelected,
                 onCheckedChange = { onToggle() }

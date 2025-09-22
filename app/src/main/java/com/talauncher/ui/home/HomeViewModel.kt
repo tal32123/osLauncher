@@ -42,6 +42,7 @@ import java.text.SimpleDateFormat
 import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 sealed class SearchItem {
     abstract val name: String
@@ -294,9 +295,14 @@ class HomeViewModel(
     fun launchApp(packageName: String) {
         viewModelScope.launch {
             if (appRepository.shouldShowTimeLimitPrompt(packageName)) {
+                val promptInfo = buildTimeLimitPromptState(packageName)
                 _uiState.value = _uiState.value.copy(
                     showTimeLimitDialog = true,
-                    selectedAppForTimeLimit = packageName
+                    selectedAppForTimeLimit = packageName,
+                    timeLimitDialogAppName = promptInfo.appName,
+                    timeLimitDialogUsageMinutes = promptInfo.usageMinutes,
+                    timeLimitDialogTimeLimitMinutes = promptInfo.limitMinutes,
+                    timeLimitDialogUsesDefaultLimit = promptInfo.usesDefaultLimit
                 )
                 timeLimitRequestSource = TimeLimitRequestSource.STANDARD
                 return@launch
@@ -515,7 +521,11 @@ class HomeViewModel(
         timeLimitRequestSource = TimeLimitRequestSource.STANDARD
         _uiState.value = _uiState.value.copy(
             showTimeLimitDialog = false,
-            selectedAppForTimeLimit = null
+            selectedAppForTimeLimit = null,
+            timeLimitDialogAppName = null,
+            timeLimitDialogUsageMinutes = null,
+            timeLimitDialogTimeLimitMinutes = 0,
+            timeLimitDialogUsesDefaultLimit = true
         )
         if (wasExtension && currentExpiredSession != null) {
             _uiState.value = _uiState.value.copy(showSessionExpiryDecisionDialog = true)
@@ -537,7 +547,11 @@ class HomeViewModel(
                 if (isExtension) {
                     _uiState.value = _uiState.value.copy(
                         showTimeLimitDialog = false,
-                        selectedAppForTimeLimit = null
+                        selectedAppForTimeLimit = null,
+                        timeLimitDialogAppName = null,
+                        timeLimitDialogUsageMinutes = null,
+                        timeLimitDialogTimeLimitMinutes = 0,
+                        timeLimitDialogUsesDefaultLimit = true
                     )
                     timeLimitRequestSource = TimeLimitRequestSource.STANDARD
                     finalizeExpiredSession()
@@ -548,11 +562,39 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     showTimeLimitDialog = false,
                     selectedAppForTimeLimit = null,
+                    timeLimitDialogAppName = null,
+                    timeLimitDialogUsageMinutes = null,
+                    timeLimitDialogTimeLimitMinutes = 0,
+                    timeLimitDialogUsesDefaultLimit = true,
                     showSessionExpiryDecisionDialog = true
                 )
                 timeLimitRequestSource = TimeLimitRequestSource.STANDARD
             }
         }
+    }
+
+    private suspend fun buildTimeLimitPromptState(packageName: String): TimeLimitPromptState {
+        val appName = appRepository.getAppDisplayName(packageName)
+        val timeLimitInfo = appRepository.getAppTimeLimitInfo(packageName)
+        val usageMinutes = getUsageMinutesForApp(packageName)
+        return TimeLimitPromptState(
+            appName = appName,
+            usageMinutes = usageMinutes,
+            limitMinutes = timeLimitInfo.minutes,
+            usesDefaultLimit = timeLimitInfo.usesDefault
+        )
+    }
+
+    private suspend fun getUsageMinutesForApp(packageName: String): Int? {
+        val helper = usageStatsHelper ?: return null
+        val permissionState = permissionsHelper?.permissionState?.value
+        if (permissionState?.hasUsageStats != true) {
+            return null
+        }
+
+        val usageStats = helper.getTodayUsageStats(true)
+        val usageMillis = usageStats.firstOrNull { it.packageName == packageName }?.timeInForeground ?: 0
+        return TimeUnit.MILLISECONDS.toMinutes(usageMillis).toInt()
     }
 
     fun dismissMathChallengeDialog() {
@@ -596,6 +638,7 @@ class HomeViewModel(
     fun onMathChallengeCompleted(packageName: String) {
         viewModelScope.launch {
             if (_uiState.value.isMathChallengeForSessionExtension) {
+                val promptInfo = buildTimeLimitPromptState(packageName)
                 _uiState.value = _uiState.value.copy(
                     showMathChallengeDialog = false,
                     selectedAppForMathChallenge = null,
@@ -603,7 +646,11 @@ class HomeViewModel(
                     isMathChallengeForExpiredSession = false,
                     showSessionExpiryDecisionDialog = false,
                     showTimeLimitDialog = true,
-                    selectedAppForTimeLimit = packageName
+                    selectedAppForTimeLimit = packageName,
+                    timeLimitDialogAppName = promptInfo.appName,
+                    timeLimitDialogUsageMinutes = promptInfo.usageMinutes,
+                    timeLimitDialogTimeLimitMinutes = promptInfo.limitMinutes,
+                    timeLimitDialogUsesDefaultLimit = promptInfo.usesDefaultLimit
                 )
                 timeLimitRequestSource = TimeLimitRequestSource.SESSION_EXTENSION
             } else {
@@ -651,12 +698,19 @@ class HomeViewModel(
 
     fun onSessionExpiryDecisionExtend() {
         val packageName = currentExpiredSession?.packageName ?: return
-        timeLimitRequestSource = TimeLimitRequestSource.SESSION_EXTENSION
-        _uiState.value = _uiState.value.copy(
-            showSessionExpiryDecisionDialog = false,
-            showTimeLimitDialog = true,
-            selectedAppForTimeLimit = packageName
-        )
+        viewModelScope.launch {
+            timeLimitRequestSource = TimeLimitRequestSource.SESSION_EXTENSION
+            val promptInfo = buildTimeLimitPromptState(packageName)
+            _uiState.value = _uiState.value.copy(
+                showSessionExpiryDecisionDialog = false,
+                showTimeLimitDialog = true,
+                selectedAppForTimeLimit = packageName,
+                timeLimitDialogAppName = promptInfo.appName,
+                timeLimitDialogUsageMinutes = promptInfo.usageMinutes,
+                timeLimitDialogTimeLimitMinutes = promptInfo.limitMinutes,
+                timeLimitDialogUsesDefaultLimit = promptInfo.usesDefaultLimit
+            )
+        }
     }
 
     fun onSessionExpiryDecisionClose() {
@@ -1178,6 +1232,13 @@ class HomeViewModel(
     }
 }
 
+private data class TimeLimitPromptState(
+    val appName: String,
+    val usageMinutes: Int?,
+    val limitMinutes: Int,
+    val usesDefaultLimit: Boolean
+)
+
 data class HomeUiState(
     val pinnedApps: List<AppInfo> = emptyList(),
     val currentTime: String = "",
@@ -1196,6 +1257,10 @@ data class HomeUiState(
     val selectedAppForFriction: String? = null,
     val showTimeLimitDialog: Boolean = false,
     val selectedAppForTimeLimit: String? = null,
+    val timeLimitDialogAppName: String? = null,
+    val timeLimitDialogUsageMinutes: Int? = null,
+    val timeLimitDialogTimeLimitMinutes: Int = 0,
+    val timeLimitDialogUsesDefaultLimit: Boolean = true,
     val showMathChallengeDialog: Boolean = false,
     val selectedAppForMathChallenge: String? = null,
     val isMathChallengeForExpiredSession: Boolean = false,

@@ -53,9 +53,7 @@ import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.theme.*
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.Collator
 import java.util.Locale
 import kotlin.math.max
@@ -576,24 +574,16 @@ fun AppDrawerScreen(
         if (uiState.showTimeLimitDialog) {
             run {
                 val selectedPackage = uiState.selectedAppForTimeLimit ?: return@run
-                var appName by remember(selectedPackage) { mutableStateOf(selectedPackage) }
-
-                LaunchedEffect(selectedPackage) {
-                    appName = withContext(Dispatchers.IO) {
-                        try {
-                            val packageManager = context.packageManager
-                            val appInfo = packageManager.getApplicationInfo(selectedPackage, 0)
-                            packageManager.getApplicationLabel(appInfo).toString()
-                        } catch (e: Exception) {
-                            selectedPackage
-                        }
-                    }
-                }
-
                 TimeLimitDialog(
-                    appName = appName,
-                    onConfirm = { durationMinutes ->
-                        viewModel.launchAppWithTimeLimit(selectedPackage, durationMinutes)
+                    appName = uiState.timeLimitDialogAppName ?: selectedPackage,
+                    usageMinutes = uiState.timeLimitDialogUsageMinutes,
+                    timeLimitMinutes = uiState.timeLimitDialogTimeLimitMinutes,
+                    isUsingDefaultLimit = uiState.timeLimitDialogUsesDefaultLimit,
+                    onConfirm = {
+                        viewModel.launchAppWithTimeLimit(
+                            selectedPackage,
+                            uiState.timeLimitDialogTimeLimitMinutes
+                        )
                     },
                     onDismiss = { viewModel.dismissTimeLimitDialog() }
                 )
