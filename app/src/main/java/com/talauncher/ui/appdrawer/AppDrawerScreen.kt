@@ -52,8 +52,9 @@ import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.theme.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.Collator
 import java.util.Locale
@@ -78,6 +79,7 @@ fun AppDrawerScreen(
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             viewModel.refreshApps()
+            awaitCancellation()
         }
     }
 
