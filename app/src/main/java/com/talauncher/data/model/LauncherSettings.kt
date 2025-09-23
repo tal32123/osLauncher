@@ -17,6 +17,7 @@ data class LauncherSettings(
     val mathDifficulty: String = "easy", // "easy", "medium", "hard"
     val sessionExpiryCountdownSeconds: Int = 5, // Number of seconds to block the app before prompting for action
     val recentAppsLimit: Int = 10, // Number of recent apps to show in insights
+    val defaultTimeLimitMinutes: Int = 30, // Default time limit applied to distracting apps
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
     val showWhatsAppAction: Boolean = true,

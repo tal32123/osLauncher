@@ -49,6 +49,12 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(sessionExpiryCountdownSeconds = seconds.coerceIn(0, 30)))
     }
 
+    suspend fun updateDefaultTimeLimit(minutes: Int) {
+        val settings = getSettingsSync()
+        val sanitized = minutes.coerceIn(5, 480)
+        updateSettings(settings.copy(defaultTimeLimitMinutes = sanitized))
+    }
+
     suspend fun updateBuildInfo(
         commitHash: String?,
         commitMessage: String?,

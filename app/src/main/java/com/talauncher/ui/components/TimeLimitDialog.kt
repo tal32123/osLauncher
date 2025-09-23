@@ -2,12 +2,10 @@ package com.talauncher.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -18,11 +16,12 @@ import com.talauncher.ui.home.MotivationalQuotesProvider
 @Composable
 fun TimeLimitDialog(
     appName: String,
-    onConfirm: (Int) -> Unit,
+    usageMinutes: Int?,
+    timeLimitMinutes: Int,
+    isUsingDefaultLimit: Boolean,
+    onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    var durationText by remember { mutableStateOf("30") }
-    var isError by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val quotesProvider = remember(context) { MotivationalQuotesProvider(context) }
@@ -57,7 +56,7 @@ fun TimeLimitDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "How long will you use $appName?",
+                    text = "Pause before opening $appName",
                     style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -67,7 +66,7 @@ fun TimeLimitDialog(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 20.dp),
+                            .padding(bottom = 16.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
                         ),
@@ -85,30 +84,42 @@ fun TimeLimitDialog(
                     }
                 }
 
+                val usageText = when {
+                    usageMinutes == null -> "We couldn't detect today's usage. Enable usage access to see your progress."
+                    usageMinutes == 0 -> "You haven't spent any time in $appName today."
+                    else -> "You've already used ${formatMinutesLabel(usageMinutes)} in $appName today."
+                }
+
                 Text(
-                    text = "Set a time limit to help manage your usage",
+                    text = usageText,
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                val limitLabel = buildString {
+                    append("Today's limit: ${formatMinutesLabel(timeLimitMinutes)}")
+                    if (isUsingDefaultLimit) {
+                        append(" (default)")
+                    }
+                }
+
+                Text(
+                    text = limitLabel,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                OutlinedTextField(
-                    value = durationText,
-                    onValueChange = {
-                        durationText = it
-                        isError = false
-                    },
-                    label = { Text("Minutes") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = isError,
-                    supportingText = if (isError) {
-                        { Text("Please enter a valid number") }
-                    } else null,
-                    modifier = Modifier.fillMaxWidth()
+                Text(
+                    text = "Are you sure you want to open it right now?",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -118,24 +129,27 @@ fun TimeLimitDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel")
+                        Text("Not now")
                     }
 
                     Button(
-                        onClick = {
-                            val duration = durationText.toIntOrNull()
-                            if (duration != null && duration > 0) {
-                                onConfirm(duration)
-                            } else {
-                                isError = true
-                            }
-                        },
+                        onClick = onConfirm,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Start")
+                        Text("Yes, open")
                     }
                 }
             }
         }
+    }
+}
+
+private fun formatMinutesLabel(totalMinutes: Int): String {
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return when {
+        hours > 0 && minutes > 0 -> "$hours hr ${minutes} min"
+        hours > 0 -> if (hours == 1) "1 hour" else "$hours hours"
+        else -> "$minutes min"
     }
 }
