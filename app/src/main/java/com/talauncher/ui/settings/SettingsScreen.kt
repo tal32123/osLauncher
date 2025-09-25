@@ -7,7 +7,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.Icons.Outlined
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -1100,7 +1102,7 @@ fun AppSelectionItem(
             if (isSelected && timeLimitMinutes != null && onEditTimeLimit != null) {
                 IconButton(onClick = onEditTimeLimit) {
                     Icon(
-                        imageVector = Icons.Outlined.Timer,
+                        imageVector = Icons.Filled.Edit,
                         contentDescription = "Edit time limit"
                     )
                 }
