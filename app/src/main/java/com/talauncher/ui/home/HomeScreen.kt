@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.foundation.layout.onSizeChanged
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.width
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
@@ -911,10 +911,10 @@ private fun ActionTextButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    PrimerButton(
+    OutlinedButton(
         onClick = onClick,
         modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
+        colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),

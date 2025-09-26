@@ -194,9 +194,9 @@ class HomeViewModel(
                     // Get recent apps and alphabet index for the moved app drawer functionality
                     val hasUsageStatsPermission = permissionsHelper?.permissionState?.value?.hasUsageStats ?: false
                     val hiddenApps = try {
-                        appRepository.getAllHiddenApps().first()
+                        appRepository.getHiddenApps().first()
                     } catch (e: Exception) {
-                        emptyList()
+                        emptyList<AppInfo>()
                     }
                     val recentAppsLimit = settings?.recentAppsLimit ?: 10
                     val recentApps = getRecentApps(allApps, hiddenApps, recentAppsLimit, hasUsageStatsPermission)
@@ -1375,24 +1375,17 @@ class HomeViewModel(
     }
 
     fun renameApp(app: AppInfo) {
-        viewModelScope.launch {
-            try {
-                // This would need to be implemented in the appRepository
-                // For now, just dismiss the dialog
-                dismissAppActionDialog()
-            } catch (e: Exception) {
-                errorHandler?.handleError(e, "Failed to rename app")
-            }
-        }
+        // For now, just dismiss the dialog - renaming would require additional UI
+        dismissAppActionDialog()
     }
 
     fun hideApp(packageName: String) {
         viewModelScope.launch {
             try {
-                appRepository.setAppHidden(packageName, true)
+                appRepository.hideApp(packageName)
                 dismissAppActionDialog()
             } catch (e: Exception) {
-                errorHandler?.handleError(e, "Failed to hide app")
+                errorHandler?.showError("Failed to hide app", e.message ?: "Unknown error", e)
             }
         }
     }
@@ -1407,7 +1400,7 @@ class HomeViewModel(
                 ctx.startActivity(intent)
                 dismissAppActionDialog()
             } catch (e: Exception) {
-                errorHandler?.handleError(e, "Failed to open app info")
+                errorHandler?.showError("Failed to open app info", e.message ?: "Unknown error", e)
             }
         }
     }
@@ -1422,7 +1415,7 @@ class HomeViewModel(
                 ctx.startActivity(intent)
                 dismissAppActionDialog()
             } catch (e: Exception) {
-                errorHandler?.handleError(e, "Failed to uninstall app")
+                errorHandler?.showError("Failed to uninstall app", e.message ?: "Unknown error", e)
             }
         }
     }
