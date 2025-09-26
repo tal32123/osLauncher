@@ -13,7 +13,7 @@ for %%C in (%CLASSES%) do (
     echo ----------------------------------------
     echo Running Espresso flow: %%C
     echo ----------------------------------------
-    call gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%%C --info
+    call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%%C --info
     if errorlevel 1 (
         echo !!! Failure detected in %%C
         set /a FAILURES+=1
@@ -24,7 +24,7 @@ for %%C in (%CLASSES%) do (
 echo ========================================
 echo Running complete unit and instrumentation suites
 echo ========================================
-call gradlew test connectedAndroidTest --info
+call .\gradlew.bat test connectedAndroidTest --info
 if errorlevel 1 (
     echo !!! Failure detected while running the full test suite
     set /a FAILURES+=1
