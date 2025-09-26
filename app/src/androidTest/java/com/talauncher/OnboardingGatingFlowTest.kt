@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.test.assertEquals
+import org.junit.Assert.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class OnboardingGatingFlowTest {
@@ -44,7 +44,7 @@ class OnboardingGatingFlowTest {
         val permissionsHelper = FakePermissionsHelper(context, notificationsInitiallyGranted).apply {
             onDefaultLauncherRequest = { usageStatsHelper.setDefaultLauncher(true) }
         }
-        val settingsRepository = SettingsRepository(FakeSettingsDao())
+        val settingsRepository = SettingsRepository(OnboardingFakeSettingsDao())
         val onboardingViewModel = OnboardingViewModel(settingsRepository)
 
         var completionCount = 0
@@ -185,7 +185,7 @@ private class FakeUsageStatsHelper(context: Context) : UsageStatsHelper(context)
     override fun isDefaultLauncher(): Boolean = isDefaultLauncher
 }
 
-private class FakeSettingsDao : SettingsDao {
+internal class OnboardingFakeSettingsDao : SettingsDao {
     private var settings: LauncherSettings = LauncherSettings()
     private val state = MutableStateFlow<LauncherSettings?>(settings)
 

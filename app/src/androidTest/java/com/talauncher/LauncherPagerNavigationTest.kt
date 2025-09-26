@@ -37,8 +37,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import kotlin.requireNotNull
 
 @RunWith(AndroidJUnit4::class)
@@ -50,7 +50,7 @@ class LauncherPagerNavigationTest {
     @Test
     fun pagerNavigation_backHandling_and_launchFlow() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val settingsRepository = SettingsRepository(FakeSettingsDao())
+        val settingsRepository = SettingsRepository(LauncherFakeSettingsDao())
         val sessionRepository = SessionRepository(FakeAppSessionDao())
         val appRepository = AppRepository(FakeAppDao(), context, settingsRepository, sessionRepository)
         val permissionsHelper = TestPermissionsHelper(context)
@@ -180,7 +180,7 @@ private class FakeAppDao : AppDao {
     override suspend fun getAllAppsSync(): List<AppInfo> = emptyList()
 }
 
-private class FakeSettingsDao : SettingsDao {
+internal class LauncherFakeSettingsDao : SettingsDao {
     private var settings = LauncherSettings()
     private val state = MutableStateFlow<LauncherSettings?>(settings)
 
