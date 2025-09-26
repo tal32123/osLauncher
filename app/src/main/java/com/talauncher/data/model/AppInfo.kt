@@ -7,9 +7,7 @@ import androidx.room.PrimaryKey
 data class AppInfo(
     @PrimaryKey val packageName: String,
     val appName: String,
-    val isPinned: Boolean = false,
     val isHidden: Boolean = false,
-    val pinnedOrder: Int = 0,
     val isDistracting: Boolean = false,
     val timeLimitMinutes: Int? = null
 )

@@ -9,8 +9,6 @@ interface AppDao {
     @Query("SELECT * FROM app_info WHERE isHidden = 0 ORDER BY appName ASC")
     fun getAllVisibleApps(): Flow<List<AppInfo>>
 
-    @Query("SELECT * FROM app_info WHERE isPinned = 1 AND isHidden = 0 ORDER BY pinnedOrder ASC, appName ASC")
-    fun getPinnedApps(): Flow<List<AppInfo>>
 
     @Query("SELECT * FROM app_info WHERE isHidden = 1 ORDER BY appName ASC")
     fun getHiddenApps(): Flow<List<AppInfo>>
@@ -36,8 +34,6 @@ interface AppDao {
     @Delete
     suspend fun deleteApps(apps: List<AppInfo>)
 
-    @Query("UPDATE app_info SET isPinned = :isPinned, pinnedOrder = :order WHERE packageName = :packageName")
-    suspend fun updatePinnedStatus(packageName: String, isPinned: Boolean, order: Int = 0)
 
     @Query("UPDATE app_info SET isHidden = :isHidden WHERE packageName = :packageName")
     suspend fun updateHiddenStatus(packageName: String, isHidden: Boolean)
@@ -48,8 +44,6 @@ interface AppDao {
     @Query("UPDATE app_info SET timeLimitMinutes = :timeLimit WHERE packageName = :packageName")
     suspend fun updateTimeLimit(packageName: String, timeLimit: Int?)
 
-    @Query("SELECT MAX(pinnedOrder) FROM app_info WHERE isPinned = 1")
-    suspend fun getMaxPinnedOrder(): Int?
 
     @Query("SELECT * FROM app_info")
     fun getAllApps(): Flow<List<AppInfo>>

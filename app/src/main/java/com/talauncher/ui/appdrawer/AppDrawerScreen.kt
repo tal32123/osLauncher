@@ -561,8 +561,6 @@ fun AppDrawerScreen(
         AppActionDialog(
             app = uiState.selectedAppForAction,
             onDismiss = viewModel::dismissAppActionDialog,
-            onPin = viewModel::pinApp,
-            onUnpin = viewModel::unpinApp,
             onRename = viewModel::startRenamingApp,
             onHide = viewModel::hideApp,
             onAppInfo = { packageName ->
@@ -831,23 +829,6 @@ fun AppDrawerItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            if (appInfo.isPinned) {
-                Surface(
-                    color = PrimerBlue.copy(alpha = 0.1f),
-                    shape = PrimerShapes.small,
-                    border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.3f))
-                ) {
-                    Text(
-                        text = "Pinned",
-                        modifier = Modifier.padding(
-                            horizontal = PrimerSpacing.xs,
-                            vertical = 2.dp
-                        ),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = PrimerBlue
-                    )
-                }
-            }
         }
     }
 }
@@ -908,8 +889,6 @@ fun HiddenAppItem(
 fun AppActionDialog(
     app: AppInfo?,
     onDismiss: () -> Unit,
-    onPin: (String) -> Unit,
-    onUnpin: (String) -> Unit,
     onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
     onAppInfo: (String) -> Unit,
@@ -940,23 +919,6 @@ fun AppActionDialog(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
                     ) {
-                        ActionTextButton(
-                            label = if (app.isPinned) "Unpin from essentials" else "Pin to essentials",
-                            description = if (app.isPinned) {
-                                "Remove this app from your quick access list."
-                            } else {
-                                "Add this app to your essentials list for quick access."
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                if (app.isPinned) {
-                                    onUnpin(app.packageName)
-                                } else {
-                                    onPin(app.packageName)
-                                }
-                                onDismiss()
-                            }
-                        )
 
                         ActionTextButton(
                             label = stringResource(R.string.rename_app_action_label),

@@ -41,7 +41,6 @@ class AppRepository(
 
     fun getAllVisibleApps(): Flow<List<AppInfo>> = appDao.getAllVisibleApps()
 
-    fun getPinnedApps(): Flow<List<AppInfo>> = appDao.getPinnedApps()
 
     fun getHiddenApps(): Flow<List<AppInfo>> = appDao.getHiddenApps()
 
@@ -51,59 +50,6 @@ class AppRepository(
 
     suspend fun insertApp(app: AppInfo) = appDao.insertApp(app)
 
-    suspend fun pinApp(packageName: String) {
-        try {
-            // Get current app or create new one
-            val existingApp = getApp(packageName)
-            val nextOrder = (appDao.getMaxPinnedOrder() ?: 0) + 1
-            if (existingApp != null) {
-                val updatedApp = existingApp.copy(
-                    isPinned = true,
-                    pinnedOrder = nextOrder,
-                    isHidden = false
-                )
-                appDao.updateApp(updatedApp)
-            } else {
-                val app = getAppInfoFromPackage(packageName)
-                if (app != null) {
-                    insertApp(
-                        app.copy(
-                            isPinned = true,
-                            pinnedOrder = nextOrder,
-                            isHidden = false
-                        )
-                    )
-                }
-            }
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Security exception pinning app: $packageName", e)
-            errorHandler?.showError(
-                "Permission Error",
-                "Unable to access app information for $packageName. Permission may be required.",
-                e
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Error pinning app: $packageName", e)
-            errorHandler?.showError(
-                "Pin App Error",
-                "Failed to pin app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
-                e
-            )
-        }
-    }
-
-    suspend fun unpinApp(packageName: String) {
-        try {
-            appDao.updatePinnedStatus(packageName, false)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error unpinning app: $packageName", e)
-            errorHandler?.showError(
-                "Unpin App Error",
-                "Failed to unpin app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
-                e
-            )
-        }
-    }
 
     suspend fun hideApp(packageName: String) {
         try {

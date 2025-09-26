@@ -269,17 +269,6 @@ class AppDrawerViewModel(
         }
     }
 
-    fun pinApp(packageName: String) {
-        viewModelScope.launch {
-            appRepository.pinApp(packageName)
-        }
-    }
-
-    fun unpinApp(packageName: String) {
-        viewModelScope.launch {
-            appRepository.unpinApp(packageName)
-        }
-    }
 
     fun hideApp(packageName: String) {
         viewModelScope.launch {

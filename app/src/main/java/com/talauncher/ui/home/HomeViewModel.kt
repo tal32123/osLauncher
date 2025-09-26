@@ -171,10 +171,9 @@ class HomeViewModel(
     private fun observeData() {
         viewModelScope.launch {
             combine(
-                appRepository.getPinnedApps(),
                 appRepository.getAllVisibleApps(),
                 settingsRepository.getSettings()
-            ) { pinnedApps, allApps, settings ->
+            ) { allApps, settings ->
                 withContext(Dispatchers.Default) {
                     allVisibleApps = allApps
                     val currentQuery = _uiState.value.searchQuery
@@ -186,7 +185,7 @@ class HomeViewModel(
 
                     withContext(Dispatchers.Main.immediate) {
                         _uiState.value = _uiState.value.copy(
-                            pinnedApps = pinnedApps,
+                            allVisibleApps = allApps,
                             showTime = settings?.showTimeOnHomeScreen ?: true,
                             showDate = settings?.showDateOnHomeScreen ?: true,
                             showWallpaper = settings?.showWallpaper ?: true,
@@ -674,17 +673,6 @@ class HomeViewModel(
         updateTime()
     }
 
-    fun pinApp(packageName: String) {
-        viewModelScope.launch {
-            appRepository.pinApp(packageName)
-        }
-    }
-
-    fun unpinApp(packageName: String) {
-        viewModelScope.launch {
-            appRepository.unpinApp(packageName)
-        }
-    }
 
     fun performGoogleSearch(query: String) {
         context?.let { ctx ->
@@ -1245,7 +1233,7 @@ private data class TimeLimitPromptState(
 )
 
 data class HomeUiState(
-    val pinnedApps: List<AppInfo> = emptyList(),
+    val allVisibleApps: List<AppInfo> = emptyList(),
     val currentTime: String = "",
     val currentDate: String = "",
     val showTime: Boolean = true,

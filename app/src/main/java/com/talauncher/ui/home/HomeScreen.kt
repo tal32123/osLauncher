@@ -201,11 +201,7 @@ fun HomeScreen(
                         viewModel.launchApp(packageName)
                     },
                     onAppLongClick = { searchItem ->
-                        if (searchItem.appInfo.isPinned) {
-                            viewModel.unpinApp(searchItem.appInfo.packageName)
-                        } else {
-                            viewModel.pinApp(searchItem.appInfo.packageName)
-                        }
+                        // Remove pin/unpin functionality
                     },
                     onContactCall = { searchItem ->
                         viewModel.callContact(searchItem.contactInfo)
@@ -241,57 +237,22 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
             } else {
-                // Pinned Apps Section
-                if (uiState.pinnedApps.isNotEmpty()) {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
-                    ) {
-                        items(uiState.pinnedApps, key = { it.packageName }) { app ->
-                            ModernAppItem(
-                                appName = app.appName,
-                                onClick = { viewModel.launchApp(app.packageName) },
-                                onLongClick = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    viewModel.unpinApp(app.packageName)
-                                },
-                                enableGlassmorphism = uiState.enableGlassmorphism,
-                                uiDensity = uiState.uiDensity.toUiDensity()
-                            )
-                        }
-                    }
-                } else {
-                    // Empty state - Modern minimalist style
-                    ModernGlassCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                            .padding(horizontal = PrimerSpacing.sm),
-                        enableGlassmorphism = uiState.enableGlassmorphism,
-                        cornerRadius = 16,
-                        elevation = 1
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(PrimerSpacing.xl),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = "No pinned apps",
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(PrimerSpacing.sm))
-                            Text(
-                                text = "Swipe right to see all apps\nLong press any app to pin it here",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                // All Apps Section
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                ) {
+                    items(uiState.allVisibleApps, key = { it.packageName }) { app ->
+                        ModernAppItem(
+                            appName = app.appName,
+                            onClick = { viewModel.launchApp(app.packageName) },
+                            onLongClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                // Remove long press functionality since no more pinning
+                            },
+                            enableGlassmorphism = uiState.enableGlassmorphism,
+                            uiDensity = uiState.uiDensity.toUiDensity()
+                        )
                     }
                 }
             }
