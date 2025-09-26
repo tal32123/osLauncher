@@ -118,21 +118,24 @@ private class FakePermissionsHelper(
 
     var onDefaultLauncherRequest: (() -> Unit)? = null
 
-    private var backingState = PermissionState(
-        hasUsageStats = false,
-        hasSystemAlertWindow = false,
-        hasNotifications = notificationsInitiallyGranted,
-        hasContacts = false,
-        hasCallPhone = false,
-        hasLocation = false
-    )
+    private lateinit var backingState: PermissionState
 
     init {
+        backingState = PermissionState(
+            hasUsageStats = false,
+            hasSystemAlertWindow = false,
+            hasNotifications = notificationsInitiallyGranted,
+            hasContacts = false,
+            hasCallPhone = false,
+            hasLocation = false
+        )
         overridePermissionState(backingState)
     }
 
     override fun checkAllPermissions() {
-        overridePermissionState(backingState)
+        if (::backingState.isInitialized) {
+            overridePermissionState(backingState)
+        }
     }
 
     override fun requestPermission(activity: Activity, type: PermissionType) {
@@ -165,6 +168,7 @@ private class FakePermissionsHelper(
     }
 
     private fun updateState(transform: (PermissionState) -> PermissionState) {
+        check(::backingState.isInitialized) { "backingState should be initialized before updating" }
         backingState = transform(backingState)
         overridePermissionState(backingState)
     }
