@@ -51,6 +51,7 @@ import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
+import com.talauncher.ui.components.AppDrawerUnifiedSearchResults
 import com.talauncher.ui.theme.*
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
