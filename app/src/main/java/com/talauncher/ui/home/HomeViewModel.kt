@@ -1352,7 +1352,6 @@ class HomeViewModel(
         _uiState.value = _uiState.value.copy(
             alphabetIndexActiveKey = entry.key
         )
-        // You could also scroll to the target index here if needed
     }
 
     fun onAlphabetScrubbingChanged(isScrubbing: Boolean) {

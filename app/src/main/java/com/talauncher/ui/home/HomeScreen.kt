@@ -12,7 +12,9 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -245,12 +247,33 @@ fun HomeScreen(
                 )
             } else {
                 // Apps Section with Recent Apps and Alphabet Index
+                val listState = rememberLazyListState()
+
+                // Handle alphabet index scrolling
+                LaunchedEffect(uiState.alphabetIndexActiveKey) {
+                    val activeKey = uiState.alphabetIndexActiveKey
+                    if (activeKey != null) {
+                        val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
+                        entry?.targetIndex?.let { targetIndex ->
+                            // Adjust index to account for recent apps section
+                            val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
+                                // Add header + recent apps + spacer + "All Apps" header
+                                targetIndex + uiState.recentApps.size + 3
+                            } else {
+                                targetIndex
+                            }
+                            listState.animateScrollToItem(adjustedIndex)
+                        }
+                    }
+                }
+
                 Row(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
                     LazyColumn(
+                        state = listState,
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
                     ) {
