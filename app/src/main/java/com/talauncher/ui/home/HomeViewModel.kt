@@ -1325,7 +1325,7 @@ class HomeViewModel(
             }
         }
 
-        val alphabet = listOf("#") + ('A'..'Z').map { it.toString() }
+        val alphabet = ('A'..'Z').map { it.toString() } + listOf("#")
 
         return alphabet.map { char ->
             val appsForChar = appsByFirstChar[char] ?: emptyList()
