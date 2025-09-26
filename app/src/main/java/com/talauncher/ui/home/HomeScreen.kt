@@ -48,6 +48,14 @@ import com.talauncher.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private fun String.toUiDensity(): UiDensity {
+    return when (this.lowercase()) {
+        "compact" -> UiDensity.Compact
+        "spacious" -> UiDensity.Spacious
+        else -> UiDensity.Comfortable
+    }
+}
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
@@ -110,9 +118,9 @@ fun HomeScreen(
     // Use modern backdrop with new design system
     ModernBackdrop(
         showWallpaper = uiState.showWallpaper,
-        blurAmount = 0f, // TODO: Get from settings
+        blurAmount = uiState.wallpaperBlurAmount,
         backgroundColor = uiState.backgroundColor,
-        opacity = 1f, // TODO: Get from settings
+        opacity = 1f,
         modifier = Modifier.systemBarsPadding()
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -172,7 +180,7 @@ fun HomeScreen(
                 value = searchQuery,
                 onValueChange = viewModel::updateSearchQuery,
                 placeholder = stringResource(R.string.home_search_placeholder),
-                enableGlassmorphism = false, // TODO: Get from settings
+                enableGlassmorphism = uiState.enableGlassmorphism,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = PrimerSpacing.lg)
@@ -231,8 +239,8 @@ fun HomeScreen(
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.unpinApp(app.packageName)
                                 },
-                                enableGlassmorphism = false, // TODO: Get from settings
-                                uiDensity = UiDensity.Comfortable // TODO: Get from settings
+                                enableGlassmorphism = uiState.enableGlassmorphism,
+                                uiDensity = uiState.uiDensity.toUiDensity()
                             )
                         }
                     }
@@ -243,7 +251,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .weight(1f)
                             .padding(horizontal = PrimerSpacing.sm),
-                        enableGlassmorphism = false, // TODO: Get from settings
+                        enableGlassmorphism = uiState.enableGlassmorphism,
                         cornerRadius = 16,
                         elevation = 1
                     ) {

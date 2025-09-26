@@ -86,9 +86,33 @@ fun TALauncherTheme(
     colorPalette: String = "default",
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
+    val baseColorScheme = when {
         darkTheme -> MinimalDarkColorScheme
         else -> MinimalLightColorScheme
+    }
+
+    val colorScheme = when (colorPalette) {
+        "warm" -> baseColorScheme.copy(
+            primary = if (darkTheme) Color(0xFFFFB74D) else Color(0xFFE65100),
+            secondary = if (darkTheme) Color(0xFFFF8A65) else Color(0xFFBF360C),
+            tertiary = if (darkTheme) Color(0xFFFFF3E0) else Color(0xFF6D4C41)
+        )
+        "cool" -> baseColorScheme.copy(
+            primary = if (darkTheme) Color(0xFF64B5F6) else Color(0xFF1976D2),
+            secondary = if (darkTheme) Color(0xFF81C784) else Color(0xFF388E3C),
+            tertiary = if (darkTheme) Color(0xFFE1F5FE) else Color(0xFF455A64)
+        )
+        "monochrome" -> baseColorScheme.copy(
+            primary = if (darkTheme) Color(0xFFBDBDBD) else Color(0xFF424242),
+            secondary = if (darkTheme) Color(0xFF9E9E9E) else Color(0xFF616161),
+            tertiary = if (darkTheme) Color(0xFF757575) else Color(0xFF212121)
+        )
+        "nature" -> baseColorScheme.copy(
+            primary = if (darkTheme) Color(0xFF81C784) else Color(0xFF2E7D32),
+            secondary = if (darkTheme) Color(0xFFA5D6A7) else Color(0xFF1B5E20),
+            tertiary = if (darkTheme) Color(0xFFDCEDC8) else Color(0xFF33691E)
+        )
+        else -> baseColorScheme // "default"
     }
 
     MaterialTheme(

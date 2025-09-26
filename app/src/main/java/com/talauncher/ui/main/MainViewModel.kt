@@ -26,8 +26,10 @@ class MainViewModel(
     private fun checkOnboardingStatus() {
         viewModelScope.launch {
             val isOnboardingCompleted = settingsRepository.isOnboardingCompleted()
+            val settings = settingsRepository.getSettingsSync()
             _uiState.value = _uiState.value.copy(
                 isOnboardingCompleted = isOnboardingCompleted,
+                colorPalette = settings.colorPalette,
                 isLoading = false
             )
         }
@@ -46,5 +48,6 @@ class MainViewModel(
 
 data class MainUiState(
     val isOnboardingCompleted: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val colorPalette: String = "default"
 )

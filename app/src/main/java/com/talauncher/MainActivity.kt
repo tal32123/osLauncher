@@ -114,15 +114,16 @@ class MainActivity : ComponentActivity() {
             }
 
             setContent {
-                TALauncherTheme {
+                val mainViewModel: MainViewModel = viewModel {
+                    MainViewModel(settingsRepository, appRepository)
+                }
+                val mainUiState by mainViewModel.uiState.collectAsState()
+
+                TALauncherTheme(colorPalette = mainUiState.colorPalette) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        val mainViewModel: MainViewModel = viewModel {
-                            MainViewModel(settingsRepository, appRepository)
-                        }
-                        val mainUiState by mainViewModel.uiState.collectAsState()
                         val errorState by errorHandler.errorState.collectAsState()
 
                         // Show error dialog if there's an error

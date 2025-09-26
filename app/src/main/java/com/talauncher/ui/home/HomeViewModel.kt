@@ -197,7 +197,12 @@ class HomeViewModel(
                             showMessageAction = settings?.showMessageAction ?: true,
                             showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
                             weatherDisplay = weatherDisplay,
-                            weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius"
+                            weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius",
+                            colorPalette = settings?.colorPalette ?: "default",
+                            wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
+                            enableGlassmorphism = settings?.enableGlassmorphism ?: false,
+                            uiDensity = settings?.uiDensity ?: "comfortable",
+                            enableAnimations = settings?.enableAnimations ?: true
                         )
 
                         // Update weather data if needed
@@ -1283,5 +1288,10 @@ data class HomeUiState(
     val weatherError: String? = null,
     val weatherTemperatureUnit: String = "celsius",
     val weatherDailyHigh: Double? = null,
-    val weatherDailyLow: Double? = null
+    val weatherDailyLow: Double? = null,
+    val colorPalette: String = "default",
+    val wallpaperBlurAmount: Float = 0f,
+    val enableGlassmorphism: Boolean = false,
+    val uiDensity: String = "comfortable",
+    val enableAnimations: Boolean = true
 )
