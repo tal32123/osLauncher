@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +40,10 @@ fun OnboardingScreen(
     var isDefaultLauncher by remember { mutableStateOf(usageStatsHelper.isDefaultLauncher()) }
 
     PermissionManager(permissionsHelper)
+
+    LaunchedEffect(permissionState) {
+        isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
+    }
 
     LaunchedEffect(permissionState.allOnboardingPermissionsGranted, isDefaultLauncher) {
         if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
@@ -86,11 +91,13 @@ fun OnboardingScreen(
 
         // Set as Default Launcher
         OnboardingStepCard(
+            modifier = Modifier.testTag("onboarding_step_default_launcher"),
             icon = Icons.Default.Home,
             title = "Set as Default Launcher",
             description = "Make $appName your default home screen",
             isCompleted = isDefaultLauncher,
             buttonText = if (isDefaultLauncher) "Completed" else "Set as Default",
+            buttonTestTag = "onboarding_step_default_launcher_button",
             onButtonClick = {
                 permissionsHelper.requestPermission(context as Activity, PermissionType.DEFAULT_LAUNCHER)
             }
@@ -100,11 +107,13 @@ fun OnboardingScreen(
 
         // Usage Stats Permission
         OnboardingStepCard(
+            modifier = Modifier.testTag("onboarding_step_usage_stats"),
             icon = Icons.Default.Info,
             title = "Usage Statistics Permission",
             description = "Required to show your app usage insights and track time spent in distracting apps",
             isCompleted = permissionState.hasUsageStats,
             buttonText = if (permissionState.hasUsageStats) "Completed" else "Grant Permission",
+            buttonTestTag = "onboarding_step_usage_stats_button",
             onButtonClick = {
                 permissionsHelper.requestPermission(context as Activity, PermissionType.USAGE_STATS)
             }
@@ -115,11 +124,13 @@ fun OnboardingScreen(
         // Notification Permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             OnboardingStepCard(
+                modifier = Modifier.testTag("onboarding_step_notifications"),
                 icon = Icons.Default.Notifications,
                 title = "Allow Notifications",
                 description = "Required to show gentle reminders when time limits expire",
                 isCompleted = permissionState.hasNotifications,
                 buttonText = if (permissionState.hasNotifications) "Completed" else "Allow Notifications",
+                buttonTestTag = "onboarding_step_notifications_button",
                 onButtonClick = {
                     permissionsHelper.requestPermission(context as Activity, PermissionType.NOTIFICATIONS)
                 }
@@ -130,11 +141,13 @@ fun OnboardingScreen(
 
         // System Alert Window Permission
         OnboardingStepCard(
+            modifier = Modifier.testTag("onboarding_step_overlay"),
             icon = Icons.Default.Notifications,
             title = "Overlay Permission",
             description = "Allows timer notifications to appear over other apps when time limits expire",
             isCompleted = permissionState.hasSystemAlertWindow,
             buttonText = if (permissionState.hasSystemAlertWindow) "Completed" else "Grant Permission",
+            buttonTestTag = "onboarding_step_overlay_button",
             onButtonClick = {
                 permissionsHelper.requestPermission(context as Activity, PermissionType.SYSTEM_ALERT_WINDOW)
             }
@@ -144,7 +157,9 @@ fun OnboardingScreen(
 
         if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("onboarding_success_card"),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
@@ -177,6 +192,7 @@ fun OnboardingScreen(
             }
         } else {
             Text(
+                modifier = Modifier.testTag("onboarding_incomplete_message"),
                 text = "Complete all steps above to continue",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
@@ -191,15 +207,17 @@ fun OnboardingScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingStepCard(
+    modifier: Modifier = Modifier,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     description: String,
     isCompleted: Boolean,
     buttonText: String,
-    onButtonClick: () -> Unit
+    onButtonClick: () -> Unit,
+    buttonTestTag: String? = null
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isCompleted)
@@ -251,10 +269,20 @@ fun OnboardingStepCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val buttonModifier = Modifier
+                .fillMaxWidth()
+                .let { base ->
+                    if (buttonTestTag != null) {
+                        base.testTag(buttonTestTag)
+                    } else {
+                        base
+                    }
+                }
+
             Button(
                 onClick = onButtonClick,
                 enabled = !isCompleted,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = buttonModifier,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                     disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
