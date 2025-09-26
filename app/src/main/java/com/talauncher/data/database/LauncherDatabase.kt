@@ -12,7 +12,7 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -168,6 +168,34 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Remove isPinned and pinnedOrder columns from app_info table
+                // SQLite doesn't support DROP COLUMN, so we need to recreate the table
+
+                // Create new table without pinned columns
+                database.execSQL("""
+                    CREATE TABLE app_info_new (
+                        packageName TEXT PRIMARY KEY NOT NULL,
+                        appName TEXT NOT NULL,
+                        isHidden INTEGER NOT NULL DEFAULT 0,
+                        isDistracting INTEGER NOT NULL DEFAULT 0,
+                        timeLimitMinutes INTEGER
+                    )
+                """)
+
+                // Copy data from old table (excluding isPinned and pinnedOrder)
+                database.execSQL("""
+                    INSERT INTO app_info_new (packageName, appName, isHidden, isDistracting, timeLimitMinutes)
+                    SELECT packageName, appName, isHidden, isDistracting, timeLimitMinutes FROM app_info
+                """)
+
+                // Drop old table and rename new one
+                database.execSQL("DROP TABLE app_info")
+                database.execSQL("ALTER TABLE app_info_new RENAME TO app_info")
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -184,7 +212,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_7_8,
                     MIGRATION_8_9,
                     MIGRATION_9_10,
-                    MIGRATION_10_11
+                    MIGRATION_10_11,
+                    MIGRATION_11_12
                 ).build()
                 INSTANCE = instance
                 instance
