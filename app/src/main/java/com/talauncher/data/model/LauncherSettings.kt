@@ -21,7 +21,7 @@ data class LauncherSettings(
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
     val showWhatsAppAction: Boolean = true,
-    val weatherDisplay: String = "off", // "off", "daily", "hourly"
+    val weatherDisplay: String = "daily", // "off", "daily", "hourly"
     val weatherTemperatureUnit: String = "celsius", // "celsius" or "fahrenheit"
     val weatherLocationLat: Double? = null,
     val weatherLocationLon: Double? = null,

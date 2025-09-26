@@ -57,7 +57,7 @@ class SettingsViewModel(
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
                     showWhatsAppAction = settings?.showWhatsAppAction ?: true,
-                    weatherDisplay = settings?.weatherDisplay ?: "off",
+                    weatherDisplay = settings?.weatherDisplay ?: "daily",
                     weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius",
 
                     buildCommitHash = settings?.buildCommitHash,
@@ -275,7 +275,7 @@ data class SettingsUiState(
     val showPhoneAction: Boolean = false,
     val showMessageAction: Boolean = false,
     val showWhatsAppAction: Boolean = false,
-    val weatherDisplay: String = "off",
+    val weatherDisplay: String = "daily",
     val weatherTemperatureUnit: String = "celsius",
 
     val buildCommitHash: String? = null,
