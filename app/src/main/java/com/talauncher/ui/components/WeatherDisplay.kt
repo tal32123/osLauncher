@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.data.model.WeatherCondition
 import com.talauncher.data.model.WeatherData
+import com.talauncher.data.model.WeatherTemperatureUnit
 import kotlin.math.roundToInt
 
 @Composable
@@ -17,7 +18,7 @@ fun WeatherDisplay(
     weatherData: WeatherData?,
     modifier: Modifier = Modifier,
     showTemperature: Boolean = true,
-    temperatureUnit: String = "celsius",
+    temperatureUnit: WeatherTemperatureUnit = WeatherTemperatureUnit.CELSIUS,
     dailyHigh: Double? = null,
     dailyLow: Double? = null
 ) {
@@ -72,16 +73,16 @@ fun WeatherIcon(
     )
 }
 
-private fun convertTemperature(temperatureCelsius: Double, unit: String): Double {
-    return when (unit.lowercase()) {
-        "fahrenheit" -> (temperatureCelsius * 9 / 5) + 32
-        else -> temperatureCelsius
+private fun convertTemperature(temperatureCelsius: Double, unit: WeatherTemperatureUnit): Double {
+    return when (unit) {
+        WeatherTemperatureUnit.FAHRENHEIT -> (temperatureCelsius * 9 / 5) + 32
+        WeatherTemperatureUnit.CELSIUS -> temperatureCelsius
     }
 }
 
-private fun getTemperatureSuffix(unit: String): String {
-    return when (unit.lowercase()) {
-        "fahrenheit" -> "F"
-        else -> "C"
+private fun getTemperatureSuffix(unit: WeatherTemperatureUnit): String {
+    return when (unit) {
+        WeatherTemperatureUnit.FAHRENHEIT -> "F"
+        WeatherTemperatureUnit.CELSIUS -> "C"
     }
 }

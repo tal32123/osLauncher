@@ -3,6 +3,7 @@ package com.talauncher.data.database
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
@@ -15,6 +16,7 @@ import com.talauncher.data.model.LauncherSettings
     version = 12,
     exportSchema = false
 )
+@TypeConverters(SettingsTypeConverters::class)
 abstract class LauncherDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao
     abstract fun settingsDao(): SettingsDao

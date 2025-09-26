@@ -15,6 +15,11 @@ import androidx.lifecycle.viewModelScope
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
+import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.MathDifficulty
+import com.talauncher.data.model.UiDensityOption
+import com.talauncher.data.model.WeatherDisplayOption
+import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
@@ -190,7 +195,7 @@ class HomeViewModel(
 
                     // Cache expensive operations
                     val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
-                    val weatherDisplay = settings?.weatherDisplay ?: "daily"
+                    val weatherDisplay = settings?.weatherDisplay ?: WeatherDisplayOption.DAILY
 
                     // Get recent apps and alphabet index for the moved app drawer functionality
                     val hasUsageStatsPermission = permissionsHelper?.permissionState?.value?.hasUsageStats ?: false
@@ -211,18 +216,19 @@ class HomeViewModel(
                             showWallpaper = settings?.showWallpaper ?: true,
                             backgroundColor = settings?.backgroundColor ?: "system",
                             backgroundOpacity = settings?.backgroundOpacity ?: 1f,
-                            mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
+                            mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
                             searchResults = filtered,
                             showPhoneAction = settings?.showPhoneAction ?: true,
                             showMessageAction = settings?.showMessageAction ?: true,
                             showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
                             weatherDisplay = weatherDisplay,
-                            weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius",
-                            colorPalette = settings?.colorPalette ?: "default",
+                            weatherTemperatureUnit = settings?.weatherTemperatureUnit
+                                ?: WeatherTemperatureUnit.CELSIUS,
+                            colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
                             wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                             customWallpaperPath = settings?.customWallpaperPath,
                             enableGlassmorphism = settings?.enableGlassmorphism ?: false,
-                            uiDensity = settings?.uiDensity ?: "comfortable",
+                            uiDensity = settings?.uiDensity ?: UiDensityOption.COMFORTABLE,
                             enableAnimations = settings?.enableAnimations ?: true,
                             // App drawer functionality moved to home screen
                             recentApps = recentApps,
@@ -232,21 +238,21 @@ class HomeViewModel(
 
                         // Update weather data if needed
                         _uiState.value = when (weatherDisplay) {
-                            "off" -> _uiState.value.copy(
+                            WeatherDisplayOption.OFF -> _uiState.value.copy(
                                 weatherData = null,
                                 weatherDailyHigh = null,
                                 weatherDailyLow = null,
                                 weatherError = null
                             )
-                            "daily" -> _uiState.value
-                            else -> _uiState.value.copy(
+                            WeatherDisplayOption.DAILY -> _uiState.value
+                            WeatherDisplayOption.HOURLY -> _uiState.value.copy(
                                 weatherDailyHigh = null,
                                 weatherDailyLow = null
                             )
                         }
                     }
 
-                    if (weatherDisplay != "off") {
+                    if (weatherDisplay != WeatherDisplayOption.OFF) {
                         updateWeatherData(
                             savedLat = settings?.weatherLocationLat,
                             savedLon = settings?.weatherLocationLon,
@@ -1047,7 +1053,11 @@ class HomeViewModel(
         return helper?.permissionState?.value?.hasSystemAlertWindow == true
     }
 
-    private fun showOverlayMathChallenge(appName: String, packageName: String, difficulty: String) {
+    private fun showOverlayMathChallenge(
+        appName: String,
+        packageName: String,
+        difficulty: MathDifficulty
+    ) {
         val overlayManager = backgroundOverlayManager
         if (overlayManager != null) {
             val success = overlayManager.showMathChallengeOverlay(
@@ -1074,7 +1084,7 @@ class HomeViewModel(
             action = OverlayService.ACTION_SHOW_MATH_CHALLENGE
             putExtra(OverlayService.EXTRA_APP_NAME, appName)
             putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
-            putExtra(OverlayService.EXTRA_DIFFICULTY, difficulty)
+            putExtra(OverlayService.EXTRA_DIFFICULTY, difficulty.storageValue)
         }
         startOverlayServiceSafely(intent, requireForeground = true)
     }
@@ -1141,7 +1151,11 @@ class HomeViewModel(
         clearSearch()
     }
 
-    private fun updateWeatherData(savedLat: Double?, savedLon: Double?, display: String) {
+    private fun updateWeatherData(
+        savedLat: Double?,
+        savedLon: Double?,
+        display: WeatherDisplayOption
+    ) {
         weatherUpdateJob?.cancel()
         weatherUpdateJob = viewModelScope.launch {
             try {
@@ -1178,7 +1192,7 @@ class HomeViewModel(
                         }
                     )
 
-                    if (display == "daily") {
+                    if (display == WeatherDisplayOption.DAILY) {
                         val dailyResult = weatherService?.getDailyWeather(location.first, location.second)
                         if (dailyResult != null) {
                             dailyResult.fold(
@@ -1458,7 +1472,7 @@ data class HomeUiState(
     val selectedAppForMathChallenge: String? = null,
     val isMathChallengeForExpiredSession: Boolean = false,
     val isMathChallengeForSessionExtension: Boolean = false,
-    val mathChallengeDifficulty: String = "easy",
+    val mathChallengeDifficulty: MathDifficulty = MathDifficulty.EASY,
     val showSessionExpiryCountdown: Boolean = false,
     val showSessionExpiryDecisionDialog: Boolean = false,
     val sessionExpiryAppName: String? = null,
@@ -1471,16 +1485,16 @@ data class HomeUiState(
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
     val showWhatsAppAction: Boolean = true,
-    val weatherDisplay: String = "daily",
+    val weatherDisplay: WeatherDisplayOption = WeatherDisplayOption.DAILY,
     val weatherData: com.talauncher.data.model.WeatherData? = null,
     val weatherError: String? = null,
-    val weatherTemperatureUnit: String = "celsius",
+    val weatherTemperatureUnit: WeatherTemperatureUnit = WeatherTemperatureUnit.CELSIUS,
     val weatherDailyHigh: Double? = null,
     val weatherDailyLow: Double? = null,
-    val colorPalette: String = "default",
+    val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val wallpaperBlurAmount: Float = 0f,
     val enableGlassmorphism: Boolean = false,
-    val uiDensity: String = "comfortable",
+    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
     val enableAnimations: Boolean = true,
     // App drawer functionality moved to home screen
     val recentApps: List<AppInfo> = emptyList(),

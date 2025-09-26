@@ -11,6 +11,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.talauncher.data.model.MathDifficulty
 import kotlin.random.Random
 
 data class MathProblem(
@@ -19,12 +20,11 @@ data class MathProblem(
 )
 
 object MathGenerator {
-    fun generateProblem(difficulty: String): MathProblem {
+    fun generateProblem(difficulty: MathDifficulty): MathProblem {
         return when (difficulty) {
-            "easy" -> generateEasyProblem()
-            "medium" -> generateMediumProblem()
-            "hard" -> generateHardProblem()
-            else -> generateEasyProblem()
+            MathDifficulty.EASY -> generateEasyProblem()
+            MathDifficulty.MEDIUM -> generateMediumProblem()
+            MathDifficulty.HARD -> generateHardProblem()
         }
     }
 
@@ -98,7 +98,7 @@ object MathGenerator {
 
 @Composable
 fun MathChallengeDialog(
-    difficulty: String = "easy",
+    difficulty: MathDifficulty = MathDifficulty.EASY,
     onCorrect: () -> Unit,
     onDismiss: () -> Unit,
     isTimeExpired: Boolean = false  // If true, this is a mandatory challenge due to time expiration

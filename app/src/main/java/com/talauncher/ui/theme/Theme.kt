@@ -8,6 +8,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import com.talauncher.data.model.ColorPaletteOption
 
 private data class PaletteVariant(
     val primary: Color,
@@ -72,7 +73,7 @@ private fun ColorScheme.applyPalette(
 }
 
 private val PaletteCatalog = mapOf(
-    "default" to PaletteDefinition(
+    ColorPaletteOption.DEFAULT to PaletteDefinition(
         light = PaletteVariant(
             primary = MinimalPrimaryLight,
             secondary = MinimalAccent,
@@ -96,7 +97,7 @@ private val PaletteCatalog = mapOf(
             outline = MinimalNeutral600
         )
     ),
-    "warm" to PaletteDefinition(
+    ColorPaletteOption.WARM to PaletteDefinition(
         light = PaletteVariant(
             primary = Color(0xFFE65100),
             secondary = Color(0xFFB45309),
@@ -120,7 +121,7 @@ private val PaletteCatalog = mapOf(
             outline = Color(0xFFB86429)
         )
     ),
-    "cool" to PaletteDefinition(
+    ColorPaletteOption.COOL to PaletteDefinition(
         light = PaletteVariant(
             primary = Color(0xFF0EA5E9),
             secondary = Color(0xFF6366F1),
@@ -144,7 +145,7 @@ private val PaletteCatalog = mapOf(
             outline = Color(0xFF60A5FA)
         )
     ),
-    "monochrome" to PaletteDefinition(
+    ColorPaletteOption.MONOCHROME to PaletteDefinition(
         light = PaletteVariant(
             primary = Color(0xFF1F2937),
             secondary = Color(0xFF4B5563),
@@ -168,7 +169,7 @@ private val PaletteCatalog = mapOf(
             outline = Color(0xFF6B7280)
         )
     ),
-    "nature" to PaletteDefinition(
+    ColorPaletteOption.NATURE to PaletteDefinition(
         light = PaletteVariant(
             primary = Color(0xFF2E7D32),
             secondary = Color(0xFF388E3C),
@@ -270,7 +271,7 @@ private val ZenLightColorScheme = PrimerLightColorScheme
 @Composable
 fun TALauncherTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    colorPalette: String = "default",
+    colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     content: @Composable () -> Unit
 ) {
     val baseColorScheme = when {
@@ -278,7 +279,7 @@ fun TALauncherTheme(
         else -> MinimalLightColorScheme
     }
 
-    val paletteDefinition = PaletteCatalog[colorPalette] ?: PaletteCatalog.getValue("default")
+    val paletteDefinition = PaletteCatalog[colorPalette] ?: PaletteCatalog.getValue(ColorPaletteOption.DEFAULT)
     val colorScheme = baseColorScheme.applyPalette(paletteDefinition, darkTheme)
 
     MaterialTheme(

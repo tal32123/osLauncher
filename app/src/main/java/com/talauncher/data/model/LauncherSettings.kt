@@ -3,6 +3,7 @@ package com.talauncher.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+
 @Entity(tableName = "launcher_settings")
 data class LauncherSettings(
     @PrimaryKey val id: Int = 1,
@@ -14,15 +15,15 @@ data class LauncherSettings(
     val showWallpaper: Boolean = true, // Whether to show device wallpaper or solid background
     val enableTimeLimitPrompt: Boolean = false, // Whether to prompt for time limits on app launch
     val enableMathChallenge: Boolean = false, // Whether to require math challenges to close apps
-    val mathDifficulty: String = "easy", // "easy", "medium", "hard"
+    val mathDifficulty: MathDifficulty = MathDifficulty.EASY,
     val sessionExpiryCountdownSeconds: Int = 5, // Number of seconds to block the app before prompting for action
     val recentAppsLimit: Int = 10, // Number of recent apps to show in insights
     val defaultTimeLimitMinutes: Int = 30, // Default time limit applied to distracting apps
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
     val showWhatsAppAction: Boolean = true,
-    val weatherDisplay: String = "daily", // "off", "daily", "hourly"
-    val weatherTemperatureUnit: String = "celsius", // "celsius" or "fahrenheit"
+    val weatherDisplay: WeatherDisplayOption = WeatherDisplayOption.DAILY,
+    val weatherTemperatureUnit: WeatherTemperatureUnit = WeatherTemperatureUnit.CELSIUS,
     val weatherLocationLat: Double? = null,
     val weatherLocationLon: Double? = null,
     val buildCommitHash: String? = null,
@@ -32,10 +33,10 @@ data class LauncherSettings(
     val buildTime: String? = null,
 
     // New 2025 minimalist UI customization options
-    val colorPalette: String = "default", // "default", "warm", "cool", "monochrome", "nature"
+    val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val wallpaperBlurAmount: Float = 0f, // 0.0 (no blur) to 1.0 (max blur)
     val enableGlassmorphism: Boolean = false, // Enable glass-like translucent effects
-    val uiDensity: String = "comfortable", // "compact", "comfortable", "spacious"
+    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
     val cardCornerRadius: Int = 12, // Corner radius for cards in dp (8-24)
     val enableDynamicColors: Boolean = false, // Use Material You dynamic colors when available
     val backgroundOpacity: Float = 1.0f, // Background opacity when wallpaper is shown (0.0-1.0)

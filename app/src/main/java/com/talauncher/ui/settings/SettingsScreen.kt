@@ -26,6 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
+import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.MathDifficulty
+import com.talauncher.data.model.UiDensityOption
+import com.talauncher.data.model.WeatherDisplayOption
+import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.ui.components.ModernButton
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
@@ -242,8 +247,8 @@ fun UIThemeSettings(
     onUpdateBackgroundColor: (String) -> Unit,
     showWallpaper: Boolean,
     onToggleShowWallpaper: (Boolean) -> Unit,
-    colorPalette: String,
-    onUpdateColorPalette: (String) -> Unit,
+    colorPalette: ColorPaletteOption,
+    onUpdateColorPalette: (ColorPaletteOption) -> Unit,
     wallpaperBlurAmount: Float,
     onUpdateWallpaperBlur: (Float) -> Unit,
     backgroundOpacity: Float,
@@ -253,8 +258,8 @@ fun UIThemeSettings(
     onClearCustomWallpaper: () -> Unit,
     enableGlassmorphism: Boolean,
     onToggleGlassmorphism: (Boolean) -> Unit,
-    uiDensity: String,
-    onUpdateUiDensity: (String) -> Unit,
+    uiDensity: UiDensityOption,
+    onUpdateUiDensity: (UiDensityOption) -> Unit,
     enableAnimations: Boolean,
     onToggleAnimations: (Boolean) -> Unit
 ) {
@@ -290,15 +295,15 @@ fun UIThemeSettings(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         listOf(
-                            "default" to "Default",
-                            "warm" to "Warm",
-                            "cool" to "Cool",
-                            "monochrome" to "Mono"
-                        ).forEach { (value, label) ->
+                            ColorPaletteOption.DEFAULT,
+                            ColorPaletteOption.WARM,
+                            ColorPaletteOption.COOL,
+                            ColorPaletteOption.MONOCHROME
+                        ).forEach { option ->
                             FilterChip(
-                                selected = colorPalette == value,
-                                onClick = { onUpdateColorPalette(value) },
-                                label = { Text(label) },
+                                selected = colorPalette == option,
+                                onClick = { onUpdateColorPalette(option) },
+                                label = { Text(option.label) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -309,9 +314,9 @@ fun UIThemeSettings(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         FilterChip(
-                            selected = colorPalette == "nature",
-                            onClick = { onUpdateColorPalette("nature") },
-                            label = { Text("Nature") },
+                            selected = colorPalette == ColorPaletteOption.NATURE,
+                            onClick = { onUpdateColorPalette(ColorPaletteOption.NATURE) },
+                            label = { Text(ColorPaletteOption.NATURE.label) },
                             modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.weight(3f))
@@ -533,15 +538,11 @@ fun UIThemeSettings(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf(
-                            "compact" to "Compact",
-                            "comfortable" to "Comfortable",
-                            "spacious" to "Spacious"
-                        ).forEach { (value, label) ->
+                        UiDensityOption.entries.forEach { option ->
                             FilterChip(
-                                selected = uiDensity == value,
-                                onClick = { onUpdateUiDensity(value) },
-                                label = { Text(label) },
+                                selected = uiDensity == option,
+                                onClick = { onUpdateUiDensity(option) },
+                                label = { Text(option.label) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -558,8 +559,8 @@ fun GeneralSettings(
     onToggleTimeLimitPrompt: () -> Unit,
     enableMathChallenge: Boolean,
     onToggleMathChallenge: () -> Unit,
-    mathDifficulty: String,
-    onUpdateMathDifficulty: (String) -> Unit,
+    mathDifficulty: MathDifficulty,
+    onUpdateMathDifficulty: (MathDifficulty) -> Unit,
     recentAppsLimit: Int,
     onUpdateRecentAppsLimit: (Int) -> Unit,
     sessionExpiryCountdownSeconds: Int,
@@ -570,10 +571,10 @@ fun GeneralSettings(
     onToggleShowMessageAction: () -> Unit,
     showWhatsAppAction: Boolean,
     onToggleShowWhatsAppAction: () -> Unit,
-    weatherDisplay: String,
-    onUpdateWeatherDisplay: (String) -> Unit,
-    weatherTemperatureUnit: String,
-    onUpdateWeatherTemperatureUnit: (String) -> Unit,
+    weatherDisplay: WeatherDisplayOption,
+    onUpdateWeatherDisplay: (WeatherDisplayOption) -> Unit,
+    weatherTemperatureUnit: WeatherTemperatureUnit,
+    onUpdateWeatherTemperatureUnit: (WeatherTemperatureUnit) -> Unit,
     permissionsHelper: com.talauncher.utils.PermissionsHelper,
     buildCommitHash: String?,
     buildBranch: String?,
@@ -752,31 +753,24 @@ fun GeneralSettings(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf("off", "daily", "hourly").forEach { option ->
+                        WeatherDisplayOption.entries.forEach { option ->
                             FilterChip(
                                 selected = weatherDisplay == option,
                                 onClick = {
-                                    if (option != "off" && !permissionState.hasLocation) {
+                                    if (option != WeatherDisplayOption.OFF && !permissionState.hasLocation) {
                                         if (context is androidx.activity.ComponentActivity) {
                                             permissionsHelper.requestPermission(context, com.talauncher.utils.PermissionType.LOCATION)
                                         }
                                     }
                                     onUpdateWeatherDisplay(option)
                                 },
-                                label = {
-                                    Text(when(option) {
-                                        "off" -> "Off"
-                                        "daily" -> "Daily"
-                                        "hourly" -> "Hourly"
-                                        else -> option
-                                    })
-                                },
+                                label = { Text(option.label) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
                     }
 
-                    if (weatherDisplay != "off" && !permissionState.hasLocation) {
+                    if (weatherDisplay != WeatherDisplayOption.OFF && !permissionState.hasLocation) {
                         Text(
                             text = "Location permission required for weather",
                             style = MaterialTheme.typography.labelMedium,
@@ -795,11 +789,11 @@ fun GeneralSettings(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf("celsius" to "°C", "fahrenheit" to "°F").forEach { (option, label) ->
+                        WeatherTemperatureUnit.entries.forEach { option ->
                             FilterChip(
                                 selected = weatherTemperatureUnit == option,
                                 onClick = { onUpdateWeatherTemperatureUnit(option) },
-                                label = { Text(label) },
+                                label = { Text("°${option.symbol}") },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -836,13 +830,11 @@ fun GeneralSettings(
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            listOf("easy", "medium", "hard").forEach { difficulty ->
+                            MathDifficulty.entries.forEach { difficulty ->
                                 FilterChip(
                                     selected = mathDifficulty == difficulty,
                                     onClick = { onUpdateMathDifficulty(difficulty) },
-                                    label = {
-                                        Text(difficulty.replaceFirstChar { it.uppercase() })
-                                    },
+                                    label = { Text(difficulty.label) },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
