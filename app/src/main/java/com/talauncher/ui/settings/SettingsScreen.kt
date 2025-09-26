@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -19,10 +20,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -243,6 +246,30 @@ fun SettingsScreen(
 }
 
 @Composable
+private fun SettingsLazyColumn(
+    modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(12.dp),
+    extraBottomPadding: Dp = 24.dp,
+    content: LazyListScope.() -> Unit
+) {
+    val layoutDirection = LocalLayoutDirection.current
+    val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
+    val contentPadding = PaddingValues(
+        start = navigationBarsPadding.calculateStartPadding(layoutDirection),
+        top = navigationBarsPadding.calculateTopPadding(),
+        end = navigationBarsPadding.calculateEndPadding(layoutDirection),
+        bottom = navigationBarsPadding.calculateBottomPadding() + extraBottomPadding
+    )
+
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = contentPadding,
+        verticalArrangement = verticalArrangement,
+        content = content
+    )
+}
+
+@Composable
 fun UIThemeSettings(
     backgroundColor: String,
     onUpdateBackgroundColor: (String) -> Unit,
@@ -264,9 +291,7 @@ fun UIThemeSettings(
     enableAnimations: Boolean,
     onToggleAnimations: (Boolean) -> Unit
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    SettingsLazyColumn {
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -587,9 +612,7 @@ fun GeneralSettings(
     buildBranch: String?,
     buildTime: String?
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    SettingsLazyColumn {
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -1145,8 +1168,9 @@ fun AppSelectionTab(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            SettingsLazyColumn(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                extraBottomPadding = 16.dp
             ) {
                 items(apps) { app ->
                     val info = timeLimitInfoProvider?.invoke(app)
