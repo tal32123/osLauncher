@@ -2,17 +2,12 @@ package com.talauncher
 
 import android.content.Context
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.talauncher.data.database.AppDao
@@ -33,12 +28,11 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import kotlin.requireNotNull
 
 @RunWith(AndroidJUnit4::class)
 class LauncherPagerNavigationTest {
@@ -47,7 +41,7 @@ class LauncherPagerNavigationTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun pagerNavigation_backHandling_and_launchFlow() {
+    fun pagerRespondsToNavigationAndBackPress() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val settingsRepository = SettingsRepository(LauncherFakeSettingsDao())
         val sessionRepository = SessionRepository(FakeAppSessionDao())
@@ -57,7 +51,8 @@ class LauncherPagerNavigationTest {
         val contactHelper = ContactHelper(context, permissionsHelper)
 
         val recordedAnimations = mutableListOf<Int>()
-        var pagerState: androidx.compose.foundation.pager.PagerState? = null
+        var pagerState: PagerState? = null
+        val shouldNavigateToHomeState = mutableStateOf(false)
 
         composeRule.setContent {
             TALauncherTheme {
@@ -68,10 +63,8 @@ class LauncherPagerNavigationTest {
                     usageStatsHelper = usageStatsHelper,
                     sessionRepository = sessionRepository,
                     contactHelper = contactHelper,
-                    settingsPageContent = { SettingsPageStub() },
-                    homePageContent = { navigateToSettings, launchApp ->
-                        HomePageStub(navigateToSettings, launchApp)
-                    },
+                    shouldNavigateToHome = shouldNavigateToHomeState.value,
+                    onNavigatedToHome = { shouldNavigateToHomeState.value = false },
                     pagerStateListener = { pagerState = it },
                     onPageAnimation = { recordedAnimations += it }
                 )
@@ -83,14 +76,15 @@ class LauncherPagerNavigationTest {
         composeRule.runOnIdle {
             assertEquals(1, pagerState?.currentPage)
         }
-        composeRule.onNodeWithTag("home_page_content").assertExists()
+        composeRule.onNodeWithTag("launcher_home_page").assertExists()
 
-        composeRule.onNodeWithTag("navigate_to_settings_button").performClick()
+        composeRule.onNodeWithTag("launcher_navigation_pager")
+            .performTouchInput { swipeRight() }
         composeRule.waitForIdle()
         composeRule.runOnIdle {
             assertEquals(0, pagerState?.currentPage)
         }
-        assertTrue(recordedAnimations.contains(0))
+        composeRule.onNodeWithTag("launcher_settings_page").assertExists()
 
         composeRule.activityRule.scenario.onActivity {
             it.onBackPressedDispatcher.onBackPressed()
@@ -99,49 +93,16 @@ class LauncherPagerNavigationTest {
         composeRule.runOnIdle {
             assertEquals(1, pagerState?.currentPage)
         }
-        assertTrue(recordedAnimations.contains(1))
 
-        composeRule.onNodeWithTag("launch_app_button").performClick()
+        composeRule.runOnIdle {
+            recordedAnimations.clear()
+            shouldNavigateToHomeState.value = true
+        }
         composeRule.waitForIdle()
         composeRule.runOnIdle {
-            val state = requireNotNull(pagerState)
-            assertEquals(state.pageCount - 1, state.currentPage)
+            assertEquals(1, pagerState?.currentPage)
         }
-        assertTrue(recordedAnimations.contains(2))
-    }
-}
-
-@Composable
-private fun SettingsPageStub() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("settings_page_content")
-    )
-}
-
-@Composable
-private fun HomePageStub(
-    navigateToSettings: () -> Unit,
-    launchApp: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("home_page_content")
-    ) {
-        Button(
-            onClick = navigateToSettings,
-            modifier = Modifier.testTag("navigate_to_settings_button")
-        ) {
-            Text("Settings")
-        }
-        Button(
-            onClick = launchApp,
-            modifier = Modifier.testTag("launch_app_button")
-        ) {
-            Text("Launch")
-        }
+        assertTrue(recordedAnimations.contains(1))
     }
 }
 

@@ -263,8 +263,6 @@ fun LauncherNavigationPager(
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {},
-    settingsPageContent: (@Composable () -> Unit)? = null,
-    homePageContent: (@Composable (navigateToSettings: () -> Unit, launchApp: () -> Unit) -> Unit)? = null,
     pagerStateListener: ((PagerState) -> Unit)? = null,
     onPageAnimation: ((Int) -> Unit)? = null
 ) {
@@ -325,18 +323,14 @@ fun LauncherNavigationPager(
                         .fillMaxSize()
                         .testTag("launcher_settings_page")
                 ) {
-                    if (settingsPageContent != null) {
-                        settingsPageContent()
-                    } else {
-                        // Settings/Insights Screen
-                        val settingsViewModel: SettingsViewModel = viewModel {
-                            SettingsViewModel(appRepository, settingsRepository, permissionsHelper, usageStatsHelper)
-                        }
-                        SettingsScreen(
-                            onNavigateBack = {},
-                            viewModel = settingsViewModel
-                        )
+                    // Settings/Insights Screen
+                    val settingsViewModel: SettingsViewModel = viewModel {
+                        SettingsViewModel(appRepository, settingsRepository, permissionsHelper, usageStatsHelper)
                     }
+                    SettingsScreen(
+                        onNavigateBack = {},
+                        viewModel = settingsViewModel
+                    )
                 }
             }
             1 -> {
@@ -345,47 +339,36 @@ fun LauncherNavigationPager(
                         .fillMaxSize()
                         .testTag("launcher_home_page")
                 ) {
-                    if (homePageContent != null) {
-                        homePageContent(
-                            {
-                                coroutineScope.launch { animateToPage(0) }
-                            },
-                            {
-                                coroutineScope.launch { animateToPage(2) }
-                            }
-                        )
-                    } else {
-                        // Main/Home Screen with pinned apps
-                        val context = LocalContext.current
-                        val homeViewModel: HomeViewModel = viewModel {
-                            HomeViewModel(
-                                appRepository,
-                                settingsRepository,
-                                onLaunchApp,
-                                sessionRepository,
-                                context,
-                                permissionsHelper,
-                                usageStatsHelper,
-                                errorHandler
-                            )
-                        }
-                        // Clear search when navigating to home screen
-                        LaunchedEffect(pagerState.currentPage) {
-                            if (pagerState.currentPage == 1) {
-                                homeViewModel.clearSearchOnNavigation()
-                            }
-                        }
-
-                        HomeScreen(
-                            viewModel = homeViewModel,
-                            onNavigateToAppDrawer = null, // App drawer functionality moved to home screen
-                            onNavigateToSettings = {
-                                coroutineScope.launch {
-                                    animateToPage(0)
-                                }
-                            }
+                    // Main/Home Screen with pinned apps
+                    val context = LocalContext.current
+                    val homeViewModel: HomeViewModel = viewModel {
+                        HomeViewModel(
+                            appRepository,
+                            settingsRepository,
+                            onLaunchApp,
+                            sessionRepository,
+                            context,
+                            permissionsHelper,
+                            usageStatsHelper,
+                            errorHandler
                         )
                     }
+                    // Clear search when navigating to home screen
+                    LaunchedEffect(pagerState.currentPage) {
+                        if (pagerState.currentPage == 1) {
+                            homeViewModel.clearSearchOnNavigation()
+                        }
+                    }
+
+                    HomeScreen(
+                        viewModel = homeViewModel,
+                        onNavigateToAppDrawer = null, // App drawer functionality moved to home screen
+                        onNavigateToSettings = {
+                            coroutineScope.launch {
+                                animateToPage(0)
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -475,3 +458,4 @@ private fun StartupErrorScreen(error: Throwable) {
 }
 
 private const val TAG = "MainActivity"
+
