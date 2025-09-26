@@ -12,21 +12,23 @@ import org.junit.runners.Suite
     // Navigation and basic functionality
     LauncherNavigationIntegrationTest::class,
     LauncherUITest::class,
+    HomeNavigationFlowTest::class,
+    LauncherPagerNavigationTest::class,
+    OnboardingGatingFlowTest::class,
 
     // App drawer functionality
     AppDrawerIntegrationTest::class,
+    AppDrawerFlowTest::class,
 
     // API compatibility tests
     APICompatibilityTest::class,
 
-    // Existing overlay and session tests
-    OverlayServiceTest::class,
-    ComprehensiveOverlayE2ETest::class,
-    MathChallengeOverlayE2ETest::class,
-    TimeLimitOverlayBasicFlowTest::class,
-    OverlayInteractionBlockingTest::class,
-    TimeLimitExpiryRealWorldTest::class,
+    // Overlay permission and flow tests
+    OverlayPermissionFlowTest::class,
+
+    // Settings and integration tests
     SettingsIntegrationTest::class,
+    UserFlowIntegrationTest::class,
 
     // Stress and performance tests
     StressAndPerformanceTest::class,
