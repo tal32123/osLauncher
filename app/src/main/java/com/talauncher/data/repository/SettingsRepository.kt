@@ -140,6 +140,16 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(wallpaperBlurAmount = blur.coerceIn(0f, 1f)))
     }
 
+    suspend fun updateBackgroundOpacity(opacity: Float) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(backgroundOpacity = opacity.coerceIn(0f, 1f)))
+    }
+
+    suspend fun updateCustomWallpaper(path: String?) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(customWallpaperPath = path))
+    }
+
     suspend fun updateGlassmorphism(enabled: Boolean) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(enableGlassmorphism = enabled))

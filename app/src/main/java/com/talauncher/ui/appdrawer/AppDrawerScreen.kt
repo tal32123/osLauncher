@@ -237,7 +237,7 @@ fun AppDrawerScreen(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                border = BorderStroke(2.dp, PrimerBlue.copy(alpha = 0.3f))
+                border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
             ) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -255,7 +255,7 @@ fun AppDrawerScreen(
                         Text(
                             text = "Search",
                             style = MaterialTheme.typography.labelMedium,
-                            color = PrimerGray600,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = PrimerSpacing.xs)
                         )
                     },
@@ -267,7 +267,7 @@ fun AppDrawerScreen(
                                     keyboardController?.hide()
                                 },
                                 colors = ButtonDefaults.textButtonColors(
-                                    contentColor = PrimerGray600
+                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
                                 contentPadding = PaddingValues(
                                     horizontal = PrimerSpacing.xs,
@@ -292,9 +292,9 @@ fun AppDrawerScreen(
                     ),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimerBlue,
-                        unfocusedBorderColor = PrimerGray300,
-                        cursorColor = PrimerBlue
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = PrimerShapes.small
                 )
@@ -437,7 +437,7 @@ fun AppDrawerScreen(
                                     colors = CardDefaults.cardColors(
                                         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                                     ),
-                                    border = BorderStroke(1.dp, PrimerGray300)
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                                 ) {
                                     TextButton(
                                         onClick = {
@@ -455,7 +455,7 @@ fun AppDrawerScreen(
                                                 "Show hidden apps (${uiState.hiddenApps.size})"
                                             },
                                             style = MaterialTheme.typography.labelLarge,
-                                            color = PrimerBlue
+                                            color = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 }
@@ -813,7 +813,7 @@ fun AppDrawerItem(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, PrimerGray200)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -850,7 +850,7 @@ fun HiddenAppItem(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         ),
-        border = BorderStroke(1.dp, PrimerGray300.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
     ) {
         Row(
             modifier = Modifier
@@ -867,9 +867,9 @@ fun HiddenAppItem(
             )
 
             Surface(
-                color = PrimerGray500.copy(alpha = 0.1f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f),
                 shape = PrimerShapes.small,
-                border = BorderStroke(1.dp, PrimerGray500.copy(alpha = 0.3f))
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Text(
                     text = "Hidden",
@@ -878,7 +878,7 @@ fun HiddenAppItem(
                         vertical = 2.dp
                     ),
                     style = MaterialTheme.typography.labelSmall,
-                    color = PrimerGray600
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -1034,9 +1034,9 @@ fun RenameAppDialog(
                             }
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimerBlue,
-                            unfocusedBorderColor = PrimerGray300,
-                            cursorColor = PrimerBlue
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         ),
                         shape = PrimerShapes.small
                     )
@@ -1135,9 +1135,9 @@ fun RecentAppItem(
                 onLongClick = onLongClick
             ),
         colors = CardDefaults.cardColors(
-            containerColor = PrimerBlue.copy(alpha = 0.05f) // Slight blue tint for recent apps
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
         ),
-        border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.2f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier
@@ -1155,9 +1155,9 @@ fun RecentAppItem(
 
             // Show a "recent" indicator
             Surface(
-                color = PrimerBlue.copy(alpha = 0.1f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 shape = PrimerShapes.small,
-                border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.3f))
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
             ) {
                 Text(
                     text = "Recent",
@@ -1166,7 +1166,7 @@ fun RecentAppItem(
                         vertical = 2.dp
                     ),
                     style = MaterialTheme.typography.labelSmall,
-                    color = PrimerBlue
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

@@ -24,9 +24,9 @@ fun GoogleSearchItem(
             .fillMaxWidth()
             .combinedClickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = PrimerBlue.copy(alpha = 0.1f)
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
         ),
-        border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.3f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
     ) {
         Row(
             modifier = Modifier
@@ -46,7 +46,7 @@ fun GoogleSearchItem(
                 Text(
                     text = "Search Google",
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                    color = PrimerBlue
+                    color = MaterialTheme.colorScheme.primary
                 )
                 Text(
                     text = "\"$query\"",

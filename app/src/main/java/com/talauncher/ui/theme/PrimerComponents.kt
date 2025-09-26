@@ -5,9 +5,16 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // GitHub Primer-inspired component styles
@@ -28,7 +35,7 @@ fun PrimerCard(
     elevation: CardElevation = CardDefaults.cardElevation(
         defaultElevation = 0.dp
     ),
-    border: BorderStroke = BorderStroke(1.dp, PrimerGray200),
+    border: BorderStroke = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -47,8 +54,8 @@ fun PrimerButton(
     modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier,
     enabled: Boolean = true,
     colors: ButtonColors = ButtonDefaults.buttonColors(
-        containerColor = PrimerBlue,
-        contentColor = Color.White
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary
     ),
     contentPadding: PaddingValues = PaddingValues(
         horizontal = PrimerSpacing.md,
@@ -79,9 +86,9 @@ fun PrimerSecondaryButton(
         modifier = modifier,
         enabled = enabled,
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = PrimerGray900
+            contentColor = MaterialTheme.colorScheme.primary
         ),
-        border = BorderStroke(1.dp, PrimerGray300),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = PrimerShapes.small,
         contentPadding = PaddingValues(
             horizontal = PrimerSpacing.md,

@@ -8,6 +8,10 @@ plugins {
 }
 
 tasks.register("checkGitStatus") {
+    onlyIf {
+        val skipEnv = System.getenv("SKIP_GIT_STATUS_CHECK")
+        skipEnv?.equals("true", ignoreCase = true)?.not() ?: true
+    }
     doLast {
         val gitStatus = providers.exec {
             commandLine("git", "status", "--porcelain")

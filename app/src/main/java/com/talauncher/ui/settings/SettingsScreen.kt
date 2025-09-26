@@ -1,5 +1,9 @@
 package com.talauncher.ui.settings
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
@@ -21,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
+import com.talauncher.ui.components.ModernButton
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
 import kotlin.math.roundToInt
@@ -37,6 +43,28 @@ fun SettingsScreen(
     var editingApp by remember { mutableStateOf<com.talauncher.data.model.InstalledApp?>(null) }
     var editingTimeLimit by remember { mutableStateOf(uiState.defaultTimeLimitMinutes) }
     var editingUsesDefault by remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val currentWallpaperPath by rememberUpdatedState(uiState.customWallpaperPath)
+
+    val pickWallpaperLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching {
+                currentWallpaperPath?.let { existing ->
+                    context.contentResolver.releasePersistableUriPermission(
+                        Uri.parse(existing),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
+            }
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            viewModel.updateCustomWallpaper(it.toString())
+        }
+    }
 
     // Clear search when navigating away from app selection tabs
     LaunchedEffect(selectedTab) {
@@ -111,6 +139,23 @@ fun SettingsScreen(
                 onUpdateColorPalette = viewModel::updateColorPalette,
                 wallpaperBlurAmount = uiState.wallpaperBlurAmount,
                 onUpdateWallpaperBlur = viewModel::updateWallpaperBlur,
+                backgroundOpacity = uiState.backgroundOpacity,
+                onUpdateBackgroundOpacity = viewModel::updateBackgroundOpacity,
+                customWallpaperPath = uiState.customWallpaperPath,
+                onPickCustomWallpaper = {
+                    pickWallpaperLauncher.launch(arrayOf("image/*"))
+                },
+                onClearCustomWallpaper = {
+                    runCatching {
+                        uiState.customWallpaperPath?.let { existing ->
+                            context.contentResolver.releasePersistableUriPermission(
+                                Uri.parse(existing),
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            )
+                        }
+                    }
+                    viewModel.updateCustomWallpaper(null)
+                },
                 enableGlassmorphism = uiState.enableGlassmorphism,
                 onToggleGlassmorphism = viewModel::updateGlassmorphism,
                 uiDensity = uiState.uiDensity,
@@ -201,6 +246,11 @@ fun UIThemeSettings(
     onUpdateColorPalette: (String) -> Unit,
     wallpaperBlurAmount: Float,
     onUpdateWallpaperBlur: (Float) -> Unit,
+    backgroundOpacity: Float,
+    onUpdateBackgroundOpacity: (Float) -> Unit,
+    customWallpaperPath: String?,
+    onPickCustomWallpaper: () -> Unit,
+    onClearCustomWallpaper: () -> Unit,
     enableGlassmorphism: Boolean,
     onToggleGlassmorphism: (Boolean) -> Unit,
     uiDensity: String,
@@ -299,6 +349,9 @@ fun UIThemeSettings(
                         var blurValue by remember(wallpaperBlurAmount) {
                             mutableStateOf(wallpaperBlurAmount)
                         }
+                        var opacityValue by remember(backgroundOpacity) {
+                            mutableStateOf(backgroundOpacity)
+                        }
 
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -321,6 +374,74 @@ fun UIThemeSettings(
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Wallpaper Opacity",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Slider(
+                                value = opacityValue,
+                                onValueChange = { opacityValue = it },
+                                valueRange = 0f..1f,
+                                onValueChangeFinished = {
+                                    onUpdateBackgroundOpacity(opacityValue)
+                                }
+                            )
+                            Text(
+                                text = "${(opacityValue * 100).toInt()}% opacity",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Custom Wallpaper",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                ModernButton(
+                                    onClick = onPickCustomWallpaper,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Choose Image")
+                                }
+                                if (customWallpaperPath != null) {
+                                    OutlinedButton(
+                                        onClick = onClearCustomWallpaper,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Remove")
+                                    }
+                                }
+                            }
+                            if (customWallpaperPath != null) {
+                                Text(
+                                    text = "Using custom wallpaper",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Text(
+                                    text = "Using system wallpaper",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     } else {
                         Text(

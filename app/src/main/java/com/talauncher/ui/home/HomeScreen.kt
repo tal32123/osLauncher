@@ -128,7 +128,8 @@ fun HomeScreen(
         showWallpaper = uiState.showWallpaper,
         blurAmount = uiState.wallpaperBlurAmount,
         backgroundColor = uiState.backgroundColor,
-        opacity = 1f,
+        opacity = uiState.backgroundOpacity,
+        customWallpaperPath = uiState.customWallpaperPath,
         modifier = Modifier.systemBarsPadding()
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -576,8 +577,9 @@ fun FrictionDialog(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     shape = PrimerShapes.small,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimerBlue,
-                        unfocusedBorderColor = PrimerGray300
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary
                     )
                 )
 
@@ -777,9 +779,9 @@ fun RecentAppItem(
                 onLongClick = onLongClick
             ),
         colors = CardDefaults.cardColors(
-            containerColor = PrimerBlue.copy(alpha = 0.05f) // Slight blue tint for recent apps
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
         ),
-        border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.2f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier
@@ -797,9 +799,9 @@ fun RecentAppItem(
 
             // Show a "recent" indicator
             Surface(
-                color = PrimerBlue.copy(alpha = 0.1f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                 shape = PrimerShapes.small,
-                border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.3f))
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
             ) {
                 Text(
                     text = "Recent",
@@ -808,7 +810,7 @@ fun RecentAppItem(
                         vertical = 2.dp
                     ),
                     style = MaterialTheme.typography.labelSmall,
-                    color = PrimerBlue
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

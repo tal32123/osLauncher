@@ -67,9 +67,11 @@ class SettingsViewModel(
                     buildTime = settings?.buildTime,
                     colorPalette = settings?.colorPalette ?: "default",
                     wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
+                    backgroundOpacity = settings?.backgroundOpacity ?: 1f,
                     enableGlassmorphism = settings?.enableGlassmorphism ?: false,
                     uiDensity = settings?.uiDensity ?: "comfortable",
                     enableAnimations = settings?.enableAnimations ?: true,
+                    customWallpaperPath = settings?.customWallpaperPath,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -183,6 +185,18 @@ class SettingsViewModel(
         }
     }
 
+    fun updateBackgroundOpacity(opacity: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateBackgroundOpacity(opacity)
+        }
+    }
+
+    fun updateCustomWallpaper(path: String?) {
+        viewModelScope.launch {
+            settingsRepository.updateCustomWallpaper(path)
+        }
+    }
+
     fun updateGlassmorphism(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.updateGlassmorphism(enabled)
@@ -271,7 +285,9 @@ data class SettingsUiState(
     val buildTime: String? = null,
     val colorPalette: String = "default",
     val wallpaperBlurAmount: Float = 0f,
+    val backgroundOpacity: Float = 1f,
     val enableGlassmorphism: Boolean = false,
     val uiDensity: String = "comfortable",
-    val enableAnimations: Boolean = true
+    val enableAnimations: Boolean = true,
+    val customWallpaperPath: String? = null
 )

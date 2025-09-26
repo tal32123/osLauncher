@@ -15,7 +15,9 @@ data class UiSettings(
     val uiDensity: String = "comfortable",
     val showWallpaper: Boolean = false,
     val wallpaperBlurAmount: Float = 0f,
-    val backgroundColor: String = "system"
+    val backgroundColor: String = "system",
+    val backgroundOpacity: Float = 1f,
+    val customWallpaperPath: String? = null
 )
 
 /**
@@ -29,7 +31,9 @@ fun LauncherSettings.toUiSettings(): UiSettings = UiSettings(
     uiDensity = this.uiDensity,
     showWallpaper = this.showWallpaper,
     wallpaperBlurAmount = this.wallpaperBlurAmount,
-    backgroundColor = this.backgroundColor
+    backgroundColor = this.backgroundColor,
+    backgroundOpacity = this.backgroundOpacity,
+    customWallpaperPath = this.customWallpaperPath
 )
 
 /**
