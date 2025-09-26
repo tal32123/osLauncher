@@ -154,17 +154,6 @@ fun SettingsScreen(
                 onPickCustomWallpaper = {
                     pickWallpaperLauncher.launch(arrayOf("image/*"))
                 },
-                onClearCustomWallpaper = {
-                    runCatching {
-                        uiState.customWallpaperPath?.let { existing ->
-                            context.contentResolver.releasePersistableUriPermission(
-                                Uri.parse(existing),
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION
-                            )
-                        }
-                    }
-                    viewModel.updateCustomWallpaper(null)
-                },
                 enableGlassmorphism = uiState.enableGlassmorphism,
                 onToggleGlassmorphism = viewModel::updateGlassmorphism,
                 uiDensity = uiState.uiDensity,
@@ -283,7 +272,6 @@ fun UIThemeSettings(
     onUpdateBackgroundOpacity: (Float) -> Unit,
     customWallpaperPath: String?,
     onPickCustomWallpaper: () -> Unit,
-    onClearCustomWallpaper: () -> Unit,
     enableGlassmorphism: Boolean,
     onToggleGlassmorphism: (Boolean) -> Unit,
     uiDensity: UiDensityOption,
@@ -456,14 +444,6 @@ fun UIThemeSettings(
                                     modifier = Modifier.weight(1f)
                                 ) {
                                     Text("Choose Image")
-                                }
-                                if (customWallpaperPath != null) {
-                                    OutlinedButton(
-                                        onClick = onClearCustomWallpaper,
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text("Remove")
-                                    }
                                 }
                             }
                             if (customWallpaperPath != null) {
