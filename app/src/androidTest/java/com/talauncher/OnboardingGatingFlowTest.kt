@@ -3,8 +3,6 @@ package com.talauncher
 import android.app.Activity
 import android.content.Context
 import android.os.Build
-import androidx.compose.ui.test.assertDoesNotExist
-import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
