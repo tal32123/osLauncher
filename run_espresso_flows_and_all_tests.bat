@@ -1,7 +1,6 @@
 @echo off
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-set SKIP_GIT_STATUS_CHECK=true
 
 echo ========================================
 echo Running targeted Espresso UI flows
