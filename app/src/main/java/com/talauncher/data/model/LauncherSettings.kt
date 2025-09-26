@@ -35,7 +35,7 @@ data class LauncherSettings(
     // New 2025 minimalist UI customization options
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val wallpaperBlurAmount: Float = 0f, // 0.0 (no blur) to 1.0 (max blur)
-    val enableGlassmorphism: Boolean = false, // Enable glass-like translucent effects
+    val enableGlassmorphism: Boolean = true, // Enable glass-like translucent effects
     val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
     val cardCornerRadius: Int = 12, // Corner radius for cards in dp (8-24)
     val enableDynamicColors: Boolean = false, // Use Material You dynamic colors when available

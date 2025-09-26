@@ -12,7 +12,7 @@ import com.talauncher.ui.components.UiDensity
  */
 data class UiSettings(
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
-    val enableGlassmorphism: Boolean = false,
+    val enableGlassmorphism: Boolean = true,
     val enableAnimations: Boolean = true,
     val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
     val showWallpaper: Boolean = false,
