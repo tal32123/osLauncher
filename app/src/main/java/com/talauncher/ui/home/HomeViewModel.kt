@@ -45,6 +45,8 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
+internal const val RECENT_APPS_INDEX_KEY = "*"
+
 sealed class SearchItem {
     abstract val name: String
     abstract val relevanceScore: Int
@@ -201,7 +203,7 @@ class HomeViewModel(
                     }
                     val recentAppsLimit = settings?.recentAppsLimit ?: 10
                     val recentApps = getRecentApps(allApps, hiddenApps, recentAppsLimit, hasUsageStatsPermission)
-                    val alphabetIndex = buildAlphabetIndex(allApps)
+                    val alphabetIndex = buildAlphabetIndex(allApps, recentApps)
 
                     withContext(Dispatchers.Main.immediate) {
                         _uiState.value = _uiState.value.copy(
@@ -1315,7 +1317,22 @@ class HomeViewModel(
         recentApps
     }
 
-    private fun buildAlphabetIndex(apps: List<AppInfo>): List<AlphabetIndexEntry> {
+    private fun buildAlphabetIndex(
+        apps: List<AppInfo>,
+        recentApps: List<AppInfo>
+    ): List<AlphabetIndexEntry> {
+        val entries = mutableListOf<AlphabetIndexEntry>()
+
+        if (recentApps.isNotEmpty()) {
+            entries += AlphabetIndexEntry(
+                key = RECENT_APPS_INDEX_KEY,
+                displayLabel = RECENT_APPS_INDEX_KEY,
+                targetIndex = null,
+                hasApps = true,
+                previewAppName = recentApps.firstOrNull()?.appName
+            )
+        }
+
         val appsByFirstChar = apps.groupBy { app ->
             val firstChar = app.appName.firstOrNull()?.toString()?.uppercase()
             when {
@@ -1327,9 +1344,9 @@ class HomeViewModel(
 
         val alphabet = ('A'..'Z').map { it.toString() } + listOf("#")
 
-        return alphabet.map { char ->
+        alphabet.forEach { char ->
             val appsForChar = appsByFirstChar[char] ?: emptyList()
-            AlphabetIndexEntry(
+            entries += AlphabetIndexEntry(
                 key = char,
                 displayLabel = char,
                 targetIndex = if (appsForChar.isNotEmpty()) {
@@ -1346,6 +1363,8 @@ class HomeViewModel(
                 previewAppName = appsForChar.firstOrNull()?.appName
             )
         }
+
+        return entries
     }
 
     fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {

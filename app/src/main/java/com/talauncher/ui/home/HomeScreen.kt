@@ -34,7 +34,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.layout.width
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
@@ -254,15 +256,21 @@ fun HomeScreen(
                     val activeKey = uiState.alphabetIndexActiveKey
                     if (activeKey != null) {
                         val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
-                        entry?.targetIndex?.let { targetIndex ->
-                            // Adjust index to account for recent apps section
-                            val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                // Add header + recent apps + spacer + "All Apps" header
-                                targetIndex + uiState.recentApps.size + 3
+                        if (entry != null) {
+                            if (entry.key == RECENT_APPS_INDEX_KEY) {
+                                listState.animateScrollToItem(0)
                             } else {
-                                targetIndex
+                                entry.targetIndex?.let { targetIndex ->
+                                    // Adjust index to account for recent apps section
+                                    val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
+                                        // Add header + recent apps + spacer + "All Apps" header
+                                        targetIndex + uiState.recentApps.size + 3
+                                    } else {
+                                        targetIndex
+                                    }
+                                    listState.animateScrollToItem(adjustedIndex)
+                                }
                             }
-                            listState.animateScrollToItem(adjustedIndex)
                         }
                     }
                 }
@@ -722,18 +730,39 @@ private fun AlphabetIndex(
     onScrubbingChanged: (Boolean) -> Unit
 ) {
     var componentSize by remember { mutableStateOf(IntSize.Zero) }
+    val entryBounds = remember(entries) { mutableStateMapOf<String, ClosedFloatingPointRange<Float>>() }
 
     fun resolveEntry(positionY: Float): Pair<AlphabetIndexEntry, Float>? {
-        if (entries.isEmpty() || componentSize.height == 0) {
+        if (entries.isEmpty() || componentSize.height == 0 || entryBounds.isEmpty()) {
             return null
         }
         val totalHeight = componentSize.height.toFloat()
+        val boundsList = entries.mapNotNull { entry ->
+            entryBounds[entry.key]?.let { bounds -> entry to bounds }
+        }
+        if (boundsList.isEmpty()) {
+            return null
+        }
+
         val clampedY = positionY.coerceIn(0f, totalHeight)
-        val entryHeight = totalHeight / entries.size
-        val index = (clampedY / entryHeight).toInt().coerceIn(0, entries.lastIndex)
-        val center = (index + 0.5f) * entryHeight
-        val fraction = center / totalHeight
-        return entries[index] to fraction
+        val candidate = boundsList.firstOrNull { (_, bounds) ->
+            clampedY in bounds
+        } ?: boundsList.minByOrNull { (_, bounds) ->
+            when {
+                clampedY < bounds.start -> bounds.start - clampedY
+                clampedY > bounds.endInclusive -> clampedY - bounds.endInclusive
+                else -> 0f
+            }
+        } ?: return null
+
+        val (entry, bounds) = candidate
+        val center = (bounds.start + bounds.endInclusive) / 2f
+        val fraction = if (totalHeight > 0f) {
+            (center / totalHeight).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+        return entry to fraction
     }
 
     Box(
@@ -780,7 +809,13 @@ private fun AlphabetIndex(
                 Text(
                     text = entry.displayLabel,
                     style = MaterialTheme.typography.labelSmall,
-                    color = color
+                    color = color,
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        val position = coordinates.positionInParent()
+                        val start = position.y
+                        val end = start + coordinates.size.height
+                        entryBounds[entry.key] = start..end
+                    }
                 )
             }
         }

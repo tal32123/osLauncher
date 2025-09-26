@@ -29,7 +29,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 // import androidx.compose.ui.layout.offset
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -587,18 +589,39 @@ private fun AlphabetIndex(
     onScrubbingChanged: (Boolean) -> Unit
 ) {
     var componentSize by remember { mutableStateOf(IntSize.Zero) }
+    val entryBounds = remember(entries) { mutableStateMapOf<String, ClosedFloatingPointRange<Float>>() }
 
     fun resolveEntry(positionY: Float): Pair<AlphabetIndexEntry, Float>? {
-        if (entries.isEmpty() || componentSize.height == 0) {
+        if (entries.isEmpty() || componentSize.height == 0 || entryBounds.isEmpty()) {
             return null
         }
         val totalHeight = componentSize.height.toFloat()
+        val boundsList = entries.mapNotNull { entry ->
+            entryBounds[entry.key]?.let { bounds -> entry to bounds }
+        }
+        if (boundsList.isEmpty()) {
+            return null
+        }
+
         val clampedY = positionY.coerceIn(0f, totalHeight)
-        val entryHeight = totalHeight / entries.size
-        val index = (clampedY / entryHeight).toInt().coerceIn(0, entries.lastIndex)
-        val center = (index + 0.5f) * entryHeight
-        val fraction = center / totalHeight
-        return entries[index] to fraction
+        val candidate = boundsList.firstOrNull { (_, bounds) ->
+            clampedY in bounds
+        } ?: boundsList.minByOrNull { (_, bounds) ->
+            when {
+                clampedY < bounds.start -> bounds.start - clampedY
+                clampedY > bounds.endInclusive -> clampedY - bounds.endInclusive
+                else -> 0f
+            }
+        } ?: return null
+
+        val (entry, bounds) = candidate
+        val center = (bounds.start + bounds.endInclusive) / 2f
+        val fraction = if (totalHeight > 0f) {
+            (center / totalHeight).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+        return entry to fraction
     }
 
     Box(
@@ -645,7 +668,13 @@ private fun AlphabetIndex(
                 Text(
                     text = entry.displayLabel,
                     style = MaterialTheme.typography.labelSmall,
-                    color = color
+                    color = color,
+                    modifier = Modifier.onGloballyPositioned { coordinates ->
+                        val position = coordinates.positionInParent()
+                        val start = position.y
+                        val end = start + coordinates.size.height
+                        entryBounds[entry.key] = start..end
+                    }
                 )
             }
         }
