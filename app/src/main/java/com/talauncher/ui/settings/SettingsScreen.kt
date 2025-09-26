@@ -33,14 +33,14 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("General", "UI & Theme", "Essential Apps", "Distracting Apps", "Usage Insights")
+    val tabs = listOf("General", "UI & Theme", "Distracting Apps", "Usage Insights")
     var editingApp by remember { mutableStateOf<com.talauncher.data.model.InstalledApp?>(null) }
     var editingTimeLimit by remember { mutableStateOf(uiState.defaultTimeLimitMinutes) }
     var editingUsesDefault by remember { mutableStateOf(true) }
 
     // Clear search when navigating away from app selection tabs
     LaunchedEffect(selectedTab) {
-        if (selectedTab != 2 && selectedTab != 3) {
+        if (selectedTab != 2) {
             viewModel.clearSearchQuery()
         }
     }
@@ -118,17 +118,7 @@ fun SettingsScreen(
                 enableAnimations = uiState.enableAnimations,
                 onToggleAnimations = viewModel::updateAnimationsEnabled
             )
-            2 -> AppSelectionTab(
-                title = "Essential Apps",
-                subtitle = "Apps that will appear on your home screen",
-                apps = viewModel.getFilteredApps(),
-                selectedApps = uiState.pinnedApps.map { it.packageName }.toSet(),
-                onToggleApp = viewModel::toggleEssentialApp,
-                searchQuery = uiState.searchQuery,
-                onSearchQueryChange = viewModel::updateSearchQuery,
-                isLoading = uiState.isLoading
-            )
-            3 -> {
+            2 -> {
                 val distractingAppMap = remember(uiState.distractingApps) {
                     uiState.distractingApps.associateBy { it.packageName }
                 }
@@ -170,7 +160,7 @@ fun SettingsScreen(
                     }
                 )
             }
-            4 -> {
+            3 -> {
                 val insightsViewModel: InsightsViewModel = viewModel {
                     InsightsViewModel(viewModel.usageStatsHelper, viewModel.permissionsHelper)
                 }
