@@ -63,6 +63,14 @@ sealed class SearchItem {
     }
 }
 
+data class AlphabetIndexEntry(
+    val key: String,
+    val displayLabel: String,
+    val targetIndex: Int?,
+    val hasApps: Boolean,
+    val previewAppName: String?
+)
+
 class HomeViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
@@ -183,6 +191,17 @@ class HomeViewModel(
                     val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
                     val weatherDisplay = settings?.weatherDisplay ?: "off"
 
+                    // Get recent apps and alphabet index for the moved app drawer functionality
+                    val hasUsageStatsPermission = permissionsHelper?.permissionState?.value?.hasUsageStats ?: false
+                    val hiddenApps = try {
+                        appRepository.getAllHiddenApps().first()
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                    val recentAppsLimit = settings?.recentAppsLimit ?: 10
+                    val recentApps = getRecentApps(allApps, hiddenApps, recentAppsLimit, hasUsageStatsPermission)
+                    val alphabetIndex = buildAlphabetIndex(allApps)
+
                     withContext(Dispatchers.Main.immediate) {
                         _uiState.value = _uiState.value.copy(
                             allVisibleApps = allApps,
@@ -201,7 +220,11 @@ class HomeViewModel(
                             wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                             enableGlassmorphism = settings?.enableGlassmorphism ?: false,
                             uiDensity = settings?.uiDensity ?: "comfortable",
-                            enableAnimations = settings?.enableAnimations ?: true
+                            enableAnimations = settings?.enableAnimations ?: true,
+                            // App drawer functionality moved to home screen
+                            recentApps = recentApps,
+                            alphabetIndexEntries = alphabetIndex,
+                            isAlphabetIndexEnabled = allApps.isNotEmpty()
                         )
 
                         // Update weather data if needed
@@ -1223,6 +1246,186 @@ class HomeViewModel(
         weatherUpdateJob?.cancel()
         contactSearchJob?.cancel()
     }
+
+    // Methods for app drawer functionality moved to home screen
+
+    private suspend fun getRecentApps(
+        visibleApps: List<AppInfo>,
+        hiddenApps: List<AppInfo>,
+        limit: Int,
+        hasPermission: Boolean
+    ): List<AppInfo> = withContext(Dispatchers.Default) {
+        if (!hasPermission || usageStatsHelper == null) {
+            return@withContext emptyList()
+        }
+
+        val sanitizedLimit = limit.coerceAtLeast(0)
+        if (sanitizedLimit == 0) {
+            return@withContext emptyList()
+        }
+
+        val usageStats = usageStatsHelper
+            .getPast48HoursUsageStats(hasPermission)
+            .filter { it.timeInForeground > 0 }
+            .sortedByDescending { it.timeInForeground }
+
+        val hiddenPackages = hiddenApps.mapTo(mutableSetOf()) { it.packageName }
+        val appMap = visibleApps.associateBy { it.packageName }
+        val recentApps = mutableListOf<AppInfo>()
+        val seenPackages = mutableSetOf<String>()
+
+        for (usageApp in usageStats) {
+            if (usageApp.packageName in hiddenPackages) {
+                continue
+            }
+
+            val app = appMap[usageApp.packageName] ?: continue
+
+            if (!seenPackages.add(app.packageName)) {
+                continue
+            }
+
+            recentApps += app
+
+            if (recentApps.size == sanitizedLimit) {
+                break
+            }
+        }
+
+        if (recentApps.size < sanitizedLimit) {
+            val fallbackApps = visibleApps
+                .asSequence()
+                .filterNot { it.packageName in hiddenPackages }
+                .filterNot { it.packageName in seenPackages }
+                .sortedBy { it.appName.lowercase() }
+                .toList()
+
+            for (app in fallbackApps) {
+                recentApps += app
+                seenPackages += app.packageName
+                if (recentApps.size == sanitizedLimit) {
+                    break
+                }
+            }
+        }
+
+        recentApps
+    }
+
+    private fun buildAlphabetIndex(apps: List<AppInfo>): List<AlphabetIndexEntry> {
+        val appsByFirstChar = apps.groupBy { app ->
+            val firstChar = app.appName.firstOrNull()?.toString()?.uppercase()
+            when {
+                firstChar == null -> "#"
+                firstChar.matches(Regex("[A-Z]")) -> firstChar
+                else -> "#"
+            }
+        }
+
+        val alphabet = listOf("#") + ('A'..'Z').map { it.toString() }
+
+        return alphabet.map { char ->
+            val appsForChar = appsByFirstChar[char] ?: emptyList()
+            AlphabetIndexEntry(
+                key = char,
+                displayLabel = char,
+                targetIndex = if (appsForChar.isNotEmpty()) {
+                    // Find the index of the first app with this starting letter
+                    apps.indexOfFirst {
+                        val firstChar = it.appName.firstOrNull()?.toString()?.uppercase()
+                        when {
+                            char == "#" -> firstChar == null || !firstChar.matches(Regex("[A-Z]"))
+                            else -> firstChar == char
+                        }
+                    }.takeIf { it != -1 }
+                } else null,
+                hasApps = appsForChar.isNotEmpty(),
+                previewAppName = appsForChar.firstOrNull()?.appName
+            )
+        }
+    }
+
+    fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
+        _uiState.value = _uiState.value.copy(
+            alphabetIndexActiveKey = entry.key
+        )
+        // You could also scroll to the target index here if needed
+    }
+
+    fun onAlphabetScrubbingChanged(isScrubbing: Boolean) {
+        if (!isScrubbing) {
+            _uiState.value = _uiState.value.copy(
+                alphabetIndexActiveKey = null
+            )
+        }
+    }
+
+    fun showAppActionDialog(app: AppInfo) {
+        _uiState.value = _uiState.value.copy(
+            showAppActionDialog = true,
+            selectedAppForAction = app
+        )
+    }
+
+    fun dismissAppActionDialog() {
+        _uiState.value = _uiState.value.copy(
+            showAppActionDialog = false,
+            selectedAppForAction = null
+        )
+    }
+
+    fun renameApp(app: AppInfo) {
+        viewModelScope.launch {
+            try {
+                // This would need to be implemented in the appRepository
+                // For now, just dismiss the dialog
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.handleError(e, "Failed to rename app")
+            }
+        }
+    }
+
+    fun hideApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.setAppHidden(packageName, true)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.handleError(e, "Failed to hide app")
+            }
+        }
+    }
+
+    fun openAppInfo(packageName: String) {
+        context?.let { ctx ->
+            try {
+                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                ctx.startActivity(intent)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.handleError(e, "Failed to open app info")
+            }
+        }
+    }
+
+    fun uninstallApp(packageName: String) {
+        context?.let { ctx ->
+            try {
+                val intent = Intent(Intent.ACTION_DELETE).apply {
+                    data = Uri.parse("package:$packageName")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                ctx.startActivity(intent)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.handleError(e, "Failed to uninstall app")
+            }
+        }
+    }
 }
 
 private data class TimeLimitPromptState(
@@ -1281,5 +1484,12 @@ data class HomeUiState(
     val wallpaperBlurAmount: Float = 0f,
     val enableGlassmorphism: Boolean = false,
     val uiDensity: String = "comfortable",
-    val enableAnimations: Boolean = true
+    val enableAnimations: Boolean = true,
+    // App drawer functionality moved to home screen
+    val recentApps: List<AppInfo> = emptyList(),
+    val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
+    val alphabetIndexActiveKey: String? = null,
+    val isAlphabetIndexEnabled: Boolean = true,
+    val showAppActionDialog: Boolean = false,
+    val selectedAppForAction: AppInfo? = null
 )

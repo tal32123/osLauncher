@@ -29,8 +29,7 @@ import com.talauncher.data.database.LauncherDatabase
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
-import com.talauncher.ui.appdrawer.AppDrawerViewModel
-import com.talauncher.ui.appdrawer.AppDrawerScreen
+// AppDrawer imports removed - functionality moved to HomeScreen
 import com.talauncher.ui.home.HomeViewModel
 import com.talauncher.ui.home.HomeScreen
 import com.talauncher.ui.main.MainViewModel
@@ -262,7 +261,7 @@ fun LauncherNavigationPager(
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
 ) {
-    val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
 
     // Handle home button navigation
@@ -335,41 +334,12 @@ fun LauncherNavigationPager(
 
                 HomeScreen(
                     viewModel = homeViewModel,
-                    onNavigateToAppDrawer = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(2)
-                        }
-                    },
+                    onNavigateToAppDrawer = null, // App drawer functionality moved to home screen
                     onNavigateToSettings = {
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(0)
                         }
                     }
-                )
-            }
-            2 -> {
-                // All Apps Screen
-                val context = LocalContext.current
-                val appDrawerViewModel: AppDrawerViewModel = viewModel {
-                    AppDrawerViewModel(
-                        appRepository,
-                        settingsRepository,
-                        usageStatsHelper,
-                        permissionsHelper,
-                        contactHelper,
-                        context,
-                        onLaunchApp
-                    )
-                }
-                // Clear search when navigating away from app drawer
-                LaunchedEffect(pagerState.currentPage) {
-                    if (pagerState.currentPage != 2) {
-                        appDrawerViewModel.clearSearchOnNavigation()
-                    }
-                }
-
-                AppDrawerScreen(
-                    viewModel = appDrawerViewModel
                 )
             }
         }

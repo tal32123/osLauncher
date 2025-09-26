@@ -5,8 +5,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +31,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.foundation.layout.onSizeChanged
+import androidx.compose.foundation.layout.width
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.ui.components.ContactItem
@@ -237,21 +243,84 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
             } else {
-                // All Apps Section
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                // Apps Section with Recent Apps and Alphabet Index
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 ) {
-                    items(uiState.allVisibleApps, key = { it.packageName }) { app ->
-                        ModernAppItem(
-                            appName = app.appName,
-                            onClick = { viewModel.launchApp(app.packageName) },
-                            onLongClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                // Remove long press functionality since no more pinning
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                    ) {
+                        // Recently Used Apps Section
+                        if (uiState.recentApps.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = "Recent Apps",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(
+                                        start = PrimerSpacing.md,
+                                        top = PrimerSpacing.md,
+                                        bottom = PrimerSpacing.sm
+                                    )
+                                )
+                            }
+
+                            items(uiState.recentApps, key = { "recent_${it.packageName}" }) { app ->
+                                RecentAppItem(
+                                    appInfo = app,
+                                    onClick = { viewModel.launchApp(app.packageName) },
+                                    onLongClick = {
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.showAppActionDialog(app)
+                                    }
+                                )
+                            }
+
+                            item {
+                                Spacer(modifier = Modifier.height(PrimerSpacing.lg))
+                                Text(
+                                    text = "All Apps",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(
+                                        start = PrimerSpacing.md,
+                                        bottom = PrimerSpacing.sm
+                                    )
+                                )
+                            }
+                        }
+
+                        // All Apps Section
+                        items(uiState.allVisibleApps, key = { it.packageName }) { app ->
+                            ModernAppItem(
+                                appName = app.appName,
+                                onClick = { viewModel.launchApp(app.packageName) },
+                                onLongClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.showAppActionDialog(app)
+                                },
+                                enableGlassmorphism = uiState.enableGlassmorphism,
+                                uiDensity = uiState.uiDensity.toUiDensity()
+                            )
+                        }
+                    }
+
+                    // Alphabet Index on the right side
+                    if (uiState.alphabetIndexEntries.isNotEmpty()) {
+                        AlphabetIndex(
+                            entries = uiState.alphabetIndexEntries,
+                            activeKey = uiState.alphabetIndexActiveKey,
+                            isEnabled = uiState.isAlphabetIndexEnabled,
+                            modifier = Modifier.padding(end = PrimerSpacing.sm),
+                            onEntryFocused = { entry, fraction ->
+                                viewModel.onAlphabetIndexFocused(entry, fraction)
                             },
-                            enableGlassmorphism = uiState.enableGlassmorphism,
-                            uiDensity = uiState.uiDensity.toUiDensity()
+                            onScrubbingChanged = { isScrubbing ->
+                                viewModel.onAlphabetScrubbingChanged(isScrubbing)
+                            }
                         )
                     }
                 }
@@ -286,6 +355,18 @@ fun HomeScreen(
                 }
         )
 
+
+        // App Action Dialog (moved from App Drawer)
+        if (uiState.showAppActionDialog) {
+            AppActionDialog(
+                app = uiState.selectedAppForAction,
+                onDismiss = { viewModel.dismissAppActionDialog() },
+                onRename = { app -> viewModel.renameApp(app) },
+                onHide = { packageName -> viewModel.hideApp(packageName) },
+                onAppInfo = { packageName -> viewModel.openAppInfo(packageName) },
+                onUninstall = { packageName -> viewModel.uninstallApp(packageName) }
+            )
+        }
 
         // Friction barrier dialog for distracting apps
         if (uiState.showFrictionDialog) {
@@ -600,6 +681,266 @@ fun PinnedAppItem(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
+        }
+    }
+}
+
+// Components moved from App Drawer to Home Screen
+
+@Composable
+private fun AlphabetIndex(
+    entries: List<AlphabetIndexEntry>,
+    activeKey: String?,
+    isEnabled: Boolean,
+    modifier: Modifier = Modifier,
+    onEntryFocused: (AlphabetIndexEntry, Float) -> Unit,
+    onScrubbingChanged: (Boolean) -> Unit
+) {
+    var componentSize by remember { mutableStateOf(IntSize.Zero) }
+
+    fun resolveEntry(positionY: Float): Pair<AlphabetIndexEntry, Float>? {
+        if (entries.isEmpty() || componentSize.height == 0) {
+            return null
+        }
+        val totalHeight = componentSize.height.toFloat()
+        val clampedY = positionY.coerceIn(0f, totalHeight)
+        val entryHeight = totalHeight / entries.size
+        val index = (clampedY / entryHeight).toInt().coerceIn(0, entries.lastIndex)
+        val center = (index + 0.5f) * entryHeight
+        val fraction = center / totalHeight
+        return entries[index] to fraction
+    }
+
+    Box(
+        modifier = modifier
+            .width(48.dp)
+            .fillMaxHeight()
+            .onSizeChanged { componentSize = it }
+            .pointerInput(entries, isEnabled) {
+                if (!isEnabled) return@pointerInput
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    onScrubbingChanged(true)
+                    resolveEntry(down.position.y)?.let { (entry, fraction) ->
+                        onEntryFocused(entry, fraction)
+                    }
+                    try {
+                        drag(down.id) { change ->
+                            resolveEntry(change.position.y)?.let { (entry, fraction) ->
+                                onEntryFocused(entry, fraction)
+                            }
+                            change.consume()
+                        }
+                    } finally {
+                        onScrubbingChanged(false)
+                    }
+                }
+            }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = PrimerSpacing.md),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            entries.forEach { entry ->
+                val isActive = isEnabled && entry.hasApps && entry.key == activeKey
+                val color = when {
+                    !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                    entry.hasApps && isActive -> MaterialTheme.colorScheme.onSurface
+                    entry.hasApps -> MaterialTheme.colorScheme.onSurfaceVariant
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                }
+                Text(
+                    text = entry.displayLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun RecentAppItem(
+    appInfo: AppInfo,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    PrimerCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = PrimerBlue.copy(alpha = 0.05f) // Slight blue tint for recent apps
+        ),
+        border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PrimerSpacing.md)
+                .heightIn(min = PrimerListItemDefaults.minHeight),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = appInfo.appName,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            // Show a "recent" indicator
+            Surface(
+                color = PrimerBlue.copy(alpha = 0.1f),
+                shape = PrimerShapes.small,
+                border = BorderStroke(1.dp, PrimerBlue.copy(alpha = 0.3f))
+            ) {
+                Text(
+                    text = "Recent",
+                    modifier = Modifier.padding(
+                        horizontal = PrimerSpacing.xs,
+                        vertical = 2.dp
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = PrimerBlue
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AppActionDialog(
+    app: AppInfo?,
+    onDismiss: () -> Unit,
+    onRename: (AppInfo) -> Unit,
+    onHide: (String) -> Unit,
+    onAppInfo: (String) -> Unit,
+    onUninstall: (String) -> Unit
+) {
+    if (app != null) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = app.appName,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Choose an action:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
+                    ) {
+
+                        ActionTextButton(
+                            label = stringResource(R.string.rename_app_action_label),
+                            description = stringResource(R.string.rename_app_action_description),
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onRename(app)
+                                onDismiss()
+                            }
+                        )
+
+                        ActionTextButton(
+                            label = "Hide app",
+                            description = "Move this app to the hidden list.",
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onHide(app.packageName)
+                                onDismiss()
+                            }
+                        )
+
+                        ActionTextButton(
+                            label = "View app info",
+                            description = "Open the system settings page for this app.",
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onAppInfo(app.packageName)
+                                onDismiss()
+                            }
+                        )
+
+                        ActionTextButton(
+                            label = "Uninstall app",
+                            description = "Remove this app from your device.",
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onUninstall(app.packageName)
+                                onDismiss()
+                            }
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = PrimerShapes.medium
+        )
+    }
+}
+
+@Composable
+private fun ActionTextButton(
+    label: String,
+    description: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    PrimerButton(
+        onClick = onClick,
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = PrimerSpacing.xs),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            if (description.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
