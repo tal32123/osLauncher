@@ -41,12 +41,10 @@ class SettingsViewModel(
             }
 
             combine(
-                appRepository.getPinnedApps(),
                 appRepository.getDistractingApps(),
                 settingsRepository.getSettings()
-            ) { pinnedApps, distractingApps, settings ->
+            ) { distractingApps, settings ->
                 _uiState.value = _uiState.value.copy(
-                    pinnedApps = pinnedApps,
                     distractingApps = distractingApps,
                     backgroundColor = settings?.backgroundColor ?: "system",
                     showWallpaper = settings?.showWallpaper ?: true,
@@ -79,16 +77,6 @@ class SettingsViewModel(
         }
     }
 
-    fun toggleEssentialApp(packageName: String) {
-        viewModelScope.launch {
-            val currentApp = appRepository.getApp(packageName)
-            if (currentApp?.isPinned == true) {
-                appRepository.unpinApp(packageName)
-            } else {
-                appRepository.pinApp(packageName)
-            }
-        }
-    }
 
     fun toggleDistractingApp(packageName: String) {
         viewModelScope.launch {
@@ -102,7 +90,6 @@ class SettingsViewModel(
                     AppInfo(
                         packageName = packageName,
                         appName = installedApp.appName,
-                        isPinned = false,
                         isHidden = false,
                         isDistracting = true
                     )
@@ -252,9 +239,6 @@ class SettingsViewModel(
         }
     }
 
-    fun isAppPinned(packageName: String): Boolean {
-        return _uiState.value.pinnedApps.any { it.packageName == packageName }
-    }
 
     fun isAppDistracting(packageName: String): Boolean {
         return _uiState.value.distractingApps.any { it.packageName == packageName }
@@ -262,7 +246,6 @@ class SettingsViewModel(
 }
 
 data class SettingsUiState(
-    val pinnedApps: List<AppInfo> = emptyList(),
     val distractingApps: List<AppInfo> = emptyList(),
     val availableApps: List<InstalledApp> = emptyList(),
     val backgroundColor: String = "system",
