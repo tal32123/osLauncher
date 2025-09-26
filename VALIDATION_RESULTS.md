@@ -69,7 +69,7 @@
 
 ### **✅ Documentation Created**
 - [x] `OVERLAY_FIX_PLAN.md` - Comprehensive implementation plan
-- [x] `TEST_PLAN.md` - Detailed testing strategy with 10 test cases
+- [x] Automated Espresso suites cover the previously documented test plan (document now retired)
 - [x] `IMPLEMENTATION_SUMMARY.md` - Complete change summary
 - [x] `manual_test_steps.md` - Step-by-step testing guide
 - [x] `test_overlay_fix.bat` - Automated test script
