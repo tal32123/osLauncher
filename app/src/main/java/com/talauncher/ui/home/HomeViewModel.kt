@@ -229,7 +229,7 @@ class HomeViewModel(
                             colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
                             wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                             customWallpaperPath = settings?.customWallpaperPath,
-                            enableGlassmorphism = settings?.enableGlassmorphism ?: false,
+                            enableGlassmorphism = settings?.enableGlassmorphism ?: true,
                             uiDensity = settings?.uiDensity ?: UiDensityOption.COMFORTABLE,
                             enableAnimations = settings?.enableAnimations ?: true,
                             // App drawer functionality moved to home screen
@@ -1512,7 +1512,7 @@ data class HomeUiState(
     val weatherDailyLow: Double? = null,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val wallpaperBlurAmount: Float = 0f,
-    val enableGlassmorphism: Boolean = false,
+    val enableGlassmorphism: Boolean = true,
     val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
     val enableAnimations: Boolean = true,
     // App drawer functionality moved to home screen
