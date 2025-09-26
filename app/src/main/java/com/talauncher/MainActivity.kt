@@ -346,10 +346,10 @@ fun LauncherNavigationPager(
                 ) {
                     if (homePageContent != null) {
                         homePageContent(
-                            navigateToSettings = {
+                            {
                                 coroutineScope.launch { animateToPage(0) }
                             },
-                            launchApp = {
+                            {
                                 coroutineScope.launch { animateToPage(2) }
                             }
                         )
