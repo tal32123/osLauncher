@@ -1,8 +1,12 @@
 package com.talauncher.data.repository
 
 import com.talauncher.data.database.SettingsDao
+import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.LauncherSettings
-import java.util.Locale
+import com.talauncher.data.model.MathDifficulty
+import com.talauncher.data.model.UiDensityOption
+import com.talauncher.data.model.WeatherDisplayOption
+import com.talauncher.data.model.WeatherTemperatureUnit
 import kotlinx.coroutines.flow.Flow
 
 class SettingsRepository(private val settingsDao: SettingsDao) {
@@ -39,7 +43,7 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(enableMathChallenge = enabled))
     }
 
-    suspend fun updateMathDifficulty(difficulty: String) {
+    suspend fun updateMathDifficulty(difficulty: MathDifficulty) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(mathDifficulty = difficulty))
     }
@@ -92,20 +96,14 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(showWhatsAppAction = enabled))
     }
 
-
-
-    suspend fun updateWeatherDisplay(display: String) {
+    suspend fun updateWeatherDisplay(display: WeatherDisplayOption) {
         val settings = getSettingsSync()
-        val allowedValues = setOf("off", "daily", "hourly")
-        val normalized = display.lowercase().takeIf { it in allowedValues }
-            ?: settings.weatherDisplay
-        updateSettings(settings.copy(weatherDisplay = normalized))
+        updateSettings(settings.copy(weatherDisplay = display))
     }
 
-    suspend fun updateWeatherTemperatureUnit(unit: String) {
-        val normalizedUnit = if (unit.lowercase() == "fahrenheit") "fahrenheit" else "celsius"
+    suspend fun updateWeatherTemperatureUnit(unit: WeatherTemperatureUnit) {
         val settings = getSettingsSync()
-        updateSettings(settings.copy(weatherTemperatureUnit = normalizedUnit))
+        updateSettings(settings.copy(weatherTemperatureUnit = unit))
     }
 
     suspend fun updateWeatherLocation(lat: Double?, lon: Double?) {
@@ -127,12 +125,9 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(showWallpaper = show))
     }
 
-    suspend fun updateColorPalette(palette: String) {
+    suspend fun updateColorPalette(palette: ColorPaletteOption) {
         val settings = getSettingsSync()
-        val allowedPalettes = setOf("default", "warm", "cool", "monochrome", "nature")
-        val normalized = palette.lowercase().takeIf { it in allowedPalettes }
-            ?: settings.colorPalette
-        updateSettings(settings.copy(colorPalette = normalized))
+        updateSettings(settings.copy(colorPalette = palette))
     }
 
     suspend fun updateWallpaperBlurAmount(blur: Float) {
@@ -155,12 +150,9 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(enableGlassmorphism = enabled))
     }
 
-    suspend fun updateUiDensity(density: String) {
+    suspend fun updateUiDensity(density: UiDensityOption) {
         val settings = getSettingsSync()
-        val allowedDensity = setOf("compact", "comfortable", "spacious")
-        val normalized = density.lowercase().takeIf { it in allowedDensity }
-            ?: settings.uiDensity
-        updateSettings(settings.copy(uiDensity = normalized))
+        updateSettings(settings.copy(uiDensity = density))
     }
 
     suspend fun updateAnimationsEnabled(enabled: Boolean) {

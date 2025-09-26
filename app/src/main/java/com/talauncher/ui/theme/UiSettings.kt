@@ -1,6 +1,8 @@
 package com.talauncher.ui.theme
 
+import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.LauncherSettings
+import com.talauncher.data.model.UiDensityOption
 import com.talauncher.ui.components.UiDensity
 
 /**
@@ -9,10 +11,10 @@ import com.talauncher.ui.components.UiDensity
  * across ViewModels and components.
  */
 data class UiSettings(
-    val colorPalette: String = "default",
+    val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val enableGlassmorphism: Boolean = false,
     val enableAnimations: Boolean = true,
-    val uiDensity: String = "comfortable",
+    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
     val showWallpaper: Boolean = false,
     val wallpaperBlurAmount: Float = 0f,
     val backgroundColor: String = "system",
@@ -47,10 +49,10 @@ fun LauncherSettings?.toUiSettingsOrDefault(): UiSettings =
  * Extension function to convert string uiDensity to UiDensity enum.
  * Follows the Null Object Pattern with safe defaults.
  */
-fun String.toUiDensity(): UiDensity = when (this.lowercase()) {
-    "compact" -> UiDensity.Compact
-    "spacious" -> UiDensity.Spacious
-    else -> UiDensity.Comfortable // Default fallback
+fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
+    UiDensityOption.COMPACT -> UiDensity.Compact
+    UiDensityOption.SPACIOUS -> UiDensity.Spacious
+    UiDensityOption.COMFORTABLE -> UiDensity.Comfortable // Default fallback
 }
 
 /**

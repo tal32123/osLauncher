@@ -40,6 +40,8 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.layout.width
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
+import com.talauncher.data.model.UiDensityOption
+import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
@@ -53,19 +55,16 @@ import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.components.UnifiedSearchResults
 import com.talauncher.ui.theme.UiSettings
-import com.talauncher.ui.theme.toUiDensity
 import com.talauncher.ui.home.MotivationalQuotesProvider
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private fun String.toUiDensity(): UiDensity {
-    return when (this.lowercase()) {
-        "compact" -> UiDensity.Compact
-        "spacious" -> UiDensity.Spacious
-        else -> UiDensity.Comfortable
-    }
+private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
+    UiDensityOption.COMPACT -> UiDensity.Compact
+    UiDensityOption.SPACIOUS -> UiDensity.Spacious
+    UiDensityOption.COMFORTABLE -> UiDensity.Comfortable
 }
 
 @Composable
@@ -161,16 +160,16 @@ fun HomeScreen(
                         )
 
                         // Weather display next to time
-                        if (uiState.weatherDisplay != "off" && uiState.weatherData != null) {
+                        if (uiState.weatherDisplay != WeatherDisplayOption.OFF && uiState.weatherData != null) {
                             Spacer(modifier = Modifier.width(12.dp))
-                            val shouldShowTemperature = uiState.weatherDisplay != "daily" ||
+                            val shouldShowTemperature = uiState.weatherDisplay != WeatherDisplayOption.DAILY ||
                                 uiState.weatherDailyHigh == null || uiState.weatherDailyLow == null
                             com.talauncher.ui.components.WeatherDisplay(
                                 weatherData = uiState.weatherData,
                                 showTemperature = shouldShowTemperature,
                                 temperatureUnit = uiState.weatherTemperatureUnit,
-                                dailyHigh = if (uiState.weatherDisplay == "daily") uiState.weatherDailyHigh else null,
-                                dailyLow = if (uiState.weatherDisplay == "daily") uiState.weatherDailyLow else null
+                                dailyHigh = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyHigh else null,
+                                dailyLow = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyLow else null
                             )
                         }
                     }

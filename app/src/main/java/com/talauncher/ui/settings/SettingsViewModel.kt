@@ -3,7 +3,12 @@ package com.talauncher.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppInfo
+import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.InstalledApp
+import com.talauncher.data.model.MathDifficulty
+import com.talauncher.data.model.UiDensityOption
+import com.talauncher.data.model.WeatherDisplayOption
+import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
@@ -50,26 +55,27 @@ class SettingsViewModel(
                     showWallpaper = settings?.showWallpaper ?: true,
                     enableTimeLimitPrompt = settings?.enableTimeLimitPrompt ?: false,
                     enableMathChallenge = settings?.enableMathChallenge ?: false,
-                    mathDifficulty = settings?.mathDifficulty ?: "easy",
+                    mathDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
                     sessionExpiryCountdownSeconds = settings?.sessionExpiryCountdownSeconds ?: 5,
                     recentAppsLimit = settings?.recentAppsLimit ?: 5,
                     defaultTimeLimitMinutes = settings?.defaultTimeLimitMinutes ?: 30,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
                     showWhatsAppAction = settings?.showWhatsAppAction ?: true,
-                    weatherDisplay = settings?.weatherDisplay ?: "daily",
-                    weatherTemperatureUnit = settings?.weatherTemperatureUnit ?: "celsius",
+                    weatherDisplay = settings?.weatherDisplay ?: WeatherDisplayOption.DAILY,
+                    weatherTemperatureUnit = settings?.weatherTemperatureUnit
+                        ?: WeatherTemperatureUnit.CELSIUS,
 
                     buildCommitHash = settings?.buildCommitHash,
                     buildCommitMessage = settings?.buildCommitMessage,
                     buildCommitDate = settings?.buildCommitDate,
                     buildBranch = settings?.buildBranch,
                     buildTime = settings?.buildTime,
-                    colorPalette = settings?.colorPalette ?: "default",
+                    colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
                     wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                     backgroundOpacity = settings?.backgroundOpacity ?: 1f,
                     enableGlassmorphism = settings?.enableGlassmorphism ?: false,
-                    uiDensity = settings?.uiDensity ?: "comfortable",
+                    uiDensity = settings?.uiDensity ?: UiDensityOption.COMFORTABLE,
                     enableAnimations = settings?.enableAnimations ?: true,
                     customWallpaperPath = settings?.customWallpaperPath,
                     availableApps = allInstalledApps,
@@ -119,7 +125,7 @@ class SettingsViewModel(
         }
     }
 
-    fun updateMathDifficulty(difficulty: String) {
+    fun updateMathDifficulty(difficulty: MathDifficulty) {
         viewModelScope.launch {
             settingsRepository.updateMathDifficulty(difficulty)
         }
@@ -173,7 +179,7 @@ class SettingsViewModel(
         }
     }
 
-    fun updateColorPalette(palette: String) {
+    fun updateColorPalette(palette: ColorPaletteOption) {
         viewModelScope.launch {
             settingsRepository.updateColorPalette(palette)
         }
@@ -203,7 +209,7 @@ class SettingsViewModel(
         }
     }
 
-    fun updateUiDensity(density: String) {
+    fun updateUiDensity(density: UiDensityOption) {
         viewModelScope.launch {
             settingsRepository.updateUiDensity(density)
         }
@@ -215,18 +221,18 @@ class SettingsViewModel(
         }
     }
 
-    fun updateWeatherDisplay(display: String) {
+    fun updateWeatherDisplay(display: WeatherDisplayOption) {
         viewModelScope.launch {
             settingsRepository.updateWeatherDisplay(display)
 
             // If enabling weather, request location permission if not already granted
-            if (display != "off" && !permissionsHelper.hasLocationPermission()) {
+            if (display != WeatherDisplayOption.OFF && !permissionsHelper.hasLocationPermission()) {
                 // Permission will be requested in the UI when user interacts
             }
         }
     }
 
-    fun updateWeatherTemperatureUnit(unit: String) {
+    fun updateWeatherTemperatureUnit(unit: WeatherTemperatureUnit) {
         viewModelScope.launch {
             settingsRepository.updateWeatherTemperatureUnit(unit)
         }
@@ -266,7 +272,7 @@ data class SettingsUiState(
     val showWallpaper: Boolean = true,
     val enableTimeLimitPrompt: Boolean = false,
     val enableMathChallenge: Boolean = false,
-    val mathDifficulty: String = "easy",
+    val mathDifficulty: MathDifficulty = MathDifficulty.EASY,
     val sessionExpiryCountdownSeconds: Int = 5,
     val recentAppsLimit: Int = 5,
     val defaultTimeLimitMinutes: Int = 30,
@@ -275,19 +281,19 @@ data class SettingsUiState(
     val showPhoneAction: Boolean = false,
     val showMessageAction: Boolean = false,
     val showWhatsAppAction: Boolean = false,
-    val weatherDisplay: String = "daily",
-    val weatherTemperatureUnit: String = "celsius",
+    val weatherDisplay: WeatherDisplayOption = WeatherDisplayOption.DAILY,
+    val weatherTemperatureUnit: WeatherTemperatureUnit = WeatherTemperatureUnit.CELSIUS,
 
     val buildCommitHash: String? = null,
     val buildCommitMessage: String? = null,
     val buildCommitDate: String? = null,
     val buildBranch: String? = null,
     val buildTime: String? = null,
-    val colorPalette: String = "default",
+    val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val wallpaperBlurAmount: Float = 0f,
     val backgroundOpacity: Float = 1f,
     val enableGlassmorphism: Boolean = false,
-    val uiDensity: String = "comfortable",
+    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
     val enableAnimations: Boolean = true,
     val customWallpaperPath: String? = null
 )

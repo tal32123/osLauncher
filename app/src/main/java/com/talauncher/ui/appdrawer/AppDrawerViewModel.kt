@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
+import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
@@ -87,7 +88,7 @@ data class AppDrawerUiState(
     val timeLimitDialogUsesDefaultLimit: Boolean = true,
     val showMathChallengeDialog: Boolean = false,
     val selectedAppForMathChallenge: String? = null,
-    val mathChallengeDifficulty: String = "easy",
+    val mathChallengeDifficulty: MathDifficulty = MathDifficulty.EASY,
     val recentAppsLimit: Int = 5,
     val searchQuery: String = "",
     val showPhoneAction: Boolean = true,
@@ -144,7 +145,7 @@ class AppDrawerViewModel(
                     allApps = visibleApps,
                     hiddenApps = hiddenApps,
                     recentApps = recentApps,
-                    mathChallengeDifficulty = settings?.mathDifficulty ?: "easy",
+                    mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
                     recentAppsLimit = recentLimit,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,

@@ -11,6 +11,7 @@ import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
 import com.talauncher.ui.components.SessionExpiryActionDialog
 import com.talauncher.ui.components.SessionExpiryCountdownDialog
+import com.talauncher.data.model.MathDifficulty
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.theme.TALauncherTheme
 
@@ -115,7 +116,7 @@ class BackgroundOverlayManager private constructor(private val applicationContex
     fun showMathChallengeOverlay(
         appName: String,
         packageName: String,
-        difficulty: String,
+        difficulty: MathDifficulty,
         onCorrect: () -> Unit = {},
         onDismiss: () -> Unit = {}
     ): Boolean {

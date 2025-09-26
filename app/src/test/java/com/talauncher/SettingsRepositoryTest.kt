@@ -1,7 +1,9 @@
 package com.talauncher
 
 import com.talauncher.data.database.SettingsDao
+import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.LauncherSettings
+import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
@@ -89,7 +91,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateColorPalette updates color palette`() = runTest {
-        repository.updateColorPalette("warm")
+        repository.updateColorPalette(ColorPaletteOption.WARM)
 
         verify(settingsDao).updateSettings(any())
     }
@@ -110,7 +112,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateUiDensity updates ui density`() = runTest {
-        repository.updateUiDensity("compact")
+        repository.updateUiDensity(UiDensityOption.COMPACT)
 
         verify(settingsDao).updateSettings(any())
     }

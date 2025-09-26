@@ -22,6 +22,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.talauncher.MainActivity
 import com.talauncher.R
+import com.talauncher.data.model.MathDifficulty
 import com.talauncher.ui.components.SessionExpiryActionDialog
 import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.MathChallengeDialog
@@ -85,7 +86,7 @@ class OverlayService : Service() {
             ACTION_SHOW_MATH_CHALLENGE -> {
                 val appName = intent.getStringExtra(EXTRA_APP_NAME) ?: "this app"
                 val packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME) ?: ""
-                val difficulty = intent.getStringExtra(EXTRA_DIFFICULTY) ?: "easy"
+                val difficulty = MathDifficulty.fromStorageValue(intent.getStringExtra(EXTRA_DIFFICULTY))
                 showMathChallengeOverlay(appName, packageName, difficulty)
             }
             ACTION_HIDE_OVERLAY -> {
@@ -200,7 +201,11 @@ class OverlayService : Service() {
         }
     }
 
-    private fun showMathChallengeOverlay(appName: String, packageName: String, difficulty: String) {
+    private fun showMathChallengeOverlay(
+        appName: String,
+        packageName: String,
+        difficulty: MathDifficulty
+    ) {
         if (!Settings.canDrawOverlays(this)) {
             Log.w(TAG, "Cannot show math challenge overlay without SYSTEM_ALERT_WINDOW permission")
             return
