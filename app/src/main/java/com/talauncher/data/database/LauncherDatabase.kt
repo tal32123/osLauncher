@@ -3,7 +3,6 @@ package com.talauncher.data.database
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
@@ -13,10 +12,9 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 12,
+    version = 13,
     exportSchema = false
 )
-@TypeConverters(SettingsTypeConverters::class)
 abstract class LauncherDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao
     abstract fun settingsDao(): SettingsDao
@@ -198,6 +196,26 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "UPDATE launcher_settings SET mathDifficulty = UPPER(mathDifficulty) WHERE mathDifficulty IS NOT NULL"
+                )
+                database.execSQL(
+                    "UPDATE launcher_settings SET weatherDisplay = UPPER(weatherDisplay) WHERE weatherDisplay IS NOT NULL"
+                )
+                database.execSQL(
+                    "UPDATE launcher_settings SET weatherTemperatureUnit = UPPER(weatherTemperatureUnit) WHERE weatherTemperatureUnit IS NOT NULL"
+                )
+                database.execSQL(
+                    "UPDATE launcher_settings SET colorPalette = UPPER(colorPalette) WHERE colorPalette IS NOT NULL"
+                )
+                database.execSQL(
+                    "UPDATE launcher_settings SET uiDensity = UPPER(uiDensity) WHERE uiDensity IS NOT NULL"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -215,7 +233,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_8_9,
                     MIGRATION_9_10,
                     MIGRATION_10_11,
-                    MIGRATION_11_12
+                    MIGRATION_11_12,
+                    MIGRATION_12_13
                 ).build()
                 INSTANCE = instance
                 instance
