@@ -192,7 +192,7 @@ class HomeViewModel(
 
                     // Cache expensive operations
                     val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
-                    val weatherDisplay = settings?.weatherDisplay ?: "off"
+                    val weatherDisplay = settings?.weatherDisplay ?: "daily"
 
                     // Get recent apps and alphabet index for the moved app drawer functionality
                     val hasUsageStatsPermission = permissionsHelper?.permissionState?.value?.hasUsageStats ?: false
@@ -1490,7 +1490,7 @@ data class HomeUiState(
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
     val showWhatsAppAction: Boolean = true,
-    val weatherDisplay: String = "off",
+    val weatherDisplay: String = "daily",
     val weatherData: com.talauncher.data.model.WeatherData? = null,
     val weatherError: String? = null,
     val weatherTemperatureUnit: String = "celsius",
