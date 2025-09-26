@@ -325,10 +325,10 @@ class PerformanceStressTest {
             AppSession(
                 id = 0, // Will be assigned by database
                 packageName = "com.test.app${Random.nextInt(1, 100)}",
+                plannedDurationMinutes = Random.nextInt(15, 240), // 15 min to 4 hours
                 startTime = startTime,
-                plannedDurationMs = Random.nextLong(15 * 60 * 1000, 4 * 60 * 60 * 1000), // 15 min to 4 hours
-                isActive = isActive,
-                endTime = if (isActive) null else startTime + Random.nextLong(60000, 3600000)
+                endTime = if (isActive) null else startTime + Random.nextLong(60000, 3600000),
+                isActive = isActive
             )
         }
     }
