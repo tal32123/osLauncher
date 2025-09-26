@@ -59,7 +59,12 @@ class AppDrawerViewModel(
             ) { visibleApps, hiddenApps, settings, permissionState ->
                 // Get top used apps from usage stats
                 val recentLimit = settings?.recentAppsLimit ?: 5
-                val recentApps = getRecentApps(visibleApps, recentLimit, permissionState.hasUsageStats)
+                val recentApps = getRecentApps(
+                    visibleApps = visibleApps,
+                    hiddenApps = hiddenApps,
+                    limit = recentLimit,
+                    hasPermission = permissionState.hasUsageStats
+                )
 
                 _uiState.value = _uiState.value.copy(
                     allApps = visibleApps,
@@ -75,7 +80,12 @@ class AppDrawerViewModel(
         }
     }
 
-    private suspend fun getRecentApps(allApps: List<AppInfo>, limit: Int, hasPermission: Boolean): List<AppInfo> = withContext(Dispatchers.Default) {
+    private suspend fun getRecentApps(
+        visibleApps: List<AppInfo>,
+        hiddenApps: List<AppInfo>,
+        limit: Int,
+        hasPermission: Boolean
+    ): List<AppInfo> = withContext(Dispatchers.Default) {
         if (!hasPermission) {
             return@withContext emptyList()
         }
@@ -85,12 +95,52 @@ class AppDrawerViewModel(
             return@withContext emptyList()
         }
 
-        val topUsedApps = usageStatsHelper.getTopUsedApps(hasPermission, sanitizedLimit)
-        val appMap = allApps.associateBy { it.packageName }
+        val usageStats = usageStatsHelper
+            .getPast48HoursUsageStats(hasPermission)
+            .filter { it.timeInForeground > 0 }
+            .sortedByDescending { it.timeInForeground }
 
-        topUsedApps.mapNotNull { usageApp ->
-            appMap[usageApp.packageName]
+        val hiddenPackages = hiddenApps.mapTo(mutableSetOf()) { it.packageName }
+        val appMap = visibleApps.associateBy { it.packageName }
+        val recentApps = mutableListOf<AppInfo>()
+        val seenPackages = mutableSetOf<String>()
+
+        for (usageApp in usageStats) {
+            if (usageApp.packageName in hiddenPackages) {
+                continue
+            }
+
+            val app = appMap[usageApp.packageName] ?: continue
+
+            if (!seenPackages.add(app.packageName)) {
+                continue
+            }
+
+            recentApps += app
+
+            if (recentApps.size == sanitizedLimit) {
+                break
+            }
         }
+
+        if (recentApps.size < sanitizedLimit) {
+            val fallbackApps = visibleApps
+                .asSequence()
+                .filterNot { it.packageName in hiddenPackages }
+                .filterNot { it.packageName in seenPackages }
+                .sortedBy { it.appName.lowercase() }
+                .toList()
+
+            for (app in fallbackApps) {
+                recentApps += app
+                seenPackages += app.packageName
+                if (recentApps.size == sanitizedLimit) {
+                    break
+                }
+            }
+        }
+
+        recentApps
     }
 
     fun launchApp(packageName: String) {
