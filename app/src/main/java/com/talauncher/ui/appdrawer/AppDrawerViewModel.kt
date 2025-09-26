@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -421,7 +422,7 @@ class AppDrawerViewModel(
     fun uninstallApp(context: Context, packageName: String) {
 
         try {
-            val intent = Intent(Intent.ACTION_UNINSTALL_PACKAGE).apply {
+            val intent = Intent(Intent.ACTION_DELETE).apply {
                 data = Uri.parse("package:$packageName")
                 putExtra(Intent.EXTRA_RETURN_RESULT, true)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -452,6 +453,7 @@ class AppDrawerViewModel(
         }
     }
 
+    @OptIn(FlowPreview::class)
     private fun setupDebouncedContactSearch() {
         viewModelScope.launch {
             searchQueryFlow

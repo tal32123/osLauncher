@@ -113,7 +113,7 @@ fun ContactItem(
                 if (showWhatsAppAction) {
                     IconButton(onClick = onWhatsApp) {
                         Icon(
-                            imageVector = Icons.Default.Send,
+                            imageVector = Icons.AutoMirrored.Filled.Send,
                             contentDescription = "WhatsApp",
                             tint = PrimerGreen
                         )

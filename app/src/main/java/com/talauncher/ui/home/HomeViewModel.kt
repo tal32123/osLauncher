@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -417,6 +418,7 @@ class HomeViewModel(
         // Contact search will be handled by the debounced flow
     }
 
+    @OptIn(FlowPreview::class)
     private fun setupDebouncedContactSearch() {
         viewModelScope.launch {
             searchQueryFlow
