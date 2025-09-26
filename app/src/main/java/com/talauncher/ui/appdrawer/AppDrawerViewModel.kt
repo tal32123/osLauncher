@@ -25,11 +25,82 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import java.util.concurrent.TimeUnit
-
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
 import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.theme.toUiSettingsOrDefault
+import java.text.Collator
+import java.util.Locale
+
+private const val RECENT_SECTION_KEY = "recent"
+
+data class AppDrawerSection(
+    val key: String,
+    val label: String,
+    val apps: List<AppInfo>,
+    val isIndexable: Boolean
+)
+
+data class AlphabetIndexEntry(
+    val key: String,
+    val displayLabel: String,
+    val targetIndex: Int?,
+    val hasApps: Boolean,
+    val previewAppName: String?
+)
+
+private data class SectionPosition(
+    val index: Int,
+    val previewAppName: String?
+)
+
+private fun sectionKeyForApp(label: String, locale: Locale): String {
+    val trimmed = label.trim()
+    if (trimmed.isEmpty()) {
+        return "#"
+    }
+    val firstChar = trimmed.firstOrNull { it.isLetterOrDigit() } ?: return "#"
+    if (!firstChar.isLetter()) {
+        return "#"
+    }
+    val upper = firstChar.toString().uppercase(locale)
+    return upper.take(1)
+}
+
+data class AppDrawerUiState(
+    val sections: List<AppDrawerSection> = emptyList(),
+    val allApps: List<AppInfo> = emptyList(),
+    val hiddenApps: List<AppInfo> = emptyList(),
+    val recentApps: List<AppInfo> = emptyList(), // Most used apps from past 48 hours respecting user limit
+    val contacts: List<ContactInfo> = emptyList(),
+    val isLoading: Boolean = false,
+    val selectedAppForAction: AppInfo? = null,
+    val appBeingRenamed: AppInfo? = null,
+    val renameInput: String = "",
+    val showFrictionDialog: Boolean = false,
+    val selectedAppForFriction: String? = null,
+    val showTimeLimitDialog: Boolean = false,
+    val selectedAppForTimeLimit: String? = null,
+    val timeLimitDialogAppName: String? = null,
+    val timeLimitDialogUsageMinutes: Int? = null,
+    val timeLimitDialogTimeLimitMinutes: Int = 0,
+    val timeLimitDialogUsesDefaultLimit: Boolean = true,
+    val showMathChallengeDialog: Boolean = false,
+    val selectedAppForMathChallenge: String? = null,
+    val mathChallengeDifficulty: String = "easy",
+    val recentAppsLimit: Int = 5,
+    val searchQuery: String = "",
+    val showPhoneAction: Boolean = true,
+    val showMessageAction: Boolean = true,
+    val showWhatsAppAction: Boolean = true,
+    val uiSettings: UiSettings = UiSettings(),
+    val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
+    val alphabetIndexActiveKey: String? = null,
+    val isAlphabetIndexEnabled: Boolean = true,
+    val scrollToIndex: Int? = null,
+    val locale: Locale? = null,
+    val collator: java.text.Collator? = null
+)
 
 class AppDrawerViewModel(
     private val appRepository: AppRepository,
@@ -79,6 +150,14 @@ class AppDrawerViewModel(
                     showMessageAction = settings?.showMessageAction ?: true,
                     showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && contactHelper.isWhatsAppInstalled(),
                     uiSettings = uiSettings
+                )
+
+                buildSectionsAndIndex(
+                    visibleApps,
+                    recentApps,
+                    _uiState.value.searchQuery,
+                    _uiState.value.locale ?: Locale.getDefault(),
+                    _uiState.value.collator ?: Collator.getInstance()
                 )
             }.collect { } 
         }
@@ -168,7 +247,8 @@ class AppDrawerViewModel(
             if (launched) {
                 // App was launched successfully, use callback if available
                 onLaunchApp?.invoke(packageName, null)
-            } else {
+            }
+            else {
                 // Show friction barrier for distracting app
                 _uiState.value = _uiState.value.copy(
                     showFrictionDialog = true,
@@ -403,6 +483,13 @@ class AppDrawerViewModel(
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
         searchQueryFlow.value = query
+        buildSectionsAndIndex(
+            _uiState.value.allApps,
+            _uiState.value.recentApps,
+            query,
+            _uiState.value.locale ?: Locale.getDefault(),
+            _uiState.value.collator ?: Collator.getInstance()
+        )
     }
 
     fun clearSearchOnNavigation() {
@@ -420,7 +507,8 @@ class AppDrawerViewModel(
         viewModelScope.launch {
             try {
                 appRepository.syncInstalledApps()
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 Log.e("AppDrawerViewModel", "Failed to refresh apps", e)
             }
         }
@@ -441,6 +529,121 @@ class AppDrawerViewModel(
     fun openContact(contact: ContactInfo) {
         contactHelper.openContact(contact)
     }
+
+    fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
+        _uiState.value = _uiState.value.copy(
+            alphabetIndexActiveKey = entry.key,
+            scrollToIndex = entry.targetIndex
+        )
+    }
+
+    fun onAlphabetScrubbingChanged(isScrubbing: Boolean) {
+        if (!isScrubbing) {
+            _uiState.value = _uiState.value.copy(
+                alphabetIndexActiveKey = null
+            )
+        }
+    }
+
+    fun onScrollHandled() {
+        _uiState.value = _uiState.value.copy(scrollToIndex = null)
+    }
+
+    fun onLocaleChanged(locale: Locale, collator: Collator) {
+        _uiState.value = _uiState.value.copy(locale = locale, collator = collator)
+        buildSectionsAndIndex(
+            _uiState.value.allApps,
+            _uiState.value.recentApps,
+            _uiState.value.searchQuery,
+            locale,
+            collator
+        )
+    }
+
+    private fun buildSectionsAndIndex(apps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
+        val filteredApps = apps.filter { app ->
+            !app.isHidden &&
+                app.appName.contains(searchQuery, ignoreCase = true)
+        }
+
+        val sortedFilteredApps = filteredApps.sortedWith { left, right ->
+            val labelComparison = collator.compare(left.appName, right.appName)
+            if (labelComparison != 0) {
+                labelComparison
+            } else {
+                left.packageName.compareTo(right.packageName)
+            }
+        }
+
+        val sections = buildList {
+            if (recentApps.isNotEmpty() && searchQuery.isEmpty()) {
+                add(
+                    AppDrawerSection(
+                        key = RECENT_SECTION_KEY,
+                        label = "Recently Used",
+                        apps = recentApps,
+                        isIndexable = false
+                    )
+                )
+            }
+
+            if (sortedFilteredApps.isNotEmpty()) {
+                val grouped = linkedMapOf<String, MutableList<AppInfo>>()
+                sortedFilteredApps.forEach { app ->
+                    val sectionKey = sectionKeyForApp(app.appName, locale)
+                    val sectionApps = grouped.getOrPut(sectionKey) { mutableListOf() }
+                    sectionApps += app
+                }
+                grouped.forEach { (key, apps) ->
+                    add(
+                        AppDrawerSection(
+                            key = key,
+                            label = key,
+                            apps = apps,
+                            isIndexable = true
+                        )
+                    )
+                }
+            }
+        }
+
+        val sectionPositions = mutableMapOf<String, SectionPosition>()
+        var currentIndex = 0
+        sections.forEach { section ->
+            if (section.isIndexable && section.apps.isNotEmpty()) {
+                sectionPositions[section.key] = SectionPosition(
+                    index = currentIndex,
+                    previewAppName = section.apps.first().appName
+                )
+            }
+            currentIndex += 1 + section.apps.size
+        }
+
+        val alphabetIndexEntries = if (sectionPositions.isEmpty()) {
+            emptyList()
+        } else {
+            val baseAlphabet = ('A'..'Z').map { it.toString() }
+            val sectionKeys = sections.filter { it.isIndexable }.map { it.key }
+            val extraKeys = sectionKeys.filter { it !in baseAlphabet && it != "#" }
+            val orderedKeys = (baseAlphabet + extraKeys + listOf("#")).distinct()
+            orderedKeys.map { key ->
+                val position = sectionPositions[key]
+                AlphabetIndexEntry(
+                    key = key,
+                    displayLabel = key,
+                    targetIndex = position?.index,
+                    hasApps = position != null,
+                    previewAppName = position?.previewAppName
+                )
+            }
+        }
+
+        _uiState.value = _uiState.value.copy(
+            sections = sections,
+            alphabetIndexEntries = alphabetIndexEntries,
+            isAlphabetIndexEnabled = alphabetIndexEntries.isNotEmpty()
+        )
+    }
 }
 
 private data class TimeLimitPromptState(
@@ -448,32 +651,4 @@ private data class TimeLimitPromptState(
     val usageMinutes: Int?,
     val limitMinutes: Int,
     val usesDefaultLimit: Boolean
-)
-
-data class AppDrawerUiState(
-    val allApps: List<AppInfo> = emptyList(),
-    val hiddenApps: List<AppInfo> = emptyList(),
-    val recentApps: List<AppInfo> = emptyList(), // Most used apps from past 48 hours respecting user limit
-    val contacts: List<ContactInfo> = emptyList(),
-    val isLoading: Boolean = false,
-    val selectedAppForAction: AppInfo? = null,
-    val appBeingRenamed: AppInfo? = null,
-    val renameInput: String = "",
-    val showFrictionDialog: Boolean = false,
-    val selectedAppForFriction: String? = null,
-    val showTimeLimitDialog: Boolean = false,
-    val selectedAppForTimeLimit: String? = null,
-    val timeLimitDialogAppName: String? = null,
-    val timeLimitDialogUsageMinutes: Int? = null,
-    val timeLimitDialogTimeLimitMinutes: Int = 0,
-    val timeLimitDialogUsesDefaultLimit: Boolean = true,
-    val showMathChallengeDialog: Boolean = false,
-    val selectedAppForMathChallenge: String? = null,
-    val mathChallengeDifficulty: String = "easy",
-    val recentAppsLimit: Int = 5,
-    val searchQuery: String = "",
-    val showPhoneAction: Boolean = true,
-    val showMessageAction: Boolean = true,
-    val showWhatsAppAction: Boolean = true,
-    val uiSettings: UiSettings = UiSettings()
 )

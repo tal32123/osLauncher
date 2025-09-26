@@ -98,92 +98,11 @@ fun AppDrawerScreen(
         }
     }
 
-    val sections = remember(uiState.allApps, uiState.recentApps, searchQuery, collator, locale) {
-        val filteredApps = uiState.allApps.filter { app ->
-            !app.isHidden &&
-                app.appName.contains(searchQuery, ignoreCase = true)
-        }
-
-        val sortedFilteredApps = filteredApps.sortedWith { left, right ->
-            val labelComparison = collator.compare(left.appName, right.appName)
-            if (labelComparison != 0) {
-                labelComparison
-            } else {
-                left.packageName.compareTo(right.packageName)
-            }
-        }
-
-        buildList {
-            if (uiState.recentApps.isNotEmpty() && searchQuery.isEmpty()) {
-                add(
-                    AppDrawerSection(
-                        key = RECENT_SECTION_KEY,
-                        label = "Recently Used",
-                        apps = uiState.recentApps,
-                        isIndexable = false
-                    )
-                )
-            }
-
-            if (sortedFilteredApps.isNotEmpty()) {
-                val grouped = linkedMapOf<String, MutableList<AppInfo>>()
-                sortedFilteredApps.forEach { app ->
-                    val sectionKey = sectionKeyForApp(app.appName, locale)
-                    val sectionApps = grouped.getOrPut(sectionKey) { mutableListOf() }
-                    sectionApps += app
-                }
-                grouped.forEach { (key, apps) ->
-                    add(
-                        AppDrawerSection(
-                            key = key,
-                            label = key,
-                            apps = apps,
-                            isIndexable = true
-                        )
-                    )
-                }
-            }
-        }
+    LaunchedEffect(locale, collator) {
+        viewModel.onLocaleChanged(locale, collator)
     }
 
-    val sectionPositions = remember(sections) {
-        var currentIndex = 0
-        buildMap<String, SectionPosition> {
-            sections.forEach { section ->
-                if (section.isIndexable && section.apps.isNotEmpty()) {
-                    put(
-                        section.key,
-                        SectionPosition(
-                            index = currentIndex,
-                            previewAppName = section.apps.first().appName
-                        )
-                    )
-                }
-                currentIndex += 1 + section.apps.size
-            }
-        }
-    }
-
-    val alphabetEntries = remember(sections, sectionPositions) {
-        if (sectionPositions.isEmpty()) {
-            emptyList()
-        } else {
-            val baseAlphabet = ('A'..'Z').map { it.toString() }
-            val sectionKeys = sections.filter { it.isIndexable }.map { it.key }
-            val extraKeys = sectionKeys.filter { it !in baseAlphabet && it != "#" }
-            val orderedKeys = (baseAlphabet + extraKeys + listOf("#")).distinct()
-            orderedKeys.map { key ->
-                val position = sectionPositions[key]
-                AlphabetIndexEntry(
-                    key = key,
-                    displayLabel = key,
-                    targetIndex = position?.index,
-                    hasApps = position != null,
-                    previewAppName = position?.previewAppName
-                )
-            }
-        }
-    }
+    val sections = uiState.sections
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -192,7 +111,7 @@ fun AppDrawerScreen(
     var previewFraction by remember { mutableStateOf(0f) }
     var lastScrubbedKey by remember { mutableStateOf<String?>(null) }
 
-    val showIndex = searchQuery.isEmpty() && alphabetEntries.isNotEmpty()
+    val showIndex = uiState.searchQuery.isEmpty() && uiState.alphabetIndexEntries.isNotEmpty()
 
     BackHandler(
         enabled = uiState.showFrictionDialog ||
@@ -395,7 +314,7 @@ fun AppDrawerScreen(
                                 )
                             }
 
-                            if (section.key == RECENT_SECTION_KEY) {
+                            if (section.key == "recent") { // TODO: Use constant
                                 items(section.apps, key = { "recent_${it.packageName}" }) { app ->
                                     RecentAppItem(
                                         appInfo = app,
@@ -517,9 +436,20 @@ fun AppDrawerScreen(
                 }
 
                 if (showIndex && selectedTab == 0) {
+                    val alphabetEntries = uiState.alphabetIndexEntries
+
+                    LaunchedEffect(uiState.scrollToIndex) {
+                        uiState.scrollToIndex?.let { index ->
+                            coroutineScope.launch {
+                                listState.scrollToItem(index)
+                                viewModel.onScrollHandled()
+                            }
+                        }
+                    }
+
                     AlphabetIndex(
                         entries = alphabetEntries,
-                        activeKey = previewEntry?.key,
+                        activeKey = uiState.alphabetIndexActiveKey,
                         isEnabled = showIndex,
                         modifier = Modifier
                             .align(
@@ -531,19 +461,16 @@ fun AppDrawerScreen(
                             )
                             .padding(horizontal = PrimerSpacing.sm),
                         onEntryFocused = { entry, fraction ->
+                            viewModel.onAlphabetIndexFocused(entry, fraction)
                             previewEntry = entry
                             previewFraction = fraction
                             if (entry.hasApps && entry.key != lastScrubbedKey) {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             }
-                            if (entry.hasApps && entry.targetIndex != null) {
-                                coroutineScope.launch {
-                                    listState.scrollToItem(entry.targetIndex)
-                                }
-                            }
                             lastScrubbedKey = entry.key
                         },
                         onScrubbingChanged = { active ->
+                            viewModel.onAlphabetScrubbingChanged(active)
                             isScrubbing = active
                             if (active) {
                                 keyboardController?.hide()
@@ -626,28 +553,6 @@ fun AppDrawerScreen(
         }
     }
 }
-
-private const val RECENT_SECTION_KEY = "recent"
-
-private data class AppDrawerSection(
-    val key: String,
-    val label: String,
-    val apps: List<AppInfo>,
-    val isIndexable: Boolean
-)
-
-private data class SectionPosition(
-    val index: Int,
-    val previewAppName: String?
-)
-
-private data class AlphabetIndexEntry(
-    val key: String,
-    val displayLabel: String,
-    val targetIndex: Int?,
-    val hasApps: Boolean,
-    val previewAppName: String?
-)
 
 @Composable
 private fun SectionHeader(
@@ -784,18 +689,6 @@ private fun ScrubPreviewBubble(
     }
 }
 
-private fun sectionKeyForApp(label: String, locale: Locale): String {
-    val trimmed = label.trim()
-    if (trimmed.isEmpty()) {
-        return "#"
-    }
-    val firstChar = trimmed.firstOrNull { it.isLetterOrDigit() } ?: return "#"
-    if (!firstChar.isLetter()) {
-        return "#"
-    }
-    val upper = firstChar.toString().uppercase(locale)
-    return upper.take(1)
-}
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppDrawerItem(
