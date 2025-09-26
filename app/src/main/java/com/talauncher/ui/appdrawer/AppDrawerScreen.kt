@@ -53,6 +53,7 @@ import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.AppDrawerUnifiedSearchResults
 import com.talauncher.ui.theme.*
+import com.talauncher.ui.theme.UiSettings
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import java.text.Collator
@@ -283,6 +284,9 @@ fun AppDrawerScreen(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
                         onSearch = {
+                            if (searchQuery.trim().isNotBlank()) {
+                                viewModel.performGoogleSearch(searchQuery.trim())
+                            }
                             keyboardController?.hide()
                         }
                     ),
@@ -356,6 +360,7 @@ fun AppDrawerScreen(
                             keyboardController?.hide()
                             viewModel.performGoogleSearch(query)
                         },
+                        uiSettings = uiState.uiSettings,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(

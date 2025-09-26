@@ -42,6 +42,8 @@ import com.talauncher.ui.components.ModernAppItem
 import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.components.UnifiedSearchResults
+import com.talauncher.ui.theme.UiSettings
+import com.talauncher.ui.theme.toUiDensity
 import com.talauncher.ui.home.MotivationalQuotesProvider
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.*
@@ -181,6 +183,11 @@ fun HomeScreen(
                 onValueChange = viewModel::updateSearchQuery,
                 placeholder = stringResource(R.string.home_search_placeholder),
                 enableGlassmorphism = uiState.enableGlassmorphism,
+                onSearch = { query ->
+                    if (query.isNotBlank()) {
+                        viewModel.performGoogleSearch(query)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = PrimerSpacing.lg)
@@ -222,6 +229,15 @@ fun HomeScreen(
                     onGrantContactsPermission = {
                         viewModel.showContactsPermissionPrompt()
                     },
+                    uiSettings = UiSettings(
+                        colorPalette = uiState.colorPalette,
+                        enableGlassmorphism = uiState.enableGlassmorphism,
+                        enableAnimations = uiState.enableAnimations,
+                        uiDensity = uiState.uiDensity,
+                        showWallpaper = uiState.showWallpaper,
+                        wallpaperBlurAmount = uiState.wallpaperBlurAmount,
+                        backgroundColor = uiState.backgroundColor
+                    ),
                     modifier = Modifier.weight(1f)
                 )
             } else {
