@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -290,36 +291,42 @@ fun UIThemeSettings(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf(
-                            ColorPaletteOption.DEFAULT,
-                            ColorPaletteOption.WARM,
-                            ColorPaletteOption.COOL,
-                            ColorPaletteOption.MONOCHROME
-                        ).forEach { option ->
-                            FilterChip(
-                                selected = colorPalette == option,
-                                onClick = { onUpdateColorPalette(option) },
-                                label = { Text(option.label) },
-                                modifier = Modifier.weight(1f)
+                        val colorPaletteRows = listOf(
+                            listOf(
+                                ColorPaletteOption.DEFAULT,
+                                ColorPaletteOption.WARM,
+                                ColorPaletteOption.COOL
+                            ),
+                            listOf(
+                                ColorPaletteOption.MONOCHROME,
+                                ColorPaletteOption.NATURE
                             )
-                        }
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        FilterChip(
-                            selected = colorPalette == ColorPaletteOption.NATURE,
-                            onClick = { onUpdateColorPalette(ColorPaletteOption.NATURE) },
-                            label = { Text(ColorPaletteOption.NATURE.label) },
-                            modifier = Modifier.weight(1f)
                         )
-                        Spacer(modifier = Modifier.weight(3f))
+
+                        colorPaletteRows.forEach { rowOptions ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                rowOptions.forEach { option ->
+                                    FilterChip(
+                                        selected = colorPalette == option,
+                                        onClick = { onUpdateColorPalette(option) },
+                                        label = {
+                                            Text(
+                                                text = option.label,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Clip,
+                                                softWrap = false
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
