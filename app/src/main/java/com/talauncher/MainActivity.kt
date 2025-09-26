@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -17,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -259,17 +261,31 @@ fun LauncherNavigationPager(
     contactHelper: ContactHelper,
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
-    onNavigatedToHome: () -> Unit = {}
+    onNavigatedToHome: () -> Unit = {},
+    settingsPageContent: (@Composable () -> Unit)? = null,
+    homePageContent: (@Composable (navigateToSettings: () -> Unit, launchApp: () -> Unit) -> Unit)? = null,
+    pagerStateListener: ((PagerState) -> Unit)? = null,
+    onPageAnimation: ((Int) -> Unit)? = null
 ) {
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        pagerStateListener?.invoke(pagerState)
+    }
+
+    suspend fun animateToPage(page: Int) {
+        onPageAnimation?.invoke(page)
+        val targetPage = page.coerceIn(0, pagerState.pageCount - 1)
+        pagerState.animateScrollToPage(targetPage)
+    }
 
     // Handle home button navigation
     LaunchedEffect(shouldNavigateToHome) {
         if (shouldNavigateToHome) {
             if (pagerState.currentPage != 1) {
                 // Only animate if we're not already on the home page
-                pagerState.animateScrollToPage(1) // Navigate to essential apps screen
+                animateToPage(1) // Navigate to essential apps screen
             }
             // Always reset the flag, even if we didn't need to navigate
             onNavigatedToHome()
@@ -281,7 +297,7 @@ fun LauncherNavigationPager(
         coroutineScope.launch {
             if (pagerState.currentPage != 1) {
                 // If not on home screen, go to home screen
-                pagerState.animateScrollToPage(1)
+                animateToPage(1)
             }
             // If already on home screen, do nothing (stay in launcher)
         }
@@ -291,56 +307,85 @@ fun LauncherNavigationPager(
     val onLaunchApp: (String, Int?) -> Unit = { _, _ ->
         coroutineScope.launch {
             // Navigate to rightmost screen after an app launch completes elsewhere
-            pagerState.animateScrollToPage(2)
+            animateToPage(2)
         }
     }
 
     HorizontalPager(
         state = pagerState,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("launcher_navigation_pager")
     ) { page ->
         when (page) {
             0 -> {
-                // Settings/Insights Screen
-                val settingsViewModel: SettingsViewModel = viewModel {
-                    SettingsViewModel(appRepository, settingsRepository, permissionsHelper, usageStatsHelper)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("launcher_settings_page")
+                ) {
+                    if (settingsPageContent != null) {
+                        settingsPageContent()
+                    } else {
+                        // Settings/Insights Screen
+                        val settingsViewModel: SettingsViewModel = viewModel {
+                            SettingsViewModel(appRepository, settingsRepository, permissionsHelper, usageStatsHelper)
+                        }
+                        SettingsScreen(
+                            onNavigateBack = {},
+                            viewModel = settingsViewModel
+                        )
+                    }
                 }
-                SettingsScreen(
-                    onNavigateBack = {},
-                    viewModel = settingsViewModel
-                )
             }
             1 -> {
-                // Main/Home Screen with pinned apps
-                val context = LocalContext.current
-                val homeViewModel: HomeViewModel = viewModel {
-                    HomeViewModel(
-                        appRepository,
-                        settingsRepository,
-                        onLaunchApp,
-                        sessionRepository,
-                        context,
-                        permissionsHelper,
-                        usageStatsHelper,
-                        errorHandler
-                    )
-                }
-                // Clear search when navigating to home screen
-                LaunchedEffect(pagerState.currentPage) {
-                    if (pagerState.currentPage == 1) {
-                        homeViewModel.clearSearchOnNavigation()
-                    }
-                }
-
-                HomeScreen(
-                    viewModel = homeViewModel,
-                    onNavigateToAppDrawer = null, // App drawer functionality moved to home screen
-                    onNavigateToSettings = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(0)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("launcher_home_page")
+                ) {
+                    if (homePageContent != null) {
+                        homePageContent(
+                            navigateToSettings = {
+                                coroutineScope.launch { animateToPage(0) }
+                            },
+                            launchApp = {
+                                coroutineScope.launch { animateToPage(2) }
+                            }
+                        )
+                    } else {
+                        // Main/Home Screen with pinned apps
+                        val context = LocalContext.current
+                        val homeViewModel: HomeViewModel = viewModel {
+                            HomeViewModel(
+                                appRepository,
+                                settingsRepository,
+                                onLaunchApp,
+                                sessionRepository,
+                                context,
+                                permissionsHelper,
+                                usageStatsHelper,
+                                errorHandler
+                            )
                         }
+                        // Clear search when navigating to home screen
+                        LaunchedEffect(pagerState.currentPage) {
+                            if (pagerState.currentPage == 1) {
+                                homeViewModel.clearSearchOnNavigation()
+                            }
+                        }
+
+                        HomeScreen(
+                            viewModel = homeViewModel,
+                            onNavigateToAppDrawer = null, // App drawer functionality moved to home screen
+                            onNavigateToSettings = {
+                                coroutineScope.launch {
+                                    animateToPage(0)
+                                }
+                            }
+                        )
                     }
-                )
+                }
             }
         }
     }

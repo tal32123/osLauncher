@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Process
 import android.provider.Settings
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +39,7 @@ enum class PermissionType {
     LOCATION
 }
 
-class PermissionsHelper(
+open class PermissionsHelper(
     private val context: Context
 ) {
 
@@ -49,7 +50,7 @@ class PermissionsHelper(
         checkAllPermissions()
     }
 
-    fun checkAllPermissions() {
+    open fun checkAllPermissions() {
         _permissionState.value = PermissionState(
             hasUsageStats = hasUsageStatsPermission(),
             hasSystemAlertWindow = hasSystemAlertWindowPermission(),
@@ -60,7 +61,7 @@ class PermissionsHelper(
         )
     }
 
-    fun requestPermission(activity: Activity, type: PermissionType) {
+    open fun requestPermission(activity: Activity, type: PermissionType) {
         when (type) {
             PermissionType.USAGE_STATS -> openUsageAccessSettings()
             PermissionType.SYSTEM_ALERT_WINDOW -> requestSystemAlertWindowPermission()
@@ -70,6 +71,11 @@ class PermissionsHelper(
             PermissionType.DEFAULT_LAUNCHER -> openDefaultLauncherSettings()
             PermissionType.LOCATION -> requestLocationPermission(activity)
         }
+    }
+
+    @VisibleForTesting
+    fun overridePermissionState(permissionState: PermissionState) {
+        _permissionState.value = permissionState
     }
 
     fun handlePermissionResult(

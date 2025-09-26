@@ -5,12 +5,13 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.annotation.VisibleForTesting
 import com.talauncher.data.model.AppUsage
 import java.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class UsageStatsHelper(
+open class UsageStatsHelper(
     private val context: Context
 ) {
     companion object {
@@ -21,6 +22,8 @@ class UsageStatsHelper(
     private var cachedTodayUsageTime: Long = 0L
     private var cachedPast48HoursUsage: List<AppUsage>? = null
     private var cachedPast48HoursUsageTime: Long = 0L
+    @Volatile
+    private var defaultLauncherOverride: Boolean? = null
 
     suspend fun getTodayUsageStats(hasPermission: Boolean): List<AppUsage> = withContext(Dispatchers.IO) {
         if (!hasPermission) {
@@ -119,7 +122,8 @@ class UsageStatsHelper(
             .filter { it.timeInForeground > 0 }
     }
 
-    fun isDefaultLauncher(): Boolean {
+    open fun isDefaultLauncher(): Boolean {
+        defaultLauncherOverride?.let { return it }
         return try {
             val intent = Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_HOME)
@@ -132,6 +136,11 @@ class UsageStatsHelper(
         } catch (e: Exception) {
             false
         }
+    }
+
+    @VisibleForTesting
+    fun overrideIsDefaultLauncher(isDefaultLauncher: Boolean?) {
+        defaultLauncherOverride = isDefaultLauncher
     }
 
     fun getAppName(packageName: String): String? {
