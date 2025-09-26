@@ -338,6 +338,34 @@ fun AppDrawerScreen(
                 }
 
                 if (selectedTab == 0) {
+                if (searchQuery.isNotBlank()) {
+                    // Use unified search when searching
+                    AppDrawerUnifiedSearchResults(
+                        searchQuery = searchQuery,
+                        allApps = uiState.allApps,
+                        onAppClick = { packageName ->
+                            viewModel.launchApp(packageName)
+                            keyboardController?.hide()
+                        },
+                        onAppLongClick = { app ->
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.showAppActionDialog(app)
+                        },
+                        onGoogleSearch = { query ->
+                            keyboardController?.hide()
+                            viewModel.performGoogleSearch(query)
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                start = PrimerSpacing.md,
+                                end = PrimerSpacing.md,
+                                top = PrimerSpacing.sm,
+                                bottom = PrimerSpacing.xl
+                            )
+                    )
+                } else {
+                    // Show sectioned apps when not searching
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         state = listState,
@@ -349,19 +377,6 @@ fun AppDrawerScreen(
                         ),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
                     ) {
-                        // Show Google search as first option when searching
-                        if (searchQuery.isNotBlank()) {
-                            item {
-                                GoogleSearchItem(
-                                    query = searchQuery,
-                                    onClick = {
-                                        keyboardController?.hide()
-                                        viewModel.performGoogleSearch(searchQuery)
-                                    }
-                                )
-                            }
-                        }
-
                         sections.forEachIndexed { index, section ->
                             item {
                                 SectionHeader(
@@ -467,7 +482,9 @@ fun AppDrawerScreen(
                             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
                         }
                     }
+                }
                 } else {
+                    // Contacts tab - show contacts search results
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(

@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.talauncher.R
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.PrimerSpacing
+import com.talauncher.data.model.AppInfo
+import java.util.Locale
 
 @Composable
 fun UnifiedSearchResults(
@@ -155,6 +157,77 @@ fun ContactPermissionCallout(
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
             ) {
                 Text(stringResource(R.string.contact_permission_required_confirm))
+            }
+        }
+    }
+}
+
+@Composable
+fun AppDrawerUnifiedSearchResults(
+    searchQuery: String,
+    allApps: List<AppInfo>,
+    onAppClick: (String) -> Unit,
+    onAppLongClick: (AppInfo) -> Unit,
+    onGoogleSearch: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val hapticFeedback = LocalHapticFeedback.current
+
+    // Filter apps based on search query
+    val filteredApps = if (searchQuery.isBlank()) {
+        emptyList()
+    } else {
+        allApps.filter { app ->
+            !app.isHidden && app.appName.contains(searchQuery, ignoreCase = true)
+        }.sortedBy { it.appName.lowercase(Locale.getDefault()) }
+    }
+
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+    ) {
+        // Always show Google search as first option
+        if (searchQuery.isNotBlank()) {
+            item {
+                GoogleSearchItem(
+                    query = searchQuery,
+                    onClick = {
+                        keyboardController?.hide()
+                        onGoogleSearch(searchQuery)
+                    }
+                )
+            }
+        }
+
+        // Show filtered apps with long press support
+        if (filteredApps.isNotEmpty()) {
+            items(filteredApps, key = { it.packageName }) { app ->
+                ModernAppItem(
+                    appName = app.appName,
+                    onClick = {
+                        keyboardController?.hide()
+                        onAppClick(app.packageName)
+                    },
+                    onLongClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onAppLongClick(app)
+                    },
+                    enableGlassmorphism = false, // TODO: Get from settings
+                    uiDensity = UiDensity.Comfortable // TODO: Get from settings
+                )
+            }
+        }
+
+        // Show no results message when no apps found
+        if (filteredApps.isEmpty() && searchQuery.isNotBlank()) {
+            item {
+                Text(
+                    text = stringResource(R.string.home_search_no_results),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(PrimerSpacing.md)
+                )
             }
         }
     }
