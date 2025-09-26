@@ -118,7 +118,7 @@ abstract class LauncherDatabase : RoomDatabase() {
         private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
-                    "ALTER TABLE launcher_settings ADD COLUMN weatherDisplay TEXT NOT NULL DEFAULT 'off'"
+                    "ALTER TABLE launcher_settings ADD COLUMN weatherDisplay TEXT NOT NULL DEFAULT 'daily'"
                 )
                 database.execSQL(
                     "ALTER TABLE launcher_settings ADD COLUMN weatherLocationLat REAL"
