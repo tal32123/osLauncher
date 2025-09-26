@@ -5,7 +5,7 @@ echo ========================================
 echo Running targeted Espresso UI flows
 echo ========================================
 
-set CLASSES=com.talauncher.OnboardingGatingFlowTest com.talauncher.LauncherPagerNavigationTest com.talauncher.HomeNavigationFlowTest com.talauncher.AppDrawerFlowTest com.talauncher.OverlayPermissionFlowTest com.talauncher.SettingsIntegrationTest com.talauncher.LauncherUITest com.talauncher.AppDrawerIntegrationTest com.talauncher.LauncherNavigationIntegrationTest com.talauncher.UserFlowIntegrationTest com.talauncher.ComprehensiveTestSuite com.talauncher.APICompatibilityTest com.talauncher.PerformanceStressTest com.talauncher.StressAndPerformanceTest
+set CLASSES=com.talauncher.OnboardingGatingFlowTest com.talauncher.LauncherPagerNavigationTest com.talauncher.ComprehensiveTestSuite
 
 set FAILURES=0
 
