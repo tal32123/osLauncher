@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit
 
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
+import com.talauncher.ui.theme.UiSettings
+import com.talauncher.ui.theme.toUiSettingsOrDefault
 
 class AppDrawerViewModel(
     private val appRepository: AppRepository,
@@ -66,6 +68,7 @@ class AppDrawerViewModel(
                     hasPermission = permissionState.hasUsageStats
                 )
 
+                val uiSettings = settings.toUiSettingsOrDefault()
                 _uiState.value = _uiState.value.copy(
                     allApps = visibleApps,
                     hiddenApps = hiddenApps,
@@ -74,7 +77,8 @@ class AppDrawerViewModel(
                     recentAppsLimit = recentLimit,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
-                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && contactHelper.isWhatsAppInstalled()
+                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && contactHelper.isWhatsAppInstalled(),
+                    uiSettings = uiSettings
                 )
             }.collect { } 
         }
@@ -481,5 +485,6 @@ data class AppDrawerUiState(
     val searchQuery: String = "",
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
-    val showWhatsAppAction: Boolean = true
+    val showWhatsAppAction: Boolean = true,
+    val uiSettings: UiSettings = UiSettings()
 )

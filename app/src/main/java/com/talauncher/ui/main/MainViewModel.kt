@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
+import com.talauncher.ui.theme.UiSettings
+import com.talauncher.ui.theme.toUiSettingsOrDefault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,19 +21,22 @@ class MainViewModel(
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     init {
-        checkOnboardingStatus()
+        observeSettingsAndOnboarding()
         syncApps()
     }
 
-    private fun checkOnboardingStatus() {
+    private fun observeSettingsAndOnboarding() {
         viewModelScope.launch {
-            val isOnboardingCompleted = settingsRepository.isOnboardingCompleted()
-            val settings = settingsRepository.getSettingsSync()
-            _uiState.value = _uiState.value.copy(
-                isOnboardingCompleted = isOnboardingCompleted,
-                colorPalette = settings.colorPalette,
-                isLoading = false
-            )
+            settingsRepository.getSettings().collect { settings ->
+                val uiSettings = settings.toUiSettingsOrDefault()
+                val isOnboardingCompleted = settings?.isOnboardingCompleted ?: false
+                _uiState.value = _uiState.value.copy(
+                    isOnboardingCompleted = isOnboardingCompleted,
+                    colorPalette = uiSettings.colorPalette,
+                    uiSettings = uiSettings,
+                    isLoading = false
+                )
+            }
         }
     }
 
@@ -49,5 +54,6 @@ class MainViewModel(
 data class MainUiState(
     val isOnboardingCompleted: Boolean = false,
     val isLoading: Boolean = true,
-    val colorPalette: String = "default"
+    val colorPalette: String = "default",
+    val uiSettings: UiSettings = UiSettings()
 )

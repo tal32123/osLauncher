@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.talauncher.R
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.PrimerSpacing
+import com.talauncher.ui.theme.UiSettings
+import com.talauncher.ui.theme.getUiDensity
 import com.talauncher.data.model.AppInfo
 import java.util.Locale
 
@@ -33,6 +35,7 @@ fun UnifiedSearchResults(
     onGoogleSearch: (String) -> Unit,
     showContactsPermissionMissing: Boolean,
     onGrantContactsPermission: () -> Unit,
+    uiSettings: UiSettings = UiSettings(),
     modifier: Modifier = Modifier
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -73,8 +76,8 @@ fun UnifiedSearchResults(
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onAppLongClick(searchItem)
                             },
-                            enableGlassmorphism = false, // TODO: Get from settings
-                            uiDensity = UiDensity.Comfortable // TODO: Get from settings
+                            enableGlassmorphism = uiSettings.enableGlassmorphism,
+                            uiDensity = uiSettings.getUiDensity()
                         )
                     }
                     is SearchItem.Contact -> {
@@ -111,7 +114,8 @@ fun UnifiedSearchResults(
                     onGrantAccess = {
                         keyboardController?.hide()
                         onGrantContactsPermission()
-                    }
+                    },
+                    uiSettings = uiSettings
                 )
             }
         }
@@ -132,11 +136,12 @@ fun UnifiedSearchResults(
 
 @Composable
 fun ContactPermissionCallout(
-    onGrantAccess: () -> Unit
+    onGrantAccess: () -> Unit,
+    uiSettings: UiSettings = UiSettings()
 ) {
     ModernGlassCard(
         modifier = Modifier.fillMaxWidth(),
-        enableGlassmorphism = false, // TODO: Get from settings
+        enableGlassmorphism = uiSettings.enableGlassmorphism,
         cornerRadius = 12,
         elevation = 1
     ) {
@@ -169,6 +174,7 @@ fun AppDrawerUnifiedSearchResults(
     onAppClick: (String) -> Unit,
     onAppLongClick: (AppInfo) -> Unit,
     onGoogleSearch: (String) -> Unit,
+    uiSettings: UiSettings = UiSettings(),
     modifier: Modifier = Modifier
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -213,8 +219,8 @@ fun AppDrawerUnifiedSearchResults(
                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                         onAppLongClick(app)
                     },
-                    enableGlassmorphism = false, // TODO: Get from settings
-                    uiDensity = UiDensity.Comfortable // TODO: Get from settings
+                    enableGlassmorphism = uiSettings.enableGlassmorphism,
+                    uiDensity = uiSettings.getUiDensity()
                 )
             }
         }
