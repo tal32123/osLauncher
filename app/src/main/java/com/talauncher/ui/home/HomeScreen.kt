@@ -887,6 +887,7 @@ fun AppActionDialog(
     if (app != null) {
         AlertDialog(
             onDismissRequest = onDismiss,
+            modifier = Modifier.testTag("app_action_dialog"),
             title = {
                 Text(
                     text = app.appName,
@@ -923,7 +924,7 @@ fun AppActionDialog(
                         ActionTextButton(
                             label = "Hide app",
                             description = "Move this app to the hidden list.",
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag("hide_app_button"),
                             onClick = {
                                 onHide(app.packageName)
                                 onDismiss()

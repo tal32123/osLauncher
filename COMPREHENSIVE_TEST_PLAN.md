@@ -97,16 +97,18 @@ This suite focuses on verifying the behavior of various dialogs and permission r
 
 ### Test Scenarios:
 
-#### Scenario: App action dialog (Hide/Rename)
+#### Scenario: App action dialog (Hide/Rename) [Hide COMPLETED, Rename TODO]
 - **Goal:** Test the long-press context menu on apps.
-- **Steps:**
+- **Steps (Hide):**
     1. On the `HomeScreen`, long-press an app.
     2. An "App Action Dialog" should appear.
     3. Click the "Hide app" button.
     4. **Verification:** Assert that the app is no longer visible in the main list. You may need to check a "Show hidden apps" section if one exists.
+- **Steps (Rename):**
     5. Long-press another app and choose "Rename".
     6. Enter a new name and save.
     7. **Verification:** Assert the app's display name is updated in the list.
+- **TODO:** The rename functionality is not currently implemented in the `HomeViewModel`. This test cannot be completed until the feature is implemented.
 
 #### Scenario: Friction dialog for distracting apps
 - **Goal:** Ensure the friction barrier works as intended.
