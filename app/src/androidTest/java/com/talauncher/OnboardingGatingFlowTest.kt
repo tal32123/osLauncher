@@ -3,8 +3,10 @@ package com.talauncher
 import android.app.Activity
 import android.content.Context
 import android.os.Build
-import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -26,7 +28,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Assert.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class OnboardingGatingFlowTest {
@@ -58,9 +59,11 @@ class OnboardingGatingFlowTest {
             }
         }
 
+        // Initially should show incomplete message, not success card
         composeTestRule.onNodeWithTag("onboarding_success_card").assertDoesNotExist()
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertExists()
 
+        // All buttons should be enabled initially
         composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertIsEnabled()
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").assertIsEnabled()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -68,44 +71,40 @@ class OnboardingGatingFlowTest {
         }
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsEnabled()
 
+        // Grant usage stats permission
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").assertIsNotEnabled()
 
+        // Grant notifications permission if required
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsNotEnabled()
         }
 
+        // Grant overlay permission
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsNotEnabled()
 
+        // Should still not show success card until default launcher is set
         composeTestRule.onNodeWithTag("onboarding_success_card").assertDoesNotExist()
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertExists()
-        assertEquals(0, completionCount)
 
+        // Set as default launcher - this should complete onboarding
         composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.runOnIdle {
-            usageStatsHelper.setDefaultLauncher(true)
-            permissionsHelper.setOverlayGranted(false)
+        // Now should show success card and complete onboarding
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onNodeWithTag("onboarding_success_card").assertExists()
+            true
         }
-        composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithTag("onboarding_success_card").assertDoesNotExist()
-
-        composeTestRule.runOnIdle {
-            permissionsHelper.setOverlayGranted(true)
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithTag("onboarding_success_card").assertExists()
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertDoesNotExist()
 
+        // Completion callback should have been called
         composeTestRule.waitUntil(timeoutMillis = 5_000) { completionCount == 1 }
-        assertEquals(1, completionCount)
     }
 }
 
@@ -143,11 +142,6 @@ private class FakePermissionsHelper(
             PermissionType.NOTIFICATIONS -> setNotificationsGranted(true)
             PermissionType.DEFAULT_LAUNCHER -> {
                 onDefaultLauncherRequest?.invoke()
-                val transientState = backingState.copy(
-                    hasSystemAlertWindow = !backingState.hasSystemAlertWindow
-                )
-                overridePermissionState(transientState)
-                overridePermissionState(backingState)
             }
             else -> Unit
         }

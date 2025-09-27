@@ -1,4 +1,6 @@
 import java.util.Date
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     id("com.android.application")
@@ -21,7 +23,7 @@ tasks.register("checkGitStatus") {
             throw GradleException("Build failed: Uncommitted changes detected. Please commit your changes before building.\n$gitStatus")
         }
 
-        println("✓ Git status clean - proceeding with build")
+        println("[OK] Git status clean - proceeding with build")
     }
 }
 
@@ -60,7 +62,7 @@ tasks.register("generateCommitInfo") {
         val commitInfoFile = file("src/main/assets/commit_info.json")
         commitInfoFile.writeText(commitInfoJson)
 
-        println("✓ Generated commit info: $commitHash")
+        println("[OK] Generated commit info: $commitHash")
     }
 }
 
@@ -146,6 +148,7 @@ dependencies {
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("org.robolectric:shadows-framework:4.11.1")
     testImplementation("androidx.test:core:1.6.1")
     testImplementation("androidx.test.ext:junit:1.2.1")
 
@@ -161,3 +164,11 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.5")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.5")
 }
+
+
+tasks.withType<Test>().configureEach {
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    })
+}
+

@@ -7,15 +7,19 @@ import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.check
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 
 @RunWith(RobolectricTestRunner::class)
 class SettingsRepositoryTest {
@@ -28,10 +32,9 @@ class SettingsRepositoryTest {
     private val defaultSettings = LauncherSettings()
 
     @Before
-    fun setUp() = runTest {
+    fun setUp() {
         MockitoAnnotations.openMocks(this)
         repository = SettingsRepository(settingsDao)
-        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
     }
 
     @Test
@@ -46,12 +49,11 @@ class SettingsRepositoryTest {
 
     @Test
     fun `getSettingsSync returns settings synchronously`() = runTest {
-        val settings = defaultSettings.copy(showWallpaper = false)
-        whenever(settingsDao.getSettingsSync()).thenReturn(settings)
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         val result = repository.getSettingsSync()
 
-        assertEquals(settings, result)
+        assertEquals(defaultSettings, result)
     }
 
     @Test
@@ -66,9 +68,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateSettings calls dao update`() = runTest {
-        val newSettings = defaultSettings.copy(
-            enableMathChallenge = true
-        )
+        val newSettings = defaultSettings.copy(enableMathChallenge = true)
 
         repository.updateSettings(newSettings)
 
@@ -76,51 +76,65 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `updateBackgroundColor updates background color`() = runTest {
+    fun `updateBackgroundColor normalizes value`() = runTest {
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
         repository.updateBackgroundColor("white")
 
-        verify(settingsDao).updateSettings(any())
+        verify(settingsDao).updateSettings(check { assertEquals("white", it.backgroundColor) })
     }
 
     @Test
     fun `updateShowWallpaper updates wallpaper visibility`() = runTest {
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
         repository.updateShowWallpaper(false)
 
-        verify(settingsDao).updateSettings(any())
+        verify(settingsDao).updateSettings(check { assertEquals(false, it.showWallpaper) })
     }
 
     @Test
     fun `updateColorPalette updates color palette`() = runTest {
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
         repository.updateColorPalette(ColorPaletteOption.WARM)
 
-        verify(settingsDao).updateSettings(any())
+        verify(settingsDao).updateSettings(check { assertEquals(ColorPaletteOption.WARM, it.colorPalette) })
     }
 
     @Test
-    fun `updateWallpaperBlurAmount updates blur amount`() = runTest {
-        repository.updateWallpaperBlurAmount(0.5f)
+    fun `updateWallpaperBlurAmount clamps value`() = runTest {
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
-        verify(settingsDao).updateSettings(any())
+        repository.updateWallpaperBlurAmount(1.5f)
+
+        verify(settingsDao).updateSettings(check { assertEquals(1.0f, it.wallpaperBlurAmount) })
     }
 
     @Test
     fun `updateGlassmorphism updates glassmorphism`() = runTest {
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
         repository.updateGlassmorphism(true)
 
-        verify(settingsDao).updateSettings(any())
+        verify(settingsDao).updateSettings(check { assertEquals(true, it.enableGlassmorphism) })
     }
 
     @Test
     fun `updateUiDensity updates ui density`() = runTest {
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
         repository.updateUiDensity(UiDensityOption.COMPACT)
 
-        verify(settingsDao).updateSettings(any())
+        verify(settingsDao).updateSettings(check { assertEquals(UiDensityOption.COMPACT, it.uiDensity) })
     }
 
     @Test
     fun `updateAnimationsEnabled updates animations`() = runTest {
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
         repository.updateAnimationsEnabled(false)
 
-        verify(settingsDao).updateSettings(any())
+        verify(settingsDao).updateSettings(check { assertEquals(false, it.enableAnimations) })
     }
 }

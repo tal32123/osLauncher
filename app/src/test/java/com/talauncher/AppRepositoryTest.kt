@@ -11,6 +11,7 @@ import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.ErrorHandler
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -18,10 +19,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
-import kotlinx.coroutines.flow.first
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 
 @RunWith(RobolectricTestRunner::class)
 class AppRepositoryTest {
@@ -73,48 +76,43 @@ class AppRepositoryTest {
     }
 
     @Test
-    fun `pinApp updates existing app`() = runTest {
+    fun `hideApp marks existing app as hidden`() = runTest {
         val packageName = "com.test.existing"
-        val existingApp = createMockApp(packageName, "Existing App", isPinned = false)
+        val existingApp = createMockApp(packageName, "Existing App")
 
         whenever(appDao.getApp(packageName)).thenReturn(existingApp)
-        whenever(appDao.getMaxPinnedOrder()).thenReturn(3)
 
-        repository.pinApp(packageName)
+        repository.hideApp(packageName)
 
-        verify(appDao).updateApp(argThat { app ->
-            app.packageName == packageName &&
-            app.isPinned &&
-            app.pinnedOrder == 4 &&
-            !app.isHidden
-        })
+        verify(appDao).updateHiddenStatus(packageName, true)
+        verify(appDao, never()).insertApp(any())
     }
 
     private fun createMockApp(
         packageName: String,
         appName: String,
         isHidden: Boolean = false,
-        isPinned: Boolean = false,
-        pinnedOrder: Int = 0,
-        isDistracting: Boolean = false
+        isDistracting: Boolean = false,
+        timeLimitMinutes: Int? = null
     ) = AppInfo(
         packageName = packageName,
         appName = appName,
         isHidden = isHidden,
-        isPinned = isPinned,
-        pinnedOrder = pinnedOrder,
-        isDistracting = isDistracting
+        isDistracting = isDistracting,
+        timeLimitMinutes = timeLimitMinutes
     )
 
     private fun createMockResolveInfo(packageName: String, label: String): ResolveInfo {
-        val mockActivityInfo = mock<ActivityInfo>()
+        val mockActivityInfo = ActivityInfo()
         mockActivityInfo.packageName = packageName
-        val mockAppInfo = mock<ApplicationInfo>()
-        whenever(mockAppInfo.loadLabel(any())).thenReturn(label)
-        mockActivityInfo.applicationInfo = mockAppInfo
-
-        return mock<ResolveInfo>().apply {
-            activityInfo = mockActivityInfo
+        mockActivityInfo.name = label
+        val mockAppInfo = ApplicationInfo().apply {
+            this.packageName = packageName
+        }
+        return ResolveInfo().apply {
+            activityInfo = mockActivityInfo.apply {
+                applicationInfo = mockAppInfo
+            }
         }
     }
 }
