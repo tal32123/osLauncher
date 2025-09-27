@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitUntil
+import androidx.compose.ui.test.assertExists
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.times
 import androidx.test.espresso.intent.matcher.IntentMatchers
@@ -102,9 +103,12 @@ class HomeScreenInteractionTest {
 
         val relativeY = ((entryBounds.top + entryBounds.bottom) / 2f) - alphabetBounds.top
 
+        val nodeWidth = alphabetBounds.width
+        val nodeHeight = alphabetBounds.height
+
         alphabetIndexNode.performTouchInput {
-            val touchX = size.width / 2f
-            val touchY = relativeY.coerceIn(0f, size.height.toFloat())
+            val touchX = nodeWidth / 2f
+            val touchY = relativeY.coerceIn(0f, nodeHeight)
             down(Offset(touchX, touchY))
             advanceEventTime(100L)
             up()

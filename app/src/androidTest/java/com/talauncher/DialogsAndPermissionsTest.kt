@@ -6,12 +6,12 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performLongClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import androidx.test.espresso.intent.Intents
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -34,7 +34,7 @@ class DialogsAndPermissionsTest {
         val appName = "Calculator"
 
         // 1. On the HomeScreen, long-press an app.
-        composeTestRule.onNodeWithText(appName).performLongClick()
+        composeTestRule.onNodeWithText(appName).performTouchInput { longClick() }
 
         // 2. An "App Action Dialog" should appear.
         composeTestRule.onNodeWithTag("app_action_dialog").assertIsDisplayed()
