@@ -146,21 +146,20 @@ class AppDrawerViewModel(
                 }
 
                 withContext(Dispatchers.Main.immediate) {
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            allApps = visibleApps,
-                            hiddenApps = hiddenApps,
-                            recentApps = recentApps,
-                            mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
-                            recentAppsLimit = recentLimit,
-                            showPhoneAction = settings?.showPhoneAction ?: true,
-                            showMessageAction = settings?.showMessageAction ?: true,
-                            showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
-                            uiSettings = uiSettings
-                        )
-                    }
+                    val newState = _uiState.value.copy(
+                        allApps = visibleApps,
+                        hiddenApps = hiddenApps,
+                        recentApps = recentApps,
+                        mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
+                        recentAppsLimit = recentLimit,
+                        showPhoneAction = settings?.showPhoneAction ?: true,
+                        showMessageAction = settings?.showMessageAction ?: true,
+                        showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
+                        uiSettings = uiSettings
+                    )
+                    _uiState.value = newState
 
-                    val updatedState = _uiState.value
+                    val updatedState = newState
                     val locale = updatedState.locale ?: Locale.getDefault()
                     val collator = updatedState.collator ?: Collator.getInstance()
                     val searchQuery = updatedState.searchQuery
