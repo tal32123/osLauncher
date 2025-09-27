@@ -91,7 +91,7 @@ fun SettingsScreen(
             text = "Settings",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp).testTag("settings_title")
         )
 
         ScrollableTabRow(selectedTabIndex = selectedTab) {
@@ -99,6 +99,7 @@ fun SettingsScreen(
                 Tab(
                     selected = selectedTab == index,
                     onClick = { selectedTab = index },
+                    modifier = Modifier.testTag("settings_tab_$title"),
                     text = {
                         Text(
                             text = title,
@@ -328,6 +329,7 @@ fun UIThemeSettings(
                                     FilterChip(
                                         selected = colorPalette == option,
                                         onClick = { onUpdateColorPalette(option) },
+                                        modifier = Modifier.testTag("color_palette_${option.name}"),
                                         label = {
                                             Text(
                                                 text = option.label,

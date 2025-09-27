@@ -60,7 +60,7 @@ This suite tests the various options within the multi-tabbed settings screen.
 
 ### Test Scenarios:
 
-#### Scenario: Navigate to Settings and change the color palette
+#### Scenario: Navigate to Settings and change the color palette [COMPLETED]
 - **Goal:** Ensure UI theme settings are applied correctly.
 - **Steps:**
     1. From the `HomeScreen`, swipe right to navigate to the `SettingsScreen`.
