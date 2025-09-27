@@ -47,7 +47,12 @@ class LauncherPagerNavigationTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val settingsRepository = SettingsRepository(LauncherFakeSettingsDao())
         val sessionRepository = SessionRepository(FakeAppSessionDao())
-        val appRepository = AppRepository(FakeAppDao(), context, settingsRepository, sessionRepository)
+        val appRepository = AppRepository(
+            FakeAppDao(),
+            context.applicationContext,
+            settingsRepository,
+            sessionRepository
+        )
         val permissionsHelper = TestPermissionsHelper(context)
         val usageStatsHelper = TestUsageStatsHelper(context)
         val contactHelper = ContactHelper(context, permissionsHelper)

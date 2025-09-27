@@ -53,6 +53,7 @@ class AppRepositoryTest {
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         whenever(context.packageManager).thenReturn(packageManager)
+        whenever(context.applicationContext).thenReturn(context)
         repository = AppRepository(
             appDao = appDao,
             context = context,
