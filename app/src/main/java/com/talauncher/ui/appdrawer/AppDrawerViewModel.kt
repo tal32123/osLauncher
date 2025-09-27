@@ -141,29 +141,29 @@ class AppDrawerViewModel(
                 )
 
                 val uiSettings = settings.toUiSettingsOrDefault()
-                val currentState = _uiState.value
                 val isWhatsAppInstalled = withContext(Dispatchers.Default) {
                     contactHelper.isWhatsAppInstalled()
                 }
 
-                val updatedState = currentState.copy(
-                    allApps = visibleApps,
-                    hiddenApps = hiddenApps,
-                    recentApps = recentApps,
-                    mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
-                    recentAppsLimit = recentLimit,
-                    showPhoneAction = settings?.showPhoneAction ?: true,
-                    showMessageAction = settings?.showMessageAction ?: true,
-                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
-                    uiSettings = uiSettings
-                )
-
-                val locale = updatedState.locale ?: Locale.getDefault()
-                val collator = updatedState.collator ?: Collator.getInstance()
-                val searchQuery = updatedState.searchQuery
-
                 withContext(Dispatchers.Main.immediate) {
-                    _uiState.value = updatedState
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            allApps = visibleApps,
+                            hiddenApps = hiddenApps,
+                            recentApps = recentApps,
+                            mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
+                            recentAppsLimit = recentLimit,
+                            showPhoneAction = settings?.showPhoneAction ?: true,
+                            showMessageAction = settings?.showMessageAction ?: true,
+                            showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
+                            uiSettings = uiSettings
+                        )
+                    }
+
+                    val updatedState = _uiState.value
+                    val locale = updatedState.locale ?: Locale.getDefault()
+                    val collator = updatedState.collator ?: Collator.getInstance()
+                    val searchQuery = updatedState.searchQuery
                     buildSectionsAndIndex(
                         visibleApps,
                         recentApps,
