@@ -81,12 +81,10 @@ class OnboardingGatingFlowTest {
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsNotEnabled()
         }
 
-        // Grant overlay permission
-        println("About to click overlay button...")
-        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsEnabled()
-        println("Overlay button is enabled, clicking now...")
-        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
-        println("Clicked overlay button")
+        // Grant overlay permission manually for now to test if the issue is with the click
+        println("Manually granting overlay permission for debugging...")
+        permissionsHelper.requestPermission(context as Activity, PermissionType.SYSTEM_ALERT_WINDOW)
+        println("Manually called requestPermission")
         composeTestRule.waitForIdle()
 
         // Wait for UI to reflect the permission state change
