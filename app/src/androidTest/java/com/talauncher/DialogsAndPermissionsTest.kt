@@ -132,11 +132,10 @@ class DialogsAndPermissionsTest {
         val uiDevice = UiDevice.getInstance(instrumentation)
         uiDevice.executeShellCommand("pm revoke ${instrumentation.targetContext.packageName} android.permission.READ_CONTACTS")
 
-        // 2. In the HomeScreen search bar, type a contact's name.
-        val searchBarPlaceholder = "Search apps, contacts, and web..."
-        composeTestRule.onNodeWithText(searchBarPlaceholder).performClick()
+        // 2. In the HomeScreen search bar, type a contact's name
+        composeTestRule.onNodeWithTag("search_field").performClick()
         val contactName = "John Doe"
-        composeTestRule.onNodeWithText(searchBarPlaceholder).performTextInput(contactName)
+        composeTestRule.onNodeWithTag("search_field").performTextInput(contactName)
 
         // 3. A "Contacts Permission Missing" card should appear in the results.
         composeTestRule.onNodeWithTag("contact_permission_callout").assertIsDisplayed()

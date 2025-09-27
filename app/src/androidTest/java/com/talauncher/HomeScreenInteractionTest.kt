@@ -161,12 +161,11 @@ class HomeScreenInteractionTest {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchApp test")
         // Scenario: Perform a search and launch an app
         // 1. Tap the search bar at the top
-        val searchBarPlaceholder = "Search apps, contacts, and web..."
-        composeTestRule.onNodeWithText(searchBarPlaceholder).performClick()
+        composeTestRule.onNodeWithTag("search_field").performClick()
 
         // 2. Type the name of a common system app (Settings)
         val appNameToSearch = "Settings"
-        composeTestRule.onNodeWithText(searchBarPlaceholder).performTextInput(appNameToSearch)
+        composeTestRule.onNodeWithTag("search_field").performTextInput(appNameToSearch)
 
         // 3. Wait for search results
         composeTestRule.waitForIdle()
@@ -182,24 +181,26 @@ class HomeScreenInteractionTest {
     fun searchAndLaunchContactAction() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchContactAction test")
         // Scenario: Perform a search and launch a contact action
-        // 1. Tap the search bar.
-        val searchBarPlaceholder = "Search apps, contacts, and web..."
-        composeTestRule.onNodeWithText(searchBarPlaceholder).performClick()
+        // 1. Tap the search bar
+        composeTestRule.onNodeWithTag("search_field").performClick()
 
-        // 2. Type the name of a known contact.
+        // 2. Type the name of a known contact
         val contactNameToSearch = "John Doe"
-        composeTestRule.onNodeWithText(searchBarPlaceholder).performTextInput(contactNameToSearch)
+        composeTestRule.onNodeWithTag("search_field").performTextInput(contactNameToSearch)
 
-        // 3. In the search results, find the contact item and click the "call" icon.
+        // 3. Wait for search results
+        composeTestRule.waitForIdle()
+
+        // 4. In the search results, find the contact item and click the "call" icon
         composeTestRule.onNodeWithText("Call").performClick()
 
-        // 4. Verification: Assert that an INTENT to ACTION_DIAL was initiated.
+        // 5. Verification: Assert that an INTENT to ACTION_DIAL was initiated
         Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_DIAL))
 
-        // 5. In the search results, find the contact item and click the "message" icon.
+        // 6. In the search results, find the contact item and click the "message" icon
         composeTestRule.onNodeWithText("Message").performClick()
 
-        // 6. Verification: Assert that an INTENT to ACTION_SENDTO was initiated.
+        // 7. Verification: Assert that an INTENT to ACTION_SENDTO was initiated
         Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_SENDTO))
     }
 }

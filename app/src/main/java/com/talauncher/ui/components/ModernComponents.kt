@@ -48,6 +48,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -155,7 +156,8 @@ fun ModernSearchField(
     placeholder: String = "Search...",
     modifier: Modifier = Modifier,
     enableGlassmorphism: Boolean = false,
-    onSearch: ((String) -> Unit)? = null
+    onSearch: ((String) -> Unit)? = null,
+    testTag: String? = null
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -196,7 +198,7 @@ fun ModernSearchField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = decoratedModifier,
+        modifier = if (testTag != null) decoratedModifier.testTag(testTag) else decoratedModifier,
         placeholder = { Text(placeholder) },
         singleLine = true,
         shape = RoundedCornerShape(16.dp),

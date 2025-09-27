@@ -200,6 +200,7 @@ fun HomeScreen(
                 onValueChange = viewModel::updateSearchQuery,
                 placeholder = stringResource(R.string.home_search_placeholder),
                 enableGlassmorphism = uiState.enableGlassmorphism,
+                testTag = "search_field",
                 onSearch = { query ->
                     if (query.isNotBlank()) {
                         viewModel.performGoogleSearch(query)
