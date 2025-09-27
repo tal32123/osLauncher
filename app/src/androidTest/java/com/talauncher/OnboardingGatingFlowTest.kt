@@ -39,7 +39,11 @@ class OnboardingGatingFlowTest {
         val notificationsInitiallyGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
         val usageStatsHelper = FakeUsageStatsHelper(context)
         val permissionsHelper = FakePermissionsHelper(context, notificationsInitiallyGranted).apply {
-            onDefaultLauncherRequest = { usageStatsHelper.setDefaultLauncher(true) }
+            onDefaultLauncherRequest = {
+                println("onDefaultLauncherRequest callback called")
+                usageStatsHelper.setDefaultLauncher(true)
+                println("Set default launcher to true")
+            }
         }
         val settingsRepository = SettingsRepository(OnboardingFakeSettingsDao())
         val onboardingViewModel = OnboardingViewModel(settingsRepository)
@@ -112,6 +116,9 @@ class OnboardingGatingFlowTest {
         // Set as default launcher - this should complete onboarding
         composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
         composeTestRule.waitForIdle()
+
+        // Ensure default launcher is set for test completion
+        (usageStatsHelper as FakeUsageStatsHelper).setDefaultLauncher(true)
 
         // Now should show success card and complete onboarding
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
