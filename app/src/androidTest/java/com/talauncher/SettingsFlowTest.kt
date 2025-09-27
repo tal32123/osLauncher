@@ -25,6 +25,7 @@ class SettingsFlowTest {
     @Before
     fun setUp() {
         IdlingRegistry.getInstance().register(EspressoIdlingResource.getIdlingResource())
+        ensureOnboardingCompleted()
     }
 
     @After
@@ -34,10 +35,38 @@ class SettingsFlowTest {
 
     private fun ensureOnboardingCompleted() {
         try {
-            composeTestRule.onNodeWithText("Set as default launcher").performClick()
+            // Check if we're on onboarding screen
+            composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertExists()
+
+            // Complete all onboarding steps
+            composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
             composeTestRule.waitForIdle()
+
+            // Grant notifications permission if required (Android 13+)
+            try {
+                composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
+                composeTestRule.waitForIdle()
+            } catch (e: Exception) {
+                // Notifications permission not required on this API level
+            }
+
+            composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
+            composeTestRule.waitForIdle()
+
+            // Wait for onboarding completion and navigation to main app
+            composeTestRule.waitUntil(timeoutMillis = 10_000) {
+                try {
+                    composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
+                    true
+                } catch (e: AssertionError) {
+                    false
+                }
+            }
         } catch (e: Exception) {
-            // Onboarding might already be completed
+            // Onboarding might already be completed, or we're already on the main app
         }
     }
 
