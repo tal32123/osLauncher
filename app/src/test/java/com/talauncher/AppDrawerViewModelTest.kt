@@ -81,8 +81,10 @@ class AppDrawerViewModelTest {
         whenever(appRepository.getHiddenApps()).thenReturn(flowOf(emptyList()))
         whenever(settingsRepository.getSettings()).thenReturn(flowOf(LauncherSettings()))
         whenever(permissionsHelper.permissionState).thenReturn(MutableStateFlow(PermissionState()))
-        runBlocking { whenever(usageStatsHelper.getPast48HoursUsageStats(any())).thenReturn(emptyList()) }
-        whenever(contactHelper.isWhatsAppInstalled()).thenReturn(false)
+        runBlocking {
+            whenever(usageStatsHelper.getPast48HoursUsageStats(any())).thenReturn(emptyList())
+            whenever(contactHelper.isWhatsAppInstalled()).thenReturn(false)
+        }
     }
 
     @After

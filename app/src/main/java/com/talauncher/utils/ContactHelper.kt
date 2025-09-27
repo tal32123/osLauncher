@@ -139,8 +139,8 @@ class ContactHelper(
         }
     }
 
-    fun isWhatsAppInstalled(): Boolean {
-        return try {
+    suspend fun isWhatsAppInstalled(): Boolean = withContext(Dispatchers.IO) {
+        try {
             context.packageManager.getPackageInfo("com.whatsapp", 0)
             true
         } catch (e: Exception) {

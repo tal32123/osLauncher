@@ -198,7 +198,9 @@ class HomeViewModel(
                     val filtered = if (currentQuery.isNotBlank()) filterApps(currentQuery, allApps) else emptyList()
 
                     // Cache expensive operations
-                    val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
+                    val isWhatsAppInstalled = contactHelper?.let { helper ->
+                        helper.isWhatsAppInstalled()
+                    } ?: false
                     val weatherDisplay = settings?.weatherDisplay ?: WeatherDisplayOption.DAILY
 
                     // Get recent apps and alphabet index for the moved app drawer functionality

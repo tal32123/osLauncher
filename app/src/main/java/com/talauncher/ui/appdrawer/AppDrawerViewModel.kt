@@ -132,7 +132,6 @@ class AppDrawerViewModel(
                 settingsRepository.getSettings(),
                 permissionsHelper.permissionState
             ) { visibleApps, hiddenApps, settings, permissionState ->
-                // Get top used apps from usage stats
                 val recentLimit = settings?.recentAppsLimit ?: 5
                 val recentApps = getRecentApps(
                     visibleApps = visibleApps,
@@ -142,7 +141,12 @@ class AppDrawerViewModel(
                 )
 
                 val uiSettings = settings.toUiSettingsOrDefault()
-                _uiState.value = _uiState.value.copy(
+                val currentState = _uiState.value
+                val isWhatsAppInstalled = withContext(Dispatchers.Default) {
+                    contactHelper.isWhatsAppInstalled()
+                }
+
+                val updatedState = currentState.copy(
                     allApps = visibleApps,
                     hiddenApps = hiddenApps,
                     recentApps = recentApps,
@@ -150,18 +154,25 @@ class AppDrawerViewModel(
                     recentAppsLimit = recentLimit,
                     showPhoneAction = settings?.showPhoneAction ?: true,
                     showMessageAction = settings?.showMessageAction ?: true,
-                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && contactHelper.isWhatsAppInstalled(),
+                    showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
                     uiSettings = uiSettings
                 )
 
-                buildSectionsAndIndex(
-                    visibleApps,
-                    recentApps,
-                    _uiState.value.searchQuery,
-                    _uiState.value.locale ?: Locale.getDefault(),
-                    _uiState.value.collator ?: Collator.getInstance()
-                )
-            }.collect { } 
+                val locale = updatedState.locale ?: Locale.getDefault()
+                val collator = updatedState.collator ?: Collator.getInstance()
+                val searchQuery = updatedState.searchQuery
+
+                withContext(Dispatchers.Main.immediate) {
+                    _uiState.value = updatedState
+                    buildSectionsAndIndex(
+                        visibleApps,
+                        recentApps,
+                        searchQuery,
+                        locale,
+                        collator
+                    )
+                }
+            }.collect { }
         }
     }
 
