@@ -18,7 +18,7 @@ This suite focuses on the core functionality of the home screen.
     3. Click on the app item.
     4. **Verification:** Assert that the launcher is no longer in the foreground (e.g., by checking for a UI element from the launched app, though this can be complex) or that an intent to launch the app was sent.
 
-#### Scenario: Launch a "Recent App"
+#### Scenario: Launch a "Recent App" [COMPLETED]
 - **Goal:** Ensure the "Recent Apps" section is functional.
 - **Steps:**
     1. Launch an app to make it "recent".
