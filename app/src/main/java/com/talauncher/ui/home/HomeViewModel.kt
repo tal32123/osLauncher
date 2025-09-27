@@ -1169,7 +1169,9 @@ class HomeViewModel(
                 } else {
                     // Try to get current location
                     if (resolvedPermissionsHelper?.hasLocationPermission() == true) {
-                        weatherService.getCurrentLocation()
+                        withContext(Dispatchers.IO) {
+                            weatherService.getCurrentLocation()
+                        }
                     } else {
                         null
                     }
