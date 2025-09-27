@@ -54,7 +54,12 @@ enum class ColorPaletteOption(val label: String) {
     WARM("Warm"),
     COOL("Cool"),
     MONOCHROME("Mono"),
-    NATURE("Nature");
+    NATURE("Nature"),
+    OCEANIC("Oceanic"),
+    SUNSET("Sunset"),
+    FOREST("Forest"),
+    LAVENDER("Lavender"),
+    CHERRY("Cherry");
 
     val storageValue: String
         get() = name
@@ -63,6 +68,22 @@ enum class ColorPaletteOption(val label: String) {
         fun fromStorageValue(value: String?): ColorPaletteOption {
             val normalized = value?.lowercase(Locale.US)
             return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: DEFAULT
+        }
+    }
+}
+
+enum class ThemeModeOption(val label: String) {
+    SYSTEM("System"),
+    LIGHT("Light"),
+    DARK("Dark");
+
+    val storageValue: String
+        get() = name
+
+    companion object {
+        fun fromStorageValue(value: String?): ThemeModeOption {
+            val normalized = value?.lowercase(Locale.US)
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: SYSTEM
         }
     }
 }

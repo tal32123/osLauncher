@@ -6,6 +6,7 @@ import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.model.MathDifficulty
+import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
@@ -72,6 +73,7 @@ class SettingsViewModel(
                     buildBranch = settings?.buildBranch,
                     buildTime = settings?.buildTime,
                     colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
+                    themeMode = settings?.themeMode ?: ThemeModeOption.SYSTEM,
                     wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                     backgroundOpacity = settings?.backgroundOpacity ?: 1f,
                     enableGlassmorphism = settings?.enableGlassmorphism ?: true,
@@ -185,6 +187,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateThemeMode(mode: ThemeModeOption) {
+        viewModelScope.launch {
+            settingsRepository.updateThemeMode(mode)
+        }
+    }
+
     fun updateWallpaperBlur(amount: Float) {
         viewModelScope.launch {
             settingsRepository.updateWallpaperBlurAmount(amount)
@@ -290,6 +298,7 @@ data class SettingsUiState(
     val buildBranch: String? = null,
     val buildTime: String? = null,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val wallpaperBlurAmount: Float = 0f,
     val backgroundOpacity: Float = 1f,
     val enableGlassmorphism: Boolean = true,

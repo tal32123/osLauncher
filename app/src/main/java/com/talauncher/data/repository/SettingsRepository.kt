@@ -4,6 +4,7 @@ import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.model.MathDifficulty
+import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
@@ -128,6 +129,11 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun updateColorPalette(palette: ColorPaletteOption) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(colorPalette = palette))
+    }
+
+    suspend fun updateThemeMode(mode: ThemeModeOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(themeMode = mode))
     }
 
     suspend fun updateWallpaperBlurAmount(blur: Float) {

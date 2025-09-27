@@ -34,6 +34,7 @@ data class LauncherSettings(
 
     // New 2025 minimalist UI customization options
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM, // System, Light, or Dark theme
     val wallpaperBlurAmount: Float = 0f, // 0.0 (no blur) to 1.0 (max blur)
     val enableGlassmorphism: Boolean = true, // Enable glass-like translucent effects
     val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,

@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.ThemeModeOption
 
 private data class PaletteVariant(
     val primary: Color,
@@ -192,6 +193,126 @@ private val PaletteCatalog = mapOf(
             onSurfaceVariant = Color(0xFFA9D5B8),
             outline = Color(0xFF6FB995)
         )
+    ),
+    ColorPaletteOption.OCEANIC to PaletteDefinition(
+        light = PaletteVariant(
+            primary = Color(0xFF0891B2),
+            secondary = Color(0xFF0284C7),
+            tertiary = Color(0xFF164E63),
+            background = Color(0xFFF0F9FF),
+            surface = Color(0xFFECFEFF),
+            surfaceVariant = Color(0xFFBFDBFE),
+            onSurface = Color(0xFF0C4A6E),
+            onSurfaceVariant = Color(0xFF0369A1),
+            outline = Color(0xFF0891B2)
+        ),
+        dark = PaletteVariant(
+            primary = Color(0xFF06B6D4),
+            secondary = Color(0xFF38BDF8),
+            tertiary = Color(0xFF67E8F9),
+            background = Color(0xFF083344),
+            surface = Color(0xFF0F172A),
+            surfaceVariant = Color(0xFF1E293B),
+            onSurface = Color(0xFFE0F7FA),
+            onSurfaceVariant = Color(0xFFB3E5FC),
+            outline = Color(0xFF0891B2)
+        )
+    ),
+    ColorPaletteOption.SUNSET to PaletteDefinition(
+        light = PaletteVariant(
+            primary = Color(0xFFEA580C),
+            secondary = Color(0xFFDC2626),
+            tertiary = Color(0xFFA21CAF),
+            background = Color(0xFFFEF2F2),
+            surface = Color(0xFFFFF7ED),
+            surfaceVariant = Color(0xFFFED7AA),
+            onSurface = Color(0xFF9A3412),
+            onSurfaceVariant = Color(0xFFB45309),
+            outline = Color(0xFFEA580C)
+        ),
+        dark = PaletteVariant(
+            primary = Color(0xFFFB923C),
+            secondary = Color(0xFFEF4444),
+            tertiary = Color(0xFFC084FC),
+            background = Color(0xFF1F1917),
+            surface = Color(0xFF292524),
+            surfaceVariant = Color(0xFF44403C),
+            onSurface = Color(0xFFFED7AA),
+            onSurfaceVariant = Color(0xFFFFBF69),
+            outline = Color(0xFFFB923C)
+        )
+    ),
+    ColorPaletteOption.FOREST to PaletteDefinition(
+        light = PaletteVariant(
+            primary = Color(0xFF166534),
+            secondary = Color(0xFF15803D),
+            tertiary = Color(0xFF365314),
+            background = Color(0xFFF0FDF4),
+            surface = Color(0xFFECFDF5),
+            surfaceVariant = Color(0xFFBBF7D0),
+            onSurface = Color(0xFF14532D),
+            onSurfaceVariant = Color(0xFF166534),
+            outline = Color(0xFF22C55E)
+        ),
+        dark = PaletteVariant(
+            primary = Color(0xFF4ADE80),
+            secondary = Color(0xFF22C55E),
+            tertiary = Color(0xFF84CC16),
+            background = Color(0xFF0F1B0F),
+            surface = Color(0xFF14532D),
+            surfaceVariant = Color(0xFF1F2937),
+            onSurface = Color(0xFFBBF7D0),
+            onSurfaceVariant = Color(0xFF86EFAC),
+            outline = Color(0xFF4ADE80)
+        )
+    ),
+    ColorPaletteOption.LAVENDER to PaletteDefinition(
+        light = PaletteVariant(
+            primary = Color(0xFF7C3AED),
+            secondary = Color(0xFF8B5CF6),
+            tertiary = Color(0xFF6D28D9),
+            background = Color(0xFFFAF5FF),
+            surface = Color(0xFFF3E8FF),
+            surfaceVariant = Color(0xFFE9D5FF),
+            onSurface = Color(0xFF5B21B6),
+            onSurfaceVariant = Color(0xFF6D28D9),
+            outline = Color(0xFF8B5CF6)
+        ),
+        dark = PaletteVariant(
+            primary = Color(0xFFA78BFA),
+            secondary = Color(0xFFC084FC),
+            tertiary = Color(0xFFDDD6FE),
+            background = Color(0xFF1E1B3A),
+            surface = Color(0xFF2E1065),
+            surfaceVariant = Color(0xFF3730A3),
+            onSurface = Color(0xFFE9D5FF),
+            onSurfaceVariant = Color(0xFFC4B5FD),
+            outline = Color(0xFFA78BFA)
+        )
+    ),
+    ColorPaletteOption.CHERRY to PaletteDefinition(
+        light = PaletteVariant(
+            primary = Color(0xFFE11D48),
+            secondary = Color(0xFFDB2777),
+            tertiary = Color(0xFF9F1239),
+            background = Color(0xFFFEF2F2),
+            surface = Color(0xFFFEF7F7),
+            surfaceVariant = Color(0xFFFECDD3),
+            onSurface = Color(0xFF881337),
+            onSurfaceVariant = Color(0xFFA11043),
+            outline = Color(0xFFE11D48)
+        ),
+        dark = PaletteVariant(
+            primary = Color(0xFFF87171),
+            secondary = Color(0xFFFBBF24),
+            tertiary = Color(0xFFFED7AA),
+            background = Color(0xFF2D1B1B),
+            surface = Color(0xFF3F1F1F),
+            surfaceVariant = Color(0xFF4C1D1D),
+            onSurface = Color(0xFFFECDD3),
+            onSurfaceVariant = Color(0xFFFCA5A5),
+            outline = Color(0xFFF87171)
+        )
     )
 )
 
@@ -270,10 +391,16 @@ private val ZenLightColorScheme = PrimerLightColorScheme
 
 @Composable
 fun TALauncherTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     content: @Composable () -> Unit
 ) {
+    val darkTheme = when (themeMode) {
+        ThemeModeOption.SYSTEM -> isSystemInDarkTheme()
+        ThemeModeOption.LIGHT -> false
+        ThemeModeOption.DARK -> true
+    }
+
     val baseColorScheme = when {
         darkTheme -> MinimalDarkColorScheme
         else -> MinimalLightColorScheme
