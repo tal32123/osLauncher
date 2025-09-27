@@ -3,13 +3,13 @@ package com.talauncher
 import android.app.Activity
 import android.content.Context
 import android.os.Build
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.repository.SettingsRepository
@@ -31,11 +31,11 @@ import org.junit.runner.RunWith
 class OnboardingGatingFlowTest {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
     fun onboardingGatingFlow_requiresCompletingAllStepsBeforeSuccessCard() {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val context = composeTestRule.activity
         val notificationsInitiallyGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
         val usageStatsHelper = FakeUsageStatsHelper(context)
         val permissionsHelper = FakePermissionsHelper(context, notificationsInitiallyGranted).apply {
@@ -83,7 +83,7 @@ class OnboardingGatingFlowTest {
 
         // Grant overlay permission manually for now to test if the issue is with the click
         println("Manually granting overlay permission for debugging...")
-        permissionsHelper.requestPermission(context as Activity, PermissionType.SYSTEM_ALERT_WINDOW)
+        permissionsHelper.requestPermission(context, PermissionType.SYSTEM_ALERT_WINDOW)
         println("Manually called requestPermission")
         composeTestRule.waitForIdle()
 
