@@ -32,6 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import android.util.Log
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -42,6 +43,7 @@ class LauncherPagerNavigationTest {
 
     @Test
     fun pagerRespondsToNavigationAndBackPress() {
+        Log.d("LauncherPagerNavigationTest", "Running pagerRespondsToNavigationAndBackPress test")
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val settingsRepository = SettingsRepository(LauncherFakeSettingsDao())
         val sessionRepository = SessionRepository(FakeAppSessionDao())

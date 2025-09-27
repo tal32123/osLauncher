@@ -1,7 +1,10 @@
 package com.talauncher
 
+import android.util.Log
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertTextStartsWith
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onFirst
@@ -10,7 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.waitUntil
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.times
 import androidx.test.espresso.intent.matcher.IntentMatchers
@@ -43,6 +46,7 @@ class HomeScreenInteractionTest {
 
     @Test
     fun launchAppFromAllAppsList() {
+        Log.d("HomeScreenInteractionTest", "Running launchAppFromAllAppsList test")
         // Scenario: Launch an app from the "All Apps" list
         // 1. Scroll down to the "All Apps" list.
         // Note: Scrolling is not explicitly implemented, assuming the app is visible.
@@ -59,6 +63,7 @@ class HomeScreenInteractionTest {
 
     @Test
     fun launchRecentApp() {
+        Log.d("HomeScreenInteractionTest", "Running launchRecentApp test")
         // Scenario: Launch a "Recent App"
         // 1. Launch an app to make it "recent".
         val appNameToLaunch = "Calculator"
@@ -83,30 +88,52 @@ class HomeScreenInteractionTest {
 
     @Test
     fun useAlphabeticalIndexScrubber() {
-        // Scenario: Use the Alphabetical Index Scrubber
-        // 1. On the right side of the screen, press and drag the alphabetical index.
-        composeTestRule.onNodeWithTag("alphabet_index").performTouchInput {
-            swipeDown()
+        Log.d("HomeScreenInteractionTest", "Running useAlphabeticalIndexScrubber test")
+        val targetLetter = "C"
+        val alphabetIndexTag = "alphabet_index"
+        val targetEntryTag = "alphabet_index_entry_${targetLetter}"
+
+        val alphabetIndexNode = composeTestRule.onNodeWithTag(alphabetIndexTag)
+        val alphabetBounds = alphabetIndexNode.fetchSemanticsNode().boundsInRoot
+
+        val targetEntryNode = composeTestRule.onNodeWithTag(targetEntryTag, useUnmergedTree = true)
+        targetEntryNode.assertExists()
+        val entryBounds = targetEntryNode.fetchSemanticsNode().boundsInRoot
+
+        val relativeY = ((entryBounds.top + entryBounds.bottom) / 2f) - alphabetBounds.top
+
+        alphabetIndexNode.performTouchInput {
+            val touchX = size.width / 2f
+            val touchY = relativeY.coerceIn(0f, size.height.toFloat())
+            down(Offset(touchX, touchY))
+            advanceEventTime(100L)
+            up()
         }
 
-        // 2. Drag to a specific letter (e.g., "C").
-        // The swipeDown is not precise. A more robust test would require calculating coordinates.
-        // For now, we assume swiping down will scroll the list.
+        composeTestRule.waitUntil {
+            val semanticsNode = runCatching {
+                composeTestRule.onNodeWithTag("app_list", useUnmergedTree = true)
+                    .onChildren()
+                    .onFirst()
+                    .fetchSemanticsNode()
+            }.getOrNull() ?: return@waitUntil false
 
-        // 3. Verification: Assert that the app list scrolls and the first visible app starts with "C".
-        // This is a weak verification because we don't know which letter we'll land on.
-        // A better approach would be to get the text of the first visible item and check it.
-        // The current implementation of the test is limited by the lack of precise scroll control.
-        // For now, we will just check that the list has scrolled by checking that the first item is not the first app in the list.
-        // This is not a very good test, but it's better than nothing.
-        // To do this, we need to know the first app in the list.
-        // Let's assume the first app is "Calculator".
-        // After scrolling, the first visible app should not be "Calculator".
-        composeTestRule.onNodeWithTag("app_list").onChildren().onFirst().assert(hasText("Calculator").not())
+            val text = semanticsNode.config.getOrNull(SemanticsProperties.Text)
+                ?.firstOrNull()
+                ?.text
+                .orEmpty()
+            text.startsWith(targetLetter)
+        }
+
+        composeTestRule.onNodeWithTag("app_list", useUnmergedTree = true)
+            .onChildren()
+            .onFirst()
+            .assertTextStartsWith(targetLetter)
     }
 
     @Test
     fun searchAndLaunchApp() {
+        Log.d("HomeScreenInteractionTest", "Running searchAndLaunchApp test")
         // Scenario: Perform a search and launch an app
         // 1. Tap the search bar at the top.
         val searchBarPlaceholder = "Search apps, contacts, and web..."
@@ -125,6 +152,7 @@ class HomeScreenInteractionTest {
 
     @Test
     fun searchAndLaunchContactAction() {
+        Log.d("HomeScreenInteractionTest", "Running searchAndLaunchContactAction test")
         // Scenario: Perform a search and launch a contact action
         // 1. Tap the search bar.
         val searchBarPlaceholder = "Search apps, contacts, and web..."

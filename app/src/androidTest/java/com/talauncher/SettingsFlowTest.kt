@@ -1,5 +1,6 @@
 package com.talauncher
 
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasText
@@ -29,6 +30,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 
     @Test
     fun changeColorPalette() {
+        Log.d("SettingsFlowTest", "Running changeColorPalette test")
         // 1. From the HomeScreen, swipe right to navigate to the SettingsScreen.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
 
@@ -46,6 +48,7 @@ import androidx.compose.ui.test.swipeLeft
 
     @Test
     fun toggleWallpaperAndChangeBlur() {
+        Log.d("SettingsFlowTest", "Running toggleWallpaperAndChangeBlur test")
         // 1. Navigate to the "UI & Theme" tab in Settings.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
         composeTestRule.onNodeWithTag("settings_tab_UI & Theme").performClick()
@@ -68,6 +71,7 @@ import androidx.compose.ui.test.swipeLeft
 
     @Test
     fun addAndConfigureDistractingApp() {
+        Log.d("SettingsFlowTest", "Running addAndConfigureDistractingApp test")
         // 1. Navigate to the "Distracting Apps" tab in Settings.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
         composeTestRule.onNodeWithTag("settings_tab_Distracting Apps").performClick()

@@ -76,6 +76,7 @@ class EdgeCaseAndErrorHandlingTest {
 
     @Test
     fun `home view model falls back to empty state when data sources return nothing`() = runTest {
+        println("Running home view model falls back to empty state when data sources return nothing test")
         whenever(appRepository.getAllVisibleApps()).thenReturn(flowOf(emptyList()))
         whenever(appRepository.getHiddenApps()).thenReturn(flowOf(emptyList()))
         whenever(settingsRepository.getSettings()).thenReturn(flowOf(null))

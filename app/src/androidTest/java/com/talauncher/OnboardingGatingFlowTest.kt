@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.junit.Rule
 import org.junit.Test
+import android.util.Log
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -35,6 +36,7 @@ class OnboardingGatingFlowTest {
 
     @Test
     fun onboardingGatingFlow_requiresCompletingAllStepsBeforeSuccessCard() {
+        Log.d("OnboardingGatingFlowTest", "Running onboardingGatingFlow_requiresCompletingAllStepsBeforeSuccessCard test")
         val context = composeTestRule.activity
         val notificationsInitiallyGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
         val usageStatsHelper = FakeUsageStatsHelper(context)

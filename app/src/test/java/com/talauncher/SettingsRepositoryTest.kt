@@ -39,6 +39,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `getSettings returns settings from dao`() = runTest {
+        println("Running getSettings returns settings from dao test")
         val settings = defaultSettings.copy(backgroundColor = "black")
         whenever(settingsDao.getSettings()).thenReturn(flowOf(settings))
 
@@ -49,6 +50,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `getSettingsSync returns settings synchronously`() = runTest {
+        println("Running getSettingsSync returns settings synchronously test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         val result = repository.getSettingsSync()
@@ -58,6 +60,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `getSettingsSync returns default settings when dao returns null`() = runTest {
+        println("Running getSettingsSync returns default settings when dao returns null test")
         whenever(settingsDao.getSettingsSync()).thenReturn(null)
 
         val result = repository.getSettingsSync()
@@ -68,6 +71,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateSettings calls dao update`() = runTest {
+        println("Running updateSettings calls dao update test")
         val newSettings = defaultSettings.copy(enableMathChallenge = true)
 
         repository.updateSettings(newSettings)
@@ -77,6 +81,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateBackgroundColor normalizes value`() = runTest {
+        println("Running updateBackgroundColor normalizes value test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         repository.updateBackgroundColor("white")
@@ -86,6 +91,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateShowWallpaper updates wallpaper visibility`() = runTest {
+        println("Running updateShowWallpaper updates wallpaper visibility test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         repository.updateShowWallpaper(false)
@@ -95,6 +101,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateColorPalette updates color palette`() = runTest {
+        println("Running updateColorPalette updates color palette test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         repository.updateColorPalette(ColorPaletteOption.WARM)
@@ -104,6 +111,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateWallpaperBlurAmount clamps value`() = runTest {
+        println("Running updateWallpaperBlurAmount clamps value test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         repository.updateWallpaperBlurAmount(1.5f)
@@ -113,6 +121,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateGlassmorphism updates glassmorphism`() = runTest {
+        println("Running updateGlassmorphism updates glassmorphism test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         repository.updateGlassmorphism(true)
@@ -122,6 +131,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateUiDensity updates ui density`() = runTest {
+        println("Running updateUiDensity updates ui density test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         repository.updateUiDensity(UiDensityOption.COMPACT)
@@ -131,6 +141,7 @@ class SettingsRepositoryTest {
 
     @Test
     fun `updateAnimationsEnabled updates animations`() = runTest {
+        println("Running updateAnimationsEnabled updates animations test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
 
         repository.updateAnimationsEnabled(false)

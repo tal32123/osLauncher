@@ -1,5 +1,6 @@
 package com.talauncher
 
+import android.util.Log
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -23,6 +24,7 @@ import androidx.test.espresso.intent.Intents
 
     @Test
     fun appActionDialog_HideApp() {
+        Log.d("DialogsAndPermissionsTest", "Running appActionDialog_HideApp test")
         val appName = "Calculator"
 
         // 1. On the HomeScreen, long-press an app.
@@ -43,6 +45,7 @@ import androidx.test.uiautomator.UiDevice
 
     @Test
     fun frictionDialogForDistractingApps() {
+        Log.d("DialogsAndPermissionsTest", "Running frictionDialogForDistractingApps test")
         val appName = "Calculator"
 
         // 1. First, mark an app as "distracting" in settings.
@@ -76,6 +79,7 @@ import androidx.test.uiautomator.UiDevice
 
     @Test
     fun contactsPermissionFlow() {
+        Log.d("DialogsAndPermissionsTest", "Running contactsPermissionFlow test")
         // 1. Ensure contacts permission is revoked.
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val uiDevice = UiDevice.getInstance(instrumentation)

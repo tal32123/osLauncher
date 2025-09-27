@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -669,12 +670,14 @@ private fun AlphabetIndex(
                     text = entry.displayLabel,
                     style = MaterialTheme.typography.labelSmall,
                     color = color,
-                    modifier = Modifier.onGloballyPositioned { coordinates ->
-                        val position = coordinates.positionInParent()
-                        val start = position.y
-                        val end = start + coordinates.size.height
-                        entryBounds[entry.key] = start..end
-                    }
+                    modifier = Modifier
+                        .testTag("alphabet_index_entry_${entry.key}")
+                        .onGloballyPositioned { coordinates ->
+                            val position = coordinates.positionInParent()
+                            val start = position.y
+                            val end = start + coordinates.size.height
+                            entryBounds[entry.key] = start..end
+                        }
                 )
             }
         }

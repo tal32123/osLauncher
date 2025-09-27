@@ -92,6 +92,7 @@ class AppDrawerViewModelTest {
 
     @Test
     fun `initial state loads all apps`() = runTest {
+        println("Running initial state loads all apps test")
         viewModel = AppDrawerViewModel(
             appRepository,
             settingsRepository,
@@ -109,6 +110,7 @@ class AppDrawerViewModelTest {
 
     @Test
     fun `launch app calls repository with correct package name`() = runTest {
+        println("Running launch app calls repository with correct package name test")
         whenever(appRepository.shouldShowTimeLimitPrompt(any())).thenReturn(false)
         whenever(appRepository.launchApp(any(), eq(false), isNull())).thenReturn(true)
 
