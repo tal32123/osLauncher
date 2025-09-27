@@ -37,9 +37,21 @@ class HomeScreenInteractionTest {
         Intents.release()
     }
 
+    private fun ensureOnboardingCompleted() {
+        try {
+            composeTestRule.onNodeWithText("Set as default launcher").performClick()
+            composeTestRule.waitForIdle()
+        } catch (e: Exception) {
+            // Onboarding might already be completed
+        }
+    }
+
     @Test
     fun launchAppFromAllAppsList() {
         Log.d("HomeScreenInteractionTest", "Running launchAppFromAllAppsList test")
+
+        ensureOnboardingCompleted()
+
         // Scenario: Launch an app from the "All Apps" list
         // 1. Wait for the app list to load and find the first available app
         composeTestRule.waitUntil(5000) {
@@ -71,6 +83,8 @@ class HomeScreenInteractionTest {
     @Test
     fun launchRecentApp() {
         Log.d("HomeScreenInteractionTest", "Running launchRecentApp test")
+        ensureOnboardingCompleted()
+
         // Scenario: Launch a "Recent App"
         // 1. Wait for app list and launch the first app to make it "recent"
         composeTestRule.waitUntil(5000) {
@@ -109,6 +123,8 @@ class HomeScreenInteractionTest {
     @Test
     fun useAlphabeticalIndexScrubber() {
         Log.d("HomeScreenInteractionTest", "Running useAlphabeticalIndexScrubber test")
+        ensureOnboardingCompleted()
+
         val targetLetter = "C"
         val alphabetIndexTag = "alphabet_index"
         val targetEntryTag = "alphabet_index_entry_${targetLetter}"
@@ -159,6 +175,9 @@ class HomeScreenInteractionTest {
     @Test
     fun searchAndLaunchApp() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchApp test")
+
+        ensureOnboardingCompleted()
+
         // Scenario: Perform a search and launch an app
         // 1. Tap the search bar at the top
         composeTestRule.onNodeWithTag("search_field").performClick()
@@ -180,6 +199,8 @@ class HomeScreenInteractionTest {
     @Test
     fun searchAndLaunchContactAction() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchContactAction test")
+        ensureOnboardingCompleted()
+
         // Scenario: Perform a search and launch a contact action
         // 1. Tap the search bar
         composeTestRule.onNodeWithTag("search_field").performClick()

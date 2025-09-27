@@ -33,9 +33,19 @@ class DialogsAndPermissionsTest {
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.getIdlingResource())
     }
 
+    private fun ensureOnboardingCompleted() {
+        try {
+            composeTestRule.onNodeWithText("Set as default launcher").performClick()
+            composeTestRule.waitForIdle()
+        } catch (e: Exception) {
+            // Onboarding might already be completed
+        }
+    }
+
     @Test
     fun appActionDialog_HideApp() {
         Log.d("DialogsAndPermissionsTest", "Running appActionDialog_HideApp test")
+        ensureOnboardingCompleted()
 
         // 1. Wait for app list to load and get first app
         composeTestRule.waitUntil(5000) {
@@ -70,6 +80,7 @@ class DialogsAndPermissionsTest {
     @Test
     fun frictionDialogForDistractingApps() {
         Log.d("DialogsAndPermissionsTest", "Running frictionDialogForDistractingApps test")
+        ensureOnboardingCompleted()
 
         // 1. Wait for app list to load and get first app
         composeTestRule.waitUntil(5000) {
@@ -97,7 +108,7 @@ class DialogsAndPermissionsTest {
         composeTestRule.waitForIdle()
 
         // Find any app checkbox and click it (using Settings app as fallback)
-        composeTestRule.onNodeWithTag("app_selection_checkbox_Settings").performClick()
+        composeTestRule.onNodeWithTag("app_selection_checkbox_com.android.settings").performClick()
 
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeLeft() }
 
@@ -127,6 +138,8 @@ class DialogsAndPermissionsTest {
     @Test
     fun contactsPermissionFlow() {
         Log.d("DialogsAndPermissionsTest", "Running contactsPermissionFlow test")
+        ensureOnboardingCompleted()
+
         // 1. Ensure contacts permission is revoked.
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val uiDevice = UiDevice.getInstance(instrumentation)

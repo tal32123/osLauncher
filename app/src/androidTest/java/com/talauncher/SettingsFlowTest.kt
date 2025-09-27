@@ -32,9 +32,20 @@ class SettingsFlowTest {
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.getIdlingResource())
     }
 
+    private fun ensureOnboardingCompleted() {
+        try {
+            composeTestRule.onNodeWithText("Set as default launcher").performClick()
+            composeTestRule.waitForIdle()
+        } catch (e: Exception) {
+            // Onboarding might already be completed
+        }
+    }
+
     @Test
     fun changeColorPalette() {
         Log.d("SettingsFlowTest", "Running changeColorPalette test")
+        ensureOnboardingCompleted()
+
         // 1. From the HomeScreen, swipe right to navigate to the SettingsScreen.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
 
@@ -51,6 +62,8 @@ class SettingsFlowTest {
     @Test
     fun toggleWallpaperAndChangeBlur() {
         Log.d("SettingsFlowTest", "Running toggleWallpaperAndChangeBlur test")
+        ensureOnboardingCompleted()
+
         // 1. Navigate to the "UI & Theme" tab in Settings.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
         composeTestRule.onNodeWithTag("settings_tab_UI & Theme").performClick()
@@ -79,6 +92,8 @@ class SettingsFlowTest {
     @Test
     fun addAndConfigureDistractingApp() {
         Log.d("SettingsFlowTest", "Running addAndConfigureDistractingApp test")
+        ensureOnboardingCompleted()
+
         // 1. Navigate to the "Distracting Apps" tab in Settings
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
         composeTestRule.onNodeWithTag("settings_tab_Distracting Apps").performClick()
@@ -86,7 +101,7 @@ class SettingsFlowTest {
         // 2. Wait for settings to load and find Settings app checkbox
         composeTestRule.waitForIdle()
 
-        val appToUse = "Settings"
+        val appToUse = "com.android.settings"
         composeTestRule.onNodeWithTag("app_selection_checkbox_$appToUse").performClick()
 
         // 3. Click the "Edit" icon next to the newly added app
@@ -102,7 +117,7 @@ class SettingsFlowTest {
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeLeft() }
 
         // 7. Find the same app and click to launch it
-        composeTestRule.onNodeWithText(appToUse, substring = true).performClick()
+        composeTestRule.onNodeWithText("Settings", substring = true).performClick()
 
         // 8. Assert that the "Friction Dialog" or "Time Limit Dialog" appears
         composeTestRule.onNodeWithTag("friction_dialog").assertExists()
