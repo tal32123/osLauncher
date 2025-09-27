@@ -49,10 +49,19 @@ if not defined DEVICE_FOUND (
     goto WAIT_FOR_INPUT
 )
 
-rem Run individual test classes
+rem Run individual test classes with detailed logging
+echo Running Espresso UI flow tests individually for better debugging...
+echo.
 call :run_test_class "com.talauncher.OnboardingGatingFlowTest"
+if not "%EXIT_CODE%"=="0" goto WAIT_FOR_INPUT
+echo.
 call :run_test_class "com.talauncher.LauncherPagerNavigationTest"
+if not "%EXIT_CODE%"=="0" goto WAIT_FOR_INPUT
+echo.
 call :run_test_class "com.talauncher.ComprehensiveTestSuite"
+if not "%EXIT_CODE%"=="0" goto WAIT_FOR_INPUT
+echo.
+echo All individual Espresso test classes completed successfully!
 
 echo ========================================
 echo Running complete unit and instrumentation suites
@@ -89,15 +98,22 @@ if "%CLASS%"=="" goto :eof
 
 echo ----------------------------------------
 echo Running Espresso flow: %CLASS%
+echo Start time: %TIME%
 echo ----------------------------------------
 if defined UI_MODE (
+    echo [DEBUG] Running with detailed output...
     call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --info
 ) else (
+    echo [DEBUG] Running in quiet mode...
     call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --quiet
 )
 if errorlevel 1 (
-    echo !!! Failure detected in %CLASS%
+    echo !!! FAILURE detected in %CLASS% at %TIME%
+    echo !!! Check the logs above for specific error details
     set /a FAILURES+=1
+    set "EXIT_CODE=1"
+) else (
+    echo === SUCCESS: %CLASS% completed at %TIME%
 )
 echo.
 goto :eof

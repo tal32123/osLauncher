@@ -4,12 +4,9 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeRight
-import androidx.compose.ui.test.assertExists
-import androidx.compose.ui.test.waitUntil
+import com.talauncher.LauncherNavigationPager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.talauncher.data.database.AppDao
@@ -45,7 +42,8 @@ class LauncherPagerNavigationTest {
 
     @Test
     fun pagerRespondsToNavigationAndBackPress() {
-        Log.d("LauncherPagerNavigationTest", "Running pagerRespondsToNavigationAndBackPress test")
+        Log.d("LauncherPagerNavigationTest", "=== STARTING pagerRespondsToNavigationAndBackPress test ===")
+        Log.d("LauncherPagerNavigationTest", "Setting up repositories and helpers")
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val settingsRepository = SettingsRepository(LauncherFakeSettingsDao())
         val sessionRepository = SessionRepository(FakeAppSessionDao())
@@ -79,24 +77,32 @@ class LauncherPagerNavigationTest {
 
         composeRule.runOnIdle {
             assertEquals(1, pagerState?.currentPage)
+            Log.d("LauncherPagerNavigationTest", "Initial state: current page = ${pagerState?.currentPage}")
         }
         composeRule.onNodeWithTag("launcher_home_page").assertExists()
+        Log.d("LauncherPagerNavigationTest", "✓ Initial state verified: on home page")
 
+        Log.d("LauncherPagerNavigationTest", "Performing swipe right to navigate to settings")
         composeRule.onNodeWithTag("launcher_navigation_pager")
             .performTouchInput { swipeRight() }
         composeRule.waitForIdle()
         composeRule.runOnIdle {
             assertEquals(0, pagerState?.currentPage)
+            Log.d("LauncherPagerNavigationTest", "After swipe: current page = ${pagerState?.currentPage}")
         }
         composeRule.onNodeWithTag("launcher_settings_page").assertExists()
+        Log.d("LauncherPagerNavigationTest", "✓ Navigation to settings page successful")
 
+        Log.d("LauncherPagerNavigationTest", "Testing back press navigation")
         composeRule.activityRule.scenario.onActivity {
             it.onBackPressedDispatcher.onBackPressed()
         }
         composeRule.waitForIdle()
         composeRule.runOnIdle {
             assertEquals(1, pagerState?.currentPage)
+            Log.d("LauncherPagerNavigationTest", "After back press: current page = ${pagerState?.currentPage}")
         }
+        Log.d("LauncherPagerNavigationTest", "✓ Back press navigation successful")
 
         composeRule.runOnIdle {
             recordedAnimations.clear()
@@ -120,6 +126,7 @@ class LauncherPagerNavigationTest {
             recordedAnimations.add(1)
         }
         assertTrue("Expected animations to contain page 1, but got: $recordedAnimations", recordedAnimations.contains(1))
+        Log.d("LauncherPagerNavigationTest", "=== TEST COMPLETED SUCCESSFULLY ===")
     }
 }
 

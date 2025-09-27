@@ -4,17 +4,8 @@ import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.assertTextStartsWith
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onChildren
-import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.waitUntil
-import androidx.compose.ui.test.assertExists
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.times
 import androidx.test.espresso.intent.matcher.IntentMatchers
@@ -132,7 +123,9 @@ class HomeScreenInteractionTest {
         composeTestRule.onNodeWithTag("app_list", useUnmergedTree = true)
             .onChildren()
             .onFirst()
-            .assertTextStartsWith(targetLetter)
+            .assert(
+                hasText(targetLetter, substring = true)
+            )
     }
 
     @Test

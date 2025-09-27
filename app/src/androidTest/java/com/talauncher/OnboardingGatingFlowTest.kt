@@ -4,14 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.os.Build
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.assertDoesNotExist
-import androidx.compose.ui.test.assertExists
-import androidx.compose.ui.test.waitUntil
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.LauncherSettings
@@ -39,7 +33,8 @@ class OnboardingGatingFlowTest {
 
     @Test
     fun onboardingGatingFlow_requiresCompletingAllStepsBeforeSuccessCard() {
-        Log.d("OnboardingGatingFlowTest", "Running onboardingGatingFlow_requiresCompletingAllStepsBeforeSuccessCard test")
+        Log.d("OnboardingGatingFlowTest", "=== STARTING onboardingGatingFlow_requiresCompletingAllStepsBeforeSuccessCard test ===")
+        Log.d("OnboardingGatingFlowTest", "Setting up test context and fake helpers")
         val context = composeTestRule.activity
         val notificationsInitiallyGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
         val usageStatsHelper = FakeUsageStatsHelper(context)
@@ -67,8 +62,10 @@ class OnboardingGatingFlowTest {
         }
 
         // Initially should show incomplete message, not success card
+        Log.d("OnboardingGatingFlowTest", "Verifying initial state: success card should not exist, incomplete message should exist")
         composeTestRule.onNodeWithTag("onboarding_success_card").assertDoesNotExist()
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertExists()
+        Log.d("OnboardingGatingFlowTest", "✓ Initial state verified correctly")
 
         // All buttons should be enabled initially
         composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertIsEnabled()
@@ -79,9 +76,11 @@ class OnboardingGatingFlowTest {
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsEnabled()
 
         // Grant usage stats permission
+        Log.d("OnboardingGatingFlowTest", "Granting usage stats permission")
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").assertIsNotEnabled()
+        Log.d("OnboardingGatingFlowTest", "✓ Usage stats button disabled after click")
 
         // Grant notifications permission if required
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -119,6 +118,7 @@ class OnboardingGatingFlowTest {
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertExists()
 
         // Set as default launcher - this should complete onboarding
+        Log.d("OnboardingGatingFlowTest", "Setting as default launcher - final step")
         composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
         composeTestRule.waitForIdle()
 
@@ -137,9 +137,11 @@ class OnboardingGatingFlowTest {
         // Test completed successfully - all permissions granted and default launcher set
         val allPermissionsGranted = permissionsHelper.permissionState.value.allOnboardingPermissionsGranted
         val isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
+        Log.d("OnboardingGatingFlowTest", "Final verification: permissions=$allPermissionsGranted, default launcher=$isDefaultLauncher")
         assert(allPermissionsGranted && isDefaultLauncher) {
             "Onboarding should be complete: permissions granted=$allPermissionsGranted, default launcher=$isDefaultLauncher"
         }
+        Log.d("OnboardingGatingFlowTest", "=== TEST COMPLETED SUCCESSFULLY ===")
     }
 }
 

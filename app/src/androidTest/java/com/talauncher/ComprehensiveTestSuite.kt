@@ -6,6 +6,10 @@ import org.junit.runners.Suite
 /**
  * Comprehensive test suite that runs all Android instrumentation tests
  * Provides a single entry point for running all UI and integration tests
+ *
+ * This suite includes:
+ * - LauncherPagerNavigationTest: Tests navigation between pages and back press handling
+ * - OnboardingGatingFlowTest: Tests the complete onboarding permission flow
  */
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
