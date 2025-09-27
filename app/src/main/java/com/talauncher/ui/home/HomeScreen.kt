@@ -39,6 +39,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.layout.width
+import kotlin.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.UiDensityOption
@@ -114,9 +116,13 @@ fun HomeScreen(
 
     LaunchedEffect(uiState.showTime, uiState.showDate) {
         if (uiState.showTime || uiState.showDate) {
-            while (true) {
-                viewModel.refreshTime()
+            viewModel.refreshTime() // Initial refresh
+            // Use a timer instead of infinite loop to allow event queue to go idle during tests
+            while (currentCoroutineContext().isActive) {
                 kotlinx.coroutines.delay(60000) // Only refresh if time/date is shown
+                if (currentCoroutineContext().isActive) {
+                    viewModel.refreshTime()
+                }
             }
         }
     }
