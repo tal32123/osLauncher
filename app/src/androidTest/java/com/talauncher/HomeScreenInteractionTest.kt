@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.swipeDown
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.times
@@ -102,5 +103,23 @@ class HomeScreenInteractionTest {
         // Let's assume the first app is "Calculator".
         // After scrolling, the first visible app should not be "Calculator".
         composeTestRule.onNodeWithTag("app_list").onChildren().onFirst().assert(hasText("Calculator").not())
+    }
+
+    @Test
+    fun searchAndLaunchApp() {
+        // Scenario: Perform a search and launch an app
+        // 1. Tap the search bar at the top.
+        val searchBarPlaceholder = "Search apps, contacts, and web..."
+        composeTestRule.onNodeWithText(searchBarPlaceholder).performClick()
+
+        // 2. Type the name of a known app (e.g., "Clock").
+        val appNameToSearch = "Clock"
+        composeTestRule.onNodeWithText(searchBarPlaceholder).performTextInput(appNameToSearch)
+
+        // 3. In the search results, click on the app item.
+        composeTestRule.onNodeWithText(appNameToSearch).performClick()
+
+        // 4. Verification: Assert that the app launches successfully.
+        Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_MAIN))
     }
 }

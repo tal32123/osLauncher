@@ -35,7 +35,7 @@ This suite focuses on the core functionality of the home screen.
     2. Drag to a specific letter (e.g., "C").
     3. **Verification:** Assert that the app list scrolls and the first visible app starts with "C".
 
-#### Scenario: Perform a search and launch an app
+#### Scenario: Perform a search and launch an app [COMPLETED]
 - **Goal:** Verify the search functionality and app launching from search results.
 - **Steps:**
     1. Tap the search bar at the top.
