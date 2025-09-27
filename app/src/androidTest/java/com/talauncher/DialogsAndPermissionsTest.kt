@@ -7,20 +7,26 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performLongClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.performTouchInput
+import androidx.test.espresso.intent.Intents
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+
 
 @RunWith(AndroidJUnit4::class)
 class DialogsAndPermissionsTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.swipeLeft
-import androidx.compose.ui.test.swipeRight
-import androidx.test.espresso.intent.Intents
 
     @Test
     fun appActionDialog_HideApp() {
@@ -39,9 +45,6 @@ import androidx.test.espresso.intent.Intents
         // 4. Verification: Assert that the app is no longer visible in the main list.
         composeTestRule.onNodeWithText(appName).assertDoesNotExist()
     }
-import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiDevice
 
     @Test
     fun frictionDialogForDistractingApps() {
