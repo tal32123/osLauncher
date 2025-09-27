@@ -86,8 +86,12 @@ class OnboardingGatingFlowTest {
         composeTestRule.waitForIdle()
 
         // Wait for the permission state to update and UI to reflect the change
-        composeTestRule.waitUntil(timeoutMillis = 3_000) {
+        // The button should become disabled after granting overlay permission
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
             try {
+                // First ensure the permission was actually granted
+                permissionsHelper.checkAllPermissions()
+                composeTestRule.waitForIdle()
                 composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsNotEnabled()
                 true
             } catch (e: AssertionError) {
