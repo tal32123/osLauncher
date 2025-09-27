@@ -31,6 +31,7 @@ import com.talauncher.utils.ContactInfo
 import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+import com.talauncher.utils.IdlingResourceHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -1162,6 +1163,7 @@ class HomeViewModel(
     ) {
         weatherUpdateJob?.cancel()
         weatherUpdateJob = viewModelScope.launch {
+            IdlingResourceHelper.increment()
             try {
                 val location = if (savedLat != null && savedLon != null) {
                     Pair(savedLat, savedLon)
@@ -1244,6 +1246,8 @@ class HomeViewModel(
                     weatherDailyHigh = null,
                     weatherDailyLow = null
                 )
+            } finally {
+                IdlingResourceHelper.decrement()
             }
         }
     }

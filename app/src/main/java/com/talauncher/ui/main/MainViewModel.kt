@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.talauncher.utils.IdlingResourceHelper
 
 class MainViewModel(
     private val settingsRepository: SettingsRepository,
@@ -43,9 +44,14 @@ class MainViewModel(
 
     private fun syncApps() {
         viewModelScope.launch(Dispatchers.IO) {
-            // Add delay to allow UI to initialize first for tests
-            kotlinx.coroutines.delay(200)
-            appRepository.syncInstalledApps()
+            IdlingResourceHelper.increment()
+            try {
+                // Add delay to allow UI to initialize first for tests
+                kotlinx.coroutines.delay(200)
+                appRepository.syncInstalledApps()
+            } finally {
+                IdlingResourceHelper.decrement()
+            }
         }
     }
 

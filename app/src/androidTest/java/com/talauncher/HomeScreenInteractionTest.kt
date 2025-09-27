@@ -11,6 +11,8 @@ import androidx.test.espresso.intent.Intents.times
 import androidx.test.espresso.intent.matcher.IntentMatchers
 import androidx.test.espresso.intent.rule.IntentsTestRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.espresso.IdlingRegistry
+import com.talauncher.utils.EspressoIdlingResource
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -23,16 +25,15 @@ class HomeScreenInteractionTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
-    @get:Rule
-    val intentsTestRule = IntentsTestRule(MainActivity::class.java)
-
     @Before
     fun setUp() {
         Intents.init()
+        IdlingRegistry.getInstance().register(EspressoIdlingResource.getIdlingResource())
     }
 
     @After
     fun tearDown() {
+        IdlingRegistry.getInstance().unregister(EspressoIdlingResource.getIdlingResource())
         Intents.release()
     }
 

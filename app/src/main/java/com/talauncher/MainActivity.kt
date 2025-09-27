@@ -46,6 +46,7 @@ import com.talauncher.utils.UsageStatsHelper
 import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.MainErrorHandler
 import com.talauncher.utils.CommitInfoReader
+import com.talauncher.utils.IdlingResourceHelper
 import com.talauncher.ui.components.ErrorDialog
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -82,6 +83,9 @@ class MainActivity : ComponentActivity() {
             // Add delay to allow UI to fully initialize first for Espresso tests
             lifecycleScope.launch {
                 try {
+                    // Signal to IdlingResource that async work is starting
+                    IdlingResourceHelper.increment()
+
                     // Brief delay to allow activity to fully start for testing
                     kotlinx.coroutines.delay(100)
 
@@ -97,19 +101,28 @@ class MainActivity : ComponentActivity() {
 
                     // Read and store commit info (defer further for tests)
                     launch {
-                        kotlinx.coroutines.delay(500)
-                        val commitInfo = CommitInfoReader.readCommitInfo(this@MainActivity)
-                        commitInfo?.let {
-                            settingsRepository.updateBuildInfo(
-                                commitHash = it.commit,
-                                commitMessage = it.message,
-                                commitDate = it.date,
-                                branch = it.branch,
-                                buildTime = it.buildTime
-                            )
+                        IdlingResourceHelper.increment()
+                        try {
+                            kotlinx.coroutines.delay(500)
+                            val commitInfo = CommitInfoReader.readCommitInfo(this@MainActivity)
+                            commitInfo?.let {
+                                settingsRepository.updateBuildInfo(
+                                    commitHash = it.commit,
+                                    commitMessage = it.message,
+                                    commitDate = it.date,
+                                    branch = it.branch,
+                                    buildTime = it.buildTime
+                                )
+                            }
+                        } finally {
+                            IdlingResourceHelper.decrement()
                         }
                     }
+
+                    // Signal to IdlingResource that main initialization is done
+                    IdlingResourceHelper.decrement()
                 } catch (e: Exception) {
+                    IdlingResourceHelper.decrement()
                     Log.e(TAG, "Error during initialization", e)
                     errorHandler.showError(
                         "Initialization Error",
