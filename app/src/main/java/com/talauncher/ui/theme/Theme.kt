@@ -99,26 +99,26 @@ private val PaletteCatalog = mapOf(
     ),
     ColorPaletteOption.WARM to PaletteDefinition(
         light = PaletteVariant(
-            primary = Color(0xFFE65100),
-            secondary = Color(0xFFB45309),
-            tertiary = Color(0xFF92400E),
-            background = Color(0xFFFEF3C7),
-            surface = Color(0xFFFFFBEB),
-            surfaceVariant = Color(0xFFFDE68A),
-            onSurface = Color(0xFF422006),
-            onSurfaceVariant = Color(0xFF713F12),
-            outline = Color(0xFFB45309)
+            primary = Color(0xFFB94517),
+            secondary = Color(0xFF9C4421),
+            tertiary = Color(0xFF825632),
+            background = Color(0xFFFCF1E6),
+            surface = Color(0xFFFFF7F0),
+            surfaceVariant = Color(0xFFF2DED1),
+            onSurface = Color(0xFF2B160C),
+            onSurfaceVariant = Color(0xFF6F4A3A),
+            outline = Color(0xFFA37968)
         ),
         dark = PaletteVariant(
-            primary = Color(0xFFFFB74D),
-            secondary = Color(0xFFEAA46B),
-            tertiary = Color(0xFFFFD7BA),
-            background = Color(0xFF1F1405),
-            surface = Color(0xFF2C1A07),
-            surfaceVariant = Color(0xFF3B2510),
-            onSurface = Color(0xFFFDE7C7),
-            onSurfaceVariant = Color(0xFFE9B08C),
-            outline = Color(0xFFB86429)
+            primary = Color(0xFFFFB68D),
+            secondary = Color(0xFFE8A572),
+            tertiary = Color(0xFFDDB889),
+            background = Color(0xFF2B160C),
+            surface = Color(0xFF361E12),
+            surfaceVariant = Color(0xFF4B2F20),
+            onSurface = Color(0xFFF8DFD2),
+            onSurfaceVariant = Color(0xFFEBC1A7),
+            outline = Color(0xFFCFA189)
         )
     ),
     ColorPaletteOption.COOL to PaletteDefinition(
@@ -171,26 +171,26 @@ private val PaletteCatalog = mapOf(
     ),
     ColorPaletteOption.NATURE to PaletteDefinition(
         light = PaletteVariant(
-            primary = Color(0xFF2E7D32),
-            secondary = Color(0xFF388E3C),
-            tertiary = Color(0xFF81C784),
-            background = Color(0xFFDCFCE7),
-            surface = Color(0xFFF0FDF4),
-            surfaceVariant = Color(0xFFD1FAE5),
-            onSurface = Color(0xFF064E3B),
-            onSurfaceVariant = Color(0xFF047857),
-            outline = Color(0xFF34D399)
+            primary = Color(0xFF256B37),
+            secondary = Color(0xFF3A7D44),
+            tertiary = Color(0xFF4F8F65),
+            background = Color(0xFFE8F5EB),
+            surface = Color(0xFFF4FBF6),
+            surfaceVariant = Color(0xFFD0E8D8),
+            onSurface = Color(0xFF0F2F1C),
+            onSurfaceVariant = Color(0xFF285239),
+            outline = Color(0xFF7AA98C)
         ),
         dark = PaletteVariant(
-            primary = Color(0xFF81C784),
-            secondary = Color(0xFF4ADE80),
-            tertiary = Color(0xFFA7F3D0),
-            background = Color(0xFF03211A),
-            surface = Color(0xFF052E21),
-            surfaceVariant = Color(0xFF0A3B29),
-            onSurface = Color(0xFFDCFCE7),
-            onSurfaceVariant = Color(0xFF6EE7B7),
-            outline = Color(0xFF34D399)
+            primary = Color(0xFF6DD9A3),
+            secondary = Color(0xFF5FBB84),
+            tertiary = Color(0xFF7CC7A4),
+            background = Color(0xFF071B11),
+            surface = Color(0xFF0C2618),
+            surfaceVariant = Color(0xFF133323),
+            onSurface = Color(0xFFDCEFE1),
+            onSurfaceVariant = Color(0xFFA9D5B8),
+            outline = Color(0xFF6FB995)
         )
     )
 )
