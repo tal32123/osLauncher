@@ -43,6 +43,8 @@ class MainViewModel(
 
     private fun syncApps() {
         viewModelScope.launch(Dispatchers.IO) {
+            // Add delay to allow UI to initialize first for tests
+            kotlinx.coroutines.delay(200)
             appRepository.syncInstalledApps()
         }
     }

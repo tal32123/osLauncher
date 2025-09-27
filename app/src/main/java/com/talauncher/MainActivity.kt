@@ -79,8 +79,12 @@ class MainActivity : ComponentActivity() {
             )
 
             // Initialize session repository and observe expirations in a single coroutine
+            // Add delay to allow UI to fully initialize first for Espresso tests
             lifecycleScope.launch {
                 try {
+                    // Brief delay to allow activity to fully start for testing
+                    kotlinx.coroutines.delay(100)
+
                     sessionRepository.initialize()
                     sessionRepository.emitExpiredSessions()
 
@@ -91,8 +95,9 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Read and store commit info
+                    // Read and store commit info (defer further for tests)
                     launch {
+                        kotlinx.coroutines.delay(500)
                         val commitInfo = CommitInfoReader.readCommitInfo(this@MainActivity)
                         commitInfo?.let {
                             settingsRepository.updateBuildInfo(
