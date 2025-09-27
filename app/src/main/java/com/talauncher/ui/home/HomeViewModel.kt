@@ -760,8 +760,9 @@ class HomeViewModel(
             val packageName = currentExpiredSession?.packageName ?: return@launch
 
             // Check if user is still in the target app before showing math challenge
-            if (usageStatsHelper != null && resolvedPermissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
+            val permissionsHelper = resolvedPermissionsHelper
+            if (usageStatsHelper != null && permissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != packageName) {
                     Log.d("HomeViewModel", "User left target app ($packageName) before math challenge, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
@@ -830,8 +831,9 @@ class HomeViewModel(
 
         viewModelScope.launch {
             // Check if user is still in the target app before showing any popup
-            if (usageStatsHelper != null && resolvedPermissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
+            val permissionsHelper = resolvedPermissionsHelper
+            if (usageStatsHelper != null && permissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != session.packageName) {
                     Log.d("HomeViewModel", "User not in target app (${session.packageName}) when session expired, current app: $currentApp. Skipping popup.")
                     // User is not in the target app, don't show popup and clean up
@@ -875,8 +877,9 @@ class HomeViewModel(
 
             while (remaining > 0) {
                 // Check if user is still in the target app
-                if (targetPackageName != null && usageStatsHelper != null && resolvedPermissionsHelper != null) {
-                    val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
+                val permissionsHelper = resolvedPermissionsHelper
+                if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
+                    val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                     if (currentApp != targetPackageName) {
                         Log.d("HomeViewModel", "User left target app ($targetPackageName), current app: $currentApp. Cancelling countdown.")
                         // User has left the target app, cancel countdown and hide overlay
@@ -905,8 +908,9 @@ class HomeViewModel(
             val targetPackageName = _uiState.value.sessionExpiryPackageName
 
             // Check if user is still in the target app before showing decision dialog
-            if (targetPackageName != null && usageStatsHelper != null && resolvedPermissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
+            val permissionsHelper = resolvedPermissionsHelper
+            if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != targetPackageName) {
                     Log.d("HomeViewModel", "User left target app ($targetPackageName) before decision dialog, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up

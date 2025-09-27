@@ -1,6 +1,8 @@
 package com.talauncher
 
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.test.core.app.ApplicationProvider
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.LauncherSettings
@@ -84,10 +86,12 @@ class EdgeCaseAndErrorHandlingTest {
         whenever(permissionsHelper.permissionState).thenReturn(MutableStateFlow(PermissionState()))
         whenever(usageStatsHelper.getPast48HoursUsageStats(any())).thenReturn(emptyList())
 
+        val appContext = ApplicationProvider.getApplicationContext<Context>()
         val viewModel = HomeViewModel(
             appRepository = appRepository,
             settingsRepository = settingsRepository,
             sessionRepository = sessionRepository,
+            appContext = appContext,
             permissionsHelper = permissionsHelper,
             usageStatsHelper = usageStatsHelper,
             errorHandler = errorHandler
