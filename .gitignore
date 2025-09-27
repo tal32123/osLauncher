@@ -98,3 +98,9 @@ node_modules/
 
 # Auto-generated commit info
 app/src/main/assets/commit_info.json
+
+# Test output files
+test_output.txt
+test_results.txt
+*_output.txt
+*_results.txt
