@@ -84,7 +84,16 @@ class OnboardingGatingFlowTest {
         // Grant overlay permission
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsNotEnabled()
+
+        // Wait for the permission state to update and UI to reflect the change
+        composeTestRule.waitUntil(timeoutMillis = 3_000) {
+            try {
+                composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsNotEnabled()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
 
         // Should still not show success card until default launcher is set
         composeTestRule.onNodeWithTag("onboarding_success_card").assertDoesNotExist()
@@ -136,7 +145,10 @@ private class FakePermissionsHelper(
     override fun requestPermission(activity: Activity, type: PermissionType) {
         when (type) {
             PermissionType.USAGE_STATS -> setUsageStatsGranted(true)
-            PermissionType.SYSTEM_ALERT_WINDOW -> setOverlayGranted(true)
+            PermissionType.SYSTEM_ALERT_WINDOW -> {
+                // For overlay permission, we need to simulate that it's granted immediately
+                setOverlayGranted(true)
+            }
             PermissionType.NOTIFICATIONS -> setNotificationsGranted(true)
             PermissionType.DEFAULT_LAUNCHER -> {
                 onDefaultLauncherRequest?.invoke()

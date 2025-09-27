@@ -5,16 +5,17 @@ echo ========================================
 echo Running targeted Espresso UI flows
 echo ========================================
 
-rem Check for UI mode parameter
-set "UI_MODE="
-if /i "%~1"=="--ui" set "UI_MODE=--info"
-if /i "%~1"=="-ui" set "UI_MODE=--info"
-if /i "%~1"=="ui" set "UI_MODE=--info"
+rem Check for quiet mode parameter (UI mode is now default)
+set "UI_MODE=--info"
+if /i "%~1"=="--quiet" set "UI_MODE="
+if /i "%~1"=="-quiet" set "UI_MODE="
+if /i "%~1"=="quiet" set "UI_MODE="
+if /i "%~1"=="-q" set "UI_MODE="
 
 if defined UI_MODE (
-    echo [UI MODE] Running with detailed output enabled
+    echo [UI MODE] Running with detailed output enabled ^(default^)
 ) else (
-    echo [HEADLESS MODE] Running in quiet mode ^(use --ui for detailed output^)
+    echo [QUIET MODE] Running in quiet mode ^(use --quiet to disable detailed output^)
 )
 
 echo.
