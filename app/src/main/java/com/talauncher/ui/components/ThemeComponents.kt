@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -118,7 +117,7 @@ private fun ThemeModeChip(
     val icon = when (mode) {
         ThemeModeOption.SYSTEM -> Icons.Filled.Settings
         ThemeModeOption.LIGHT -> Icons.Filled.Star
-        ThemeModeOption.DARK -> Icons.Filled.Circle
+        ThemeModeOption.DARK -> Icons.Filled.Settings
     }
 
     val label = when (mode) {
