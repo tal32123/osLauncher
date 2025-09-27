@@ -27,7 +27,8 @@ This suite focuses on the core functionality of the home screen.
     4. Click on it.
     5. **Verification:** Assert that the app launches successfully.
 
-#### Scenario: Use the Alphabetical Index Scrubber
+#### Scenario: Use the Alphabetical Index Scrubber [COMPLETED]
+- **Note:** The current test implementation is basic. It verifies that the scrubber responds to a swipe gesture but does not assert that the list scrolls to the correct letter due to the imprecision of swipe gestures in tests. A more robust test would require a more sophisticated way to interact with the scrubber.
 - **Goal:** Test the fast-scrolling functionality.
 - **Steps:**
     1. On the right side of the screen, press and drag the alphabetical index.

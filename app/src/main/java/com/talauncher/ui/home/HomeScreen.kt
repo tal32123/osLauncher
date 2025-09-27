@@ -281,7 +281,7 @@ fun HomeScreen(
                 ) {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).testTag("app_list"),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
                     ) {
                         // Recently Used Apps Section
@@ -345,7 +345,7 @@ fun HomeScreen(
                             entries = uiState.alphabetIndexEntries,
                             activeKey = uiState.alphabetIndexActiveKey,
                             isEnabled = uiState.isAlphabetIndexEnabled,
-                            modifier = Modifier.padding(end = PrimerSpacing.sm),
+                            modifier = Modifier.padding(end = PrimerSpacing.sm).testTag("alphabet_index"),
                             onEntryFocused = { entry, fraction ->
                                 viewModel.onAlphabetIndexFocused(entry, fraction)
                             },
