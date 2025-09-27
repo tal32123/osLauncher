@@ -1,4 +1,4 @@
-package com.talauncher.ui.home
+﻿package com.talauncher.ui.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -1010,4 +1010,5 @@ private fun ActionTextButton(
         }
     }
 }
+
 
