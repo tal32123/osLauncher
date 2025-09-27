@@ -81,23 +81,16 @@ class OnboardingGatingFlowTest {
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsNotEnabled()
         }
 
-        // Grant overlay permission manually for now to test if the issue is with the click
-        println("Manually granting overlay permission for debugging...")
-        permissionsHelper.requestPermission(context, PermissionType.SYSTEM_ALERT_WINDOW)
-        println("Manually called requestPermission")
+        // Grant overlay permission
+        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
         composeTestRule.waitForIdle()
 
         // Wait for UI to reflect the permission state change
         composeTestRule.waitForIdle()
 
-        // Debug: Check permission state before waiting
-        println("Permission state before waiting: ${permissionsHelper.permissionState.value}")
-
         // Verify the permission was granted
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            val state = permissionsHelper.permissionState.value
-            println("Current permission state: $state")
-            state.hasSystemAlertWindow
+            permissionsHelper.permissionState.value.hasSystemAlertWindow
         }
 
         // Wait for UI to recompose and button to become disabled
@@ -158,14 +151,10 @@ private class FakePermissionsHelper(
     }
 
     override fun requestPermission(activity: Activity, type: PermissionType) {
-        println("FakePermissionsHelper.requestPermission called with type: $type")
         when (type) {
             PermissionType.USAGE_STATS -> setUsageStatsGranted(true)
             PermissionType.SYSTEM_ALERT_WINDOW -> {
-                // For overlay permission, we need to simulate that it's granted immediately
-                println("Setting overlay permission to granted")
                 setOverlayGranted(true)
-                println("After setting overlay: ${permissionState.value}")
             }
             PermissionType.NOTIFICATIONS -> setNotificationsGranted(true)
             PermissionType.DEFAULT_LAUNCHER -> {
