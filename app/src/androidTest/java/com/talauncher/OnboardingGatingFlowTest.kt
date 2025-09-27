@@ -82,7 +82,11 @@ class OnboardingGatingFlowTest {
         }
 
         // Grant overlay permission
+        println("About to click overlay button, checking if enabled...")
+        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsEnabled()
+        println("Overlay button is enabled, clicking now...")
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
+        println("Clicked overlay button")
         composeTestRule.waitForIdle()
 
         // Wait for permission state to update after button click
