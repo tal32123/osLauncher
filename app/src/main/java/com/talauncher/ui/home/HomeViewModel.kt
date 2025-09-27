@@ -1,7 +1,6 @@
 package com.talauncher.ui.home
 
 import android.Manifest
-import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -35,8 +34,11 @@ import com.talauncher.utils.IdlingResourceHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -81,12 +83,19 @@ data class AlphabetIndexEntry(
     val previewAppName: String?
 )
 
+sealed interface HomeEvent {
+    data object RequestContactsPermission : HomeEvent
+    data object RequestOverlayPermission : HomeEvent
+}
+
 class HomeViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
     private val sessionRepository: SessionRepository? = null,
-    private val context: Context? = null,
+    private val appContext: Context,
+    private val backgroundOverlayManager: BackgroundOverlayManager = BackgroundOverlayManager.getInstance(appContext),
+    initialContactHelper: ContactHelper? = null,
     private val permissionsHelper: PermissionsHelper? = null,
     private val usageStatsHelper: UsageStatsHelper? = null,
     private val errorHandler: ErrorHandler? = null
@@ -96,6 +105,17 @@ class HomeViewModel(
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<HomeEvent>()
+    val events: SharedFlow<HomeEvent> = _events.asSharedFlow()
+
+    private val contactHelper: ContactHelper? = initialContactHelper ?: permissionsHelper?.let {
+        ContactHelper(appContext, it)
+    }
+    private val weatherService = WeatherService(appContext)
+    private val fallbackPermissionsHelper: PermissionsHelper by lazy { PermissionsHelper(appContext) }
+    private val resolvedPermissionsHelper: PermissionsHelper?
+        get() = permissionsHelper ?: fallbackPermissionsHelper
 
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     private val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
@@ -107,11 +127,8 @@ class HomeViewModel(
     private var overlayPermissionPrompted = false
     private var isReceiverRegistered = false
     private val sessionExpirationMutex = Mutex()
-    private var backgroundOverlayManager: BackgroundOverlayManager? = null
-    private var contactHelper: ContactHelper? = null
     private var pendingContactQuery: String? = null
     private var hasShownContactsPermissionPrompt = false
-    private var weatherService: WeatherService? = null
     private var weatherUpdateJob: Job? = null
     private var contactSearchJob: Job? = null
     private val searchQueryFlow = MutableStateFlow("")
@@ -152,36 +169,27 @@ class HomeViewModel(
         checkExpiredSessions()
         setupBroadcastReceiver()
         setupDebouncedContactSearch()
-        context?.let {
-            backgroundOverlayManager = BackgroundOverlayManager.getInstance(it)
-            if (permissionsHelper != null) {
-                contactHelper = ContactHelper(it, permissionsHelper)
-            }
-            weatherService = WeatherService(it)
-        }
     }
 
     private fun setupBroadcastReceiver() {
-        context?.let { ctx ->
-            if (!isReceiverRegistered) {
-                val filter = IntentFilter().apply {
-                    addAction("com.talauncher.SESSION_EXPIRY_EXTEND")
-                    addAction("com.talauncher.SESSION_EXPIRY_CLOSE")
-                    addAction("com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE")
-                    addAction("com.talauncher.MATH_CHALLENGE_CORRECT")
-                    addAction("com.talauncher.MATH_CHALLENGE_DISMISS")
-                }
-                try {
-                    ContextCompat.registerReceiver(
-                        ctx,
-                        sessionExpiryReceiver,
-                        filter,
-                        ContextCompat.RECEIVER_NOT_EXPORTED
-                    )
-                    isReceiverRegistered = true
-                } catch (e: Exception) {
-                    Log.e("HomeViewModel", "Failed to register broadcast receiver", e)
-                }
+        if (!isReceiverRegistered) {
+            val filter = IntentFilter().apply {
+                addAction("com.talauncher.SESSION_EXPIRY_EXTEND")
+                addAction("com.talauncher.SESSION_EXPIRY_CLOSE")
+                addAction("com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE")
+                addAction("com.talauncher.MATH_CHALLENGE_CORRECT")
+                addAction("com.talauncher.MATH_CHALLENGE_DISMISS")
+            }
+            try {
+                ContextCompat.registerReceiver(
+                    appContext,
+                    sessionExpiryReceiver,
+                    filter,
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+                )
+                isReceiverRegistered = true
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Failed to register broadcast receiver", e)
             }
         }
     }
@@ -202,7 +210,7 @@ class HomeViewModel(
                     val weatherDisplay = settings?.weatherDisplay ?: WeatherDisplayOption.DAILY
 
                     // Get recent apps and alphabet index for the moved app drawer functionality
-                    val hasUsageStatsPermission = permissionsHelper?.permissionState?.value?.hasUsageStats ?: false
+                    val hasUsageStatsPermission = resolvedPermissionsHelper?.permissionState?.value?.hasUsageStats ?: false
                     val hiddenApps = try {
                         appRepository.getHiddenApps().first()
                     } catch (e: Exception) {
@@ -393,7 +401,7 @@ class HomeViewModel(
 
         pendingContactQuery = sanitized
 
-        val helper = permissionsHelper
+        val helper = resolvedPermissionsHelper
         if (contactHelper == null || helper == null) {
             // Only show apps if no contact helper
             val unifiedResults = createUnifiedSearchResults(sanitized, appResults, emptyList())
@@ -426,7 +434,7 @@ class HomeViewModel(
                 .debounce(300) // 300ms debounce
                 .collect { query ->
                     if (query.isNotBlank() && contactHelper != null &&
-                        permissionsHelper?.permissionState?.value?.hasContacts == true) {
+                        resolvedPermissionsHelper?.permissionState?.value?.hasContacts == true) {
                         launchContactSearch(query)
                     }
                 }
@@ -466,7 +474,7 @@ class HomeViewModel(
     }
 
     fun requestContactsPermission() {
-        val helper = permissionsHelper
+        val helper = resolvedPermissionsHelper
         if (helper == null || contactHelper == null) {
             _uiState.value = _uiState.value.copy(showContactsPermissionDialog = false)
             return
@@ -479,8 +487,7 @@ class HomeViewModel(
 
         _uiState.value = _uiState.value.copy(showContactsPermissionDialog = false)
 
-        val rationale = context?.getString(R.string.contact_permission_required_message)
-            ?: "Allow TALauncher to access your contacts to find people quickly."
+        val rationale = appContext.getString(R.string.contact_permission_required_message)
         val handler = errorHandler
         if (handler != null) {
             handler.requestPermission(
@@ -494,11 +501,8 @@ class HomeViewModel(
                 }
             }
         } else {
-            val activity = context as? Activity
-            if (activity != null) {
-                helper.requestPermission(activity, com.talauncher.utils.PermissionType.CONTACTS)
-            } else {
-                onContactsPermissionDenied()
+            viewModelScope.launch {
+                _events.emit(HomeEvent.RequestContactsPermission)
             }
         }
     }
@@ -628,7 +632,7 @@ class HomeViewModel(
 
     private suspend fun getUsageMinutesForApp(packageName: String): Int? {
         val helper = usageStatsHelper ?: return null
-        val permissionState = permissionsHelper?.permissionState?.value
+        val permissionState = resolvedPermissionsHelper?.permissionState?.value
         if (permissionState?.hasUsageStats != true) {
             return null
         }
@@ -712,17 +716,15 @@ class HomeViewModel(
 
 
     fun performGoogleSearch(query: String) {
-        context?.let { ctx ->
-            try {
-                val searchUrl = "https://www.google.com/search?q=${Uri.encode(query)}"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(searchUrl)).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                ctx.startActivity(intent)
-                clearSearch()
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Failed to open Google search", e)
+        try {
+            val searchUrl = "https://www.google.com/search?q=${Uri.encode(query)}"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(searchUrl)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+            appContext.startActivity(intent)
+            clearSearch()
+        } catch (e: Exception) {
+            Log.e("HomeViewModel", "Failed to open Google search", e)
         }
     }
 
@@ -758,8 +760,8 @@ class HomeViewModel(
             val packageName = currentExpiredSession?.packageName ?: return@launch
 
             // Check if user is still in the target app before showing math challenge
-            if (usageStatsHelper != null && permissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
+            if (usageStatsHelper != null && resolvedPermissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != packageName) {
                     Log.d("HomeViewModel", "User left target app ($packageName) before math challenge, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
@@ -828,8 +830,8 @@ class HomeViewModel(
 
         viewModelScope.launch {
             // Check if user is still in the target app before showing any popup
-            if (usageStatsHelper != null && permissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
+            if (usageStatsHelper != null && resolvedPermissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != session.packageName) {
                     Log.d("HomeViewModel", "User not in target app (${session.packageName}) when session expired, current app: $currentApp. Skipping popup.")
                     // User is not in the target app, don't show popup and clean up
@@ -873,8 +875,8 @@ class HomeViewModel(
 
             while (remaining > 0) {
                 // Check if user is still in the target app
-                if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
-                    val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
+                if (targetPackageName != null && usageStatsHelper != null && resolvedPermissionsHelper != null) {
+                    val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
                     if (currentApp != targetPackageName) {
                         Log.d("HomeViewModel", "User left target app ($targetPackageName), current app: $currentApp. Cancelling countdown.")
                         // User has left the target app, cancel countdown and hide overlay
@@ -903,8 +905,8 @@ class HomeViewModel(
             val targetPackageName = _uiState.value.sessionExpiryPackageName
 
             // Check if user is still in the target app before showing decision dialog
-            if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
+            if (targetPackageName != null && usageStatsHelper != null && resolvedPermissionsHelper != null) {
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(resolvedPermissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != targetPackageName) {
                     Log.d("HomeViewModel", "User left target app ($targetPackageName) before decision dialog, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
@@ -971,14 +973,13 @@ class HomeViewModel(
             return
         }
 
-        val overlayManager = backgroundOverlayManager ?: return
+        val overlayManager = backgroundOverlayManager
         val success = overlayManager.showCountdownOverlay(appName, remainingSeconds, totalSeconds)
 
         if (!success) {
             Log.w("HomeViewModel", "Failed to show countdown overlay, using fallback")
             // Keep existing service fallback for compatibility
-            val ctx = context ?: return
-            val intent = Intent(ctx, OverlayService::class.java).apply {
+            val intent = Intent(appContext, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_SHOW_COUNTDOWN
                 putExtra(OverlayService.EXTRA_APP_NAME, appName)
                 putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
@@ -993,7 +994,7 @@ class HomeViewModel(
             return
         }
 
-        val overlayManager = backgroundOverlayManager ?: return
+        val overlayManager = backgroundOverlayManager
         val success = overlayManager.showDecisionOverlay(
             appName = appName,
             packageName = packageName,
@@ -1006,8 +1007,7 @@ class HomeViewModel(
         if (!success) {
             Log.w("HomeViewModel", "Failed to show decision overlay, using fallback")
             // Keep existing service fallback for compatibility
-            val ctx = context ?: return
-            val intent = Intent(ctx, OverlayService::class.java).apply {
+            val intent = Intent(appContext, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_SHOW_DECISION
                 putExtra(OverlayService.EXTRA_APP_NAME, appName)
                 putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
@@ -1019,18 +1019,17 @@ class HomeViewModel(
 
     private fun hideOverlay() {
         // Hide background overlay first
-        backgroundOverlayManager?.hideCurrentOverlay()
+        backgroundOverlayManager.hideCurrentOverlay()
 
         // Also hide service overlay for compatibility
-        val ctx = context ?: return
-        val intent = Intent(ctx, OverlayService::class.java).apply {
+        val intent = Intent(appContext, OverlayService::class.java).apply {
             action = OverlayService.ACTION_HIDE_OVERLAY
         }
         startOverlayServiceSafely(intent, requireForeground = false)
     }
 
     private fun ensureOverlayPermission(appName: String?): Boolean {
-        val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
+        val helper = resolvedPermissionsHelper
         val hasPermission = helper?.permissionState?.value?.hasSystemAlertWindow
 
         if (hasPermission == true) {
@@ -1044,7 +1043,9 @@ class HomeViewModel(
         if (!overlayPermissionPrompted) {
             overlayPermissionPrompted = true
             _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = true)
-            helper?.requestPermission(context as Activity, com.talauncher.utils.PermissionType.SYSTEM_ALERT_WINDOW)
+            viewModelScope.launch {
+                _events.emit(HomeEvent.RequestOverlayPermission)
+            }
             viewModelScope.launch {
                 appRepository.closeCurrentApp()
             }
@@ -1054,7 +1055,7 @@ class HomeViewModel(
     }
 
     private fun ensureOverlayPermissionImmediate(): Boolean {
-        val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
+        val helper = resolvedPermissionsHelper
         return helper?.permissionState?.value?.hasSystemAlertWindow == true
     }
 
@@ -1063,29 +1064,25 @@ class HomeViewModel(
         packageName: String,
         difficulty: MathDifficulty
     ) {
-        val overlayManager = backgroundOverlayManager
-        if (overlayManager != null) {
-            val success = overlayManager.showMathChallengeOverlay(
-                appName = appName,
-                packageName = packageName,
-                difficulty = difficulty,
-                onCorrect = {
-                    onMathChallengeCompleted(packageName)
-                },
-                onDismiss = {
-                    dismissMathChallengeDialog()
-                }
-            )
-
-            if (success) {
-                return // Successfully shown background overlay
+        val success = backgroundOverlayManager.showMathChallengeOverlay(
+            appName = appName,
+            packageName = packageName,
+            difficulty = difficulty,
+            onCorrect = {
+                onMathChallengeCompleted(packageName)
+            },
+            onDismiss = {
+                dismissMathChallengeDialog()
             }
+        )
+
+        if (success) {
+            return // Successfully shown background overlay
         }
 
         // Fallback to service approach
         Log.w("HomeViewModel", "Failed to show math challenge overlay, using service fallback")
-        val ctx = context ?: return
-        val intent = Intent(ctx, OverlayService::class.java).apply {
+        val intent = Intent(appContext, OverlayService::class.java).apply {
             action = OverlayService.ACTION_SHOW_MATH_CHALLENGE
             putExtra(OverlayService.EXTRA_APP_NAME, appName)
             putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
@@ -1095,9 +1092,6 @@ class HomeViewModel(
     }
 
     private fun startOverlayServiceSafely(intent: Intent, requireForeground: Boolean) {
-        val ctx = context ?: return
-        val appContext = ctx.applicationContext
-
         try {
             if (requireForeground && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ContextCompat.startForegroundService(appContext, intent)
@@ -1132,8 +1126,9 @@ class HomeViewModel(
     }
 
     fun openOverlayPermissionSettings() {
-        val helper = permissionsHelper ?: context?.let { PermissionsHelper(it.applicationContext) }
-        helper?.requestPermission(context as Activity, com.talauncher.utils.PermissionType.SYSTEM_ALERT_WINDOW)
+        viewModelScope.launch {
+            _events.emit(HomeEvent.RequestOverlayPermission)
+        }
     }
 
     fun callContact(contact: ContactInfo) {
@@ -1169,8 +1164,8 @@ class HomeViewModel(
                     Pair(savedLat, savedLon)
                 } else {
                     // Try to get current location
-                    if (permissionsHelper?.hasLocationPermission() == true) {
-                        weatherService?.getCurrentLocation()
+                    if (resolvedPermissionsHelper?.hasLocationPermission() == true) {
+                        weatherService.getCurrentLocation()
                     } else {
                         null
                     }
@@ -1182,7 +1177,7 @@ class HomeViewModel(
                         settingsRepository.updateWeatherLocation(location.first, location.second)
                     }
 
-                    val result = weatherService?.getCurrentWeather(location.first, location.second)
+                    val result = weatherService.getCurrentWeather(location.first, location.second)
                     result?.fold(
                         onSuccess = { weatherData ->
                             _uiState.value = _uiState.value.copy(
@@ -1199,7 +1194,7 @@ class HomeViewModel(
                     )
 
                     if (display == WeatherDisplayOption.DAILY) {
-                        val dailyResult = weatherService?.getDailyWeather(location.first, location.second)
+                        val dailyResult = weatherService.getDailyWeather(location.first, location.second)
                         if (dailyResult != null) {
                             dailyResult.fold(
                                 onSuccess = { dailyData ->
@@ -1256,7 +1251,7 @@ class HomeViewModel(
         super.onCleared()
         if (isReceiverRegistered) {
             try {
-                context?.unregisterReceiver(sessionExpiryReceiver)
+                appContext.unregisterReceiver(sessionExpiryReceiver)
                 isReceiverRegistered = false
             } catch (e: IllegalArgumentException) {
                 // Receiver was not registered, which is fine
@@ -1432,32 +1427,28 @@ class HomeViewModel(
     }
 
     fun openAppInfo(packageName: String) {
-        context?.let { ctx ->
-            try {
-                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.parse("package:$packageName")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                ctx.startActivity(intent)
-                dismissAppActionDialog()
-            } catch (e: Exception) {
-                errorHandler?.showError("Failed to open app info", e.message ?: "Unknown error", e)
+        try {
+            val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+            appContext.startActivity(intent)
+            dismissAppActionDialog()
+        } catch (e: Exception) {
+            errorHandler?.showError("Failed to open app info", e.message ?: "Unknown error", e)
         }
     }
 
     fun uninstallApp(packageName: String) {
-        context?.let { ctx ->
-            try {
-                val intent = Intent(Intent.ACTION_DELETE).apply {
-                    data = Uri.parse("package:$packageName")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                ctx.startActivity(intent)
-                dismissAppActionDialog()
-            } catch (e: Exception) {
-                errorHandler?.showError("Failed to uninstall app", e.message ?: "Unknown error", e)
+        try {
+            val intent = Intent(Intent.ACTION_DELETE).apply {
+                data = Uri.parse("package:$packageName")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
+            appContext.startActivity(intent)
+            dismissAppActionDialog()
+        } catch (e: Exception) {
+            errorHandler?.showError("Failed to uninstall app", e.message ?: "Unknown error", e)
         }
     }
 }
