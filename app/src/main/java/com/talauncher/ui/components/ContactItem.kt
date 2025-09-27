@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -112,7 +112,7 @@ fun ContactItem(
                 if (showWhatsAppAction) {
                     IconButton(onClick = onWhatsApp) {
                         Icon(
-                            imageVector = Icons.Default.Chat,
+                            imageVector = Icons.Default.QuestionAnswer,
                             contentDescription = "WhatsApp",
                             tint = PrimerGreen
                         )
