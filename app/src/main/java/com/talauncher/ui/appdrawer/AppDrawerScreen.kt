@@ -1,4 +1,4 @@
-package com.talauncher.ui.appdrawer
+﻿package com.talauncher.ui.appdrawer
 
 import android.os.Build
 import androidx.activity.compose.BackHandler
@@ -1097,3 +1097,4 @@ fun RecentAppItem(
         }
     }
 }
+
