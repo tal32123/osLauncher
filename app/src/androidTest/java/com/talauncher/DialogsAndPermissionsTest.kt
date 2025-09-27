@@ -37,6 +37,9 @@ import androidx.test.espresso.intent.Intents
         // 4. Verification: Assert that the app is no longer visible in the main list.
         composeTestRule.onNodeWithText(appName).assertDoesNotExist()
     }
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
 
     @Test
     fun frictionDialogForDistractingApps() {
@@ -69,5 +72,29 @@ import androidx.test.espresso.intent.Intents
 
         // 7. Verification: Assert that the dialog closes and the app does not launch.
         composeTestRule.onNodeWithTag("friction_dialog").assertDoesNotExist()
+    }
+
+    @Test
+    fun contactsPermissionFlow() {
+        // 1. Ensure contacts permission is revoked.
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val uiDevice = UiDevice.getInstance(instrumentation)
+        uiDevice.executeShellCommand("pm revoke ${instrumentation.targetContext.packageName} android.permission.READ_CONTACTS")
+
+        // 2. In the HomeScreen search bar, type a contact's name.
+        val searchBarPlaceholder = "Search apps, contacts, and web..."
+        composeTestRule.onNodeWithText(searchBarPlaceholder).performClick()
+        val contactName = "John Doe"
+        composeTestRule.onNodeWithText(searchBarPlaceholder).performTextInput(contactName)
+
+        // 3. A "Contacts Permission Missing" card should appear in the results.
+        composeTestRule.onNodeWithTag("contact_permission_callout").assertIsDisplayed()
+
+        // 4. Click the "Grant" button.
+        composeTestRule.onNodeWithTag("grant_contacts_permission_button").performClick()
+
+        // 5. Verification: Assert that the system permission dialog for contacts is displayed.
+        val permissionDialog = uiDevice.findObject(By.textContains("contacts"))
+        assert(permissionDialog != null)
     }
 }

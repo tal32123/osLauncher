@@ -140,7 +140,7 @@ fun ContactPermissionCallout(
     uiSettings: UiSettings = UiSettings()
 ) {
     ModernGlassCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag("contact_permission_callout"),
         enableGlassmorphism = uiSettings.enableGlassmorphism,
         cornerRadius = 12,
         elevation = 1
@@ -158,6 +158,7 @@ fun ContactPermissionCallout(
             )
             OutlinedButton(
                 onClick = onGrantAccess,
+                modifier = Modifier.testTag("grant_contacts_permission_button"),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
             ) {

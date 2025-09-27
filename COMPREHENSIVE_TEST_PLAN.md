@@ -121,7 +121,7 @@ This suite focuses on verifying the behavior of various dialogs and permission r
     6. Relaunch the app, and this time click "Cancel".
     7. **Verification:** Assert that the dialog closes and the app does not launch.
 
-#### Scenario: Contacts permission flow
+#### Scenario: Contacts permission flow [COMPLETED]
 - **Goal:** Test the graceful handling of missing permissions for the contacts feature.
 - **Steps:**
     1. Ensure contacts permission is revoked.
