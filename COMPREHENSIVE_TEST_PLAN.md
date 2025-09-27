@@ -69,7 +69,7 @@ This suite tests the various options within the multi-tabbed settings screen.
     4. Click a new palette option (e.g., "Warm").
     5. **Verification:** Assert that the color of a known element (like a button or header) changes to the expected color from the new palette.
 
-#### Scenario: Enable/Disable wallpaper and change blur
+#### Scenario: Enable/Disable wallpaper and change blur [COMPLETED]
 - **Goal:** Test the wallpaper and background effects settings.
 - **Steps:**
     1. Navigate to the "UI & Theme" tab in Settings.
