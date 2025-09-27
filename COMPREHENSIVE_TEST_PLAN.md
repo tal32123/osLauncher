@@ -43,7 +43,7 @@ This suite focuses on the core functionality of the home screen.
     3. In the search results, click on the app item.
     4. **Verification:** Assert that the app launches successfully.
 
-#### Scenario: Perform a search and launch a contact action
+#### Scenario: Perform a search and launch a contact action [COMPLETED]
 - **Goal:** Verify that contact search and actions (call, message) work.
 - **Steps:**
     1. Tap the search bar.
