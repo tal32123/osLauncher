@@ -88,9 +88,14 @@ class OnboardingGatingFlowTest {
         // Wait for UI to reflect the permission state change
         composeTestRule.waitForIdle()
 
+        // Debug: Check permission state before waiting
+        println("Permission state before waiting: ${permissionsHelper.permissionState.value}")
+
         // Verify the permission was granted
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            permissionsHelper.permissionState.value.hasSystemAlertWindow
+            val state = permissionsHelper.permissionState.value
+            println("Current permission state: $state")
+            state.hasSystemAlertWindow
         }
 
         // Wait for UI to recompose and button to become disabled
@@ -151,11 +156,14 @@ private class FakePermissionsHelper(
     }
 
     override fun requestPermission(activity: Activity, type: PermissionType) {
+        println("FakePermissionsHelper.requestPermission called with type: $type")
         when (type) {
             PermissionType.USAGE_STATS -> setUsageStatsGranted(true)
             PermissionType.SYSTEM_ALERT_WINDOW -> {
                 // For overlay permission, we need to simulate that it's granted immediately
+                println("Setting overlay permission to granted")
                 setOverlayGranted(true)
+                println("After setting overlay: ${permissionState.value}")
             }
             PermissionType.NOTIFICATIONS -> setNotificationsGranted(true)
             PermissionType.DEFAULT_LAUNCHER -> {
