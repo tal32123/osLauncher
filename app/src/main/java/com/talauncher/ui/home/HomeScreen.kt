@@ -1,5 +1,9 @@
-﻿package com.talauncher.ui.home
+package com.talauncher.ui.home
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
@@ -61,7 +65,10 @@ import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.home.MotivationalQuotesProvider
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.*
+import com.talauncher.utils.PermissionType
+import com.talauncher.utils.PermissionsHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
 
 private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
@@ -73,6 +80,7 @@ private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    permissionsHelper: PermissionsHelper,
     onNavigateToAppDrawer: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null
 ) {
@@ -85,6 +93,23 @@ fun HomeScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
+
+    LaunchedEffect(viewModel, permissionsHelper, context) {
+        viewModel.events.collect { event ->
+            val activity = context.findActivity()
+            if (activity == null) {
+                Log.w("HomeScreen", "Unable to handle event $event without Activity context")
+                return@collect
+            }
+
+            when (event) {
+                HomeEvent.RequestContactsPermission ->
+                    permissionsHelper.requestPermission(activity, PermissionType.CONTACTS)
+                HomeEvent.RequestOverlayPermission ->
+                    permissionsHelper.requestPermission(activity, PermissionType.SYSTEM_ALERT_WINDOW)
+            }
+        }
+    }
 
     // Handle back button for dialogs - prioritize dialogs over navigation
     BackHandler(
@@ -547,6 +572,12 @@ fun HomeScreen(
         }
         } // End Box
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @Composable
