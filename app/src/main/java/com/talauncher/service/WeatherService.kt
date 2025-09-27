@@ -103,10 +103,10 @@ class WeatherService(private val context: Context) {
         }
     }
 
-    fun getCurrentLocation(): Pair<Double, Double>? {
+    suspend fun getCurrentLocation(): Pair<Double, Double>? = withContext(Dispatchers.IO) {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        return try {
+        try {
             val providers = locationManager.getProviders(true)
             var bestLocation: Location? = null
 
