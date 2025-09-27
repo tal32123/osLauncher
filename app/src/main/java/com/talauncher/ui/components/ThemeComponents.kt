@@ -16,7 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.SettingsBrightness
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -116,7 +116,7 @@ private fun ThemeModeChip(
     )
 
     val icon = when (mode) {
-        ThemeModeOption.SYSTEM -> Icons.Filled.SettingsBrightness
+        ThemeModeOption.SYSTEM -> Icons.Filled.Settings
         ThemeModeOption.LIGHT -> Icons.Filled.LightMode
         ThemeModeOption.DARK -> Icons.Filled.DarkMode
     }
@@ -140,7 +140,7 @@ private fun ThemeModeChip(
         contentColor = contentColor,
         shape = RoundedCornerShape(20.dp),
         border = if (!isSelected) {
-            BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
         } else null
     ) {
         Row(
@@ -234,7 +234,7 @@ private fun ColorPaletteCard(
     onSelected: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = getPalettePreviewColors(palette)
+    val colors = remember(palette) { getPalettePreviewColors(palette) }
 
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) {
@@ -253,12 +253,11 @@ private fun ColorPaletteCard(
             .testTag("color_palette_${palette.name}")
             .semantics {
                 role = Role.RadioButton
-                contentDescription = stringResource(R.string.color_palette_button_description, palette.label)
             },
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (isSelected) 4.dp else 1.dp
         ),
-        border = BorderStroke(
+        border = androidx.compose.foundation.BorderStroke(
             width = if (isSelected) 2.dp else 1.dp,
             color = borderColor
         ),
@@ -340,59 +339,61 @@ private fun ColorPreview(
 /**
  * Get preview colors for each palette
  */
+private val palettePreviewColorsMap = mapOf(
+    ColorPaletteOption.DEFAULT to PalettePreviewColors(
+        primary = Color(0xFF6366F1),
+        secondary = Color(0xFF06B6D4),
+        background = Color(0xFFFAFAFA)
+    ),
+    ColorPaletteOption.WARM to PalettePreviewColors(
+        primary = Color(0xFFB94517),
+        secondary = Color(0xFF9C4421),
+        background = Color(0xFFFCF1E6)
+    ),
+    ColorPaletteOption.COOL to PalettePreviewColors(
+        primary = Color(0xFF0EA5E9),
+        secondary = Color(0xFF6366F1),
+        background = Color(0xFFE0F2FE)
+    ),
+    ColorPaletteOption.MONOCHROME to PalettePreviewColors(
+        primary = Color(0xFF1F2937),
+        secondary = Color(0xFF4B5563),
+        background = Color(0xFFF5F5F5)
+    ),
+    ColorPaletteOption.NATURE to PalettePreviewColors(
+        primary = Color(0xFF256B37),
+        secondary = Color(0xFF3A7D44),
+        background = Color(0xFFE8F5EB)
+    ),
+    ColorPaletteOption.OCEANIC to PalettePreviewColors(
+        primary = Color(0xFF0891B2),
+        secondary = Color(0xFF0284C7),
+        background = Color(0xFFF0F9FF)
+    ),
+    ColorPaletteOption.SUNSET to PalettePreviewColors(
+        primary = Color(0xFFEA580C),
+        secondary = Color(0xFFDC2626),
+        background = Color(0xFFFEF2F2)
+    ),
+    ColorPaletteOption.FOREST to PalettePreviewColors(
+        primary = Color(0xFF166534),
+        secondary = Color(0xFF15803D),
+        background = Color(0xFFF0FDF4)
+    ),
+    ColorPaletteOption.LAVENDER to PalettePreviewColors(
+        primary = Color(0xFF7C3AED),
+        secondary = Color(0xFF8B5CF6),
+        background = Color(0xFFFAF5FF)
+    ),
+    ColorPaletteOption.CHERRY to PalettePreviewColors(
+        primary = Color(0xFFE11D48),
+        secondary = Color(0xFFDB2777),
+        background = Color(0xFFFEF2F2)
+    )
+)
+
 private fun getPalettePreviewColors(palette: ColorPaletteOption): PalettePreviewColors {
-    return when (palette) {
-        ColorPaletteOption.DEFAULT -> PalettePreviewColors(
-            primary = Color(0xFF6366F1),
-            secondary = Color(0xFF06B6D4),
-            background = Color(0xFFFAFAFA)
-        )
-        ColorPaletteOption.WARM -> PalettePreviewColors(
-            primary = Color(0xFFB94517),
-            secondary = Color(0xFF9C4421),
-            background = Color(0xFFFCF1E6)
-        )
-        ColorPaletteOption.COOL -> PalettePreviewColors(
-            primary = Color(0xFF0EA5E9),
-            secondary = Color(0xFF6366F1),
-            background = Color(0xFFE0F2FE)
-        )
-        ColorPaletteOption.MONOCHROME -> PalettePreviewColors(
-            primary = Color(0xFF1F2937),
-            secondary = Color(0xFF4B5563),
-            background = Color(0xFFF5F5F5)
-        )
-        ColorPaletteOption.NATURE -> PalettePreviewColors(
-            primary = Color(0xFF256B37),
-            secondary = Color(0xFF3A7D44),
-            background = Color(0xFFE8F5EB)
-        )
-        ColorPaletteOption.OCEANIC -> PalettePreviewColors(
-            primary = Color(0xFF0891B2),
-            secondary = Color(0xFF0284C7),
-            background = Color(0xFFF0F9FF)
-        )
-        ColorPaletteOption.SUNSET -> PalettePreviewColors(
-            primary = Color(0xFFEA580C),
-            secondary = Color(0xFFDC2626),
-            background = Color(0xFFFEF2F2)
-        )
-        ColorPaletteOption.FOREST -> PalettePreviewColors(
-            primary = Color(0xFF166534),
-            secondary = Color(0xFF15803D),
-            background = Color(0xFFF0FDF4)
-        )
-        ColorPaletteOption.LAVENDER -> PalettePreviewColors(
-            primary = Color(0xFF7C3AED),
-            secondary = Color(0xFF8B5CF6),
-            background = Color(0xFFFAF5FF)
-        )
-        ColorPaletteOption.CHERRY -> PalettePreviewColors(
-            primary = Color(0xFFE11D48),
-            secondary = Color(0xFFDB2777),
-            background = Color(0xFFFEF2F2)
-        )
-    }
+    return palettePreviewColorsMap[palette] ?: palettePreviewColorsMap[ColorPaletteOption.DEFAULT]!!
 }
 
 private data class PalettePreviewColors(
