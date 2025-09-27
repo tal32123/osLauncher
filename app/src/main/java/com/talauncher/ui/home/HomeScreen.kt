@@ -571,6 +571,7 @@ fun FrictionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.testTag("friction_dialog"),
         title = {
             Text(
                 text = "Mindful Usage",

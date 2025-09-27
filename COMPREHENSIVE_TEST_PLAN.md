@@ -79,7 +79,7 @@ This suite tests the various options within the multi-tabbed settings screen.
     5. Move the "Wallpaper Blur" slider.
     6. **Verification:** This is hard to verify visually, but you can check that the value is saved and propagated to the `HomeViewModel`.
 
-#### Scenario: Add and configure a "Distracting App"
+#### Scenario: Add and configure a "Distracting App" [COMPLETED]
 - **Goal:** Test the core friction-barrier functionality.
 - **Steps:**
     1. Navigate to the "Distracting Apps" tab in Settings.

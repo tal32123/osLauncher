@@ -369,7 +369,8 @@ fun UIThemeSettings(
                         title = "Show Device Wallpaper",
                         subtitle = "Display your device wallpaper as background",
                         checked = showWallpaper,
-                        onCheckedChange = onToggleShowWallpaper
+                        onCheckedChange = onToggleShowWallpaper,
+                        modifier = Modifier.testTag("show_wallpaper_switch")
                     )
 
                     if (showWallpaper) {
@@ -394,7 +395,8 @@ fun UIThemeSettings(
                                 valueRange = 0f..1f,
                                 onValueChangeFinished = {
                                     onUpdateWallpaperBlur(blurValue)
-                                }
+                                },
+                                modifier = Modifier.testTag("wallpaper_blur_slider")
                             )
                             Text(
                                 text = "${(blurValue * 100).toInt()}% blur",
@@ -995,7 +997,8 @@ fun EditTimeLimitDialog(
                     label = { Text("Minutes") },
                     singleLine = true,
                     isError = isError,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.testTag("time_limit_input")
                 )
 
                 TextButton(onClick = onUseDefault) {
@@ -1026,7 +1029,8 @@ fun EditTimeLimitDialog(
                     } else {
                         isError = true
                     }
-                }
+                },
+                modifier = Modifier.testTag("time_limit_save_button")
             ) {
                 Text("Save")
             }
@@ -1054,7 +1058,8 @@ fun SettingItem(
     title: String,
     subtitle: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1077,6 +1082,7 @@ fun SettingItem(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            modifier = modifier,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.primary,
                 checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
@@ -1216,7 +1222,7 @@ fun AppSelectionItem(
             }
 
             if (isSelected && timeLimitMinutes != null && onEditTimeLimit != null) {
-                IconButton(onClick = onEditTimeLimit) {
+                IconButton(onClick = onEditTimeLimit, modifier = Modifier.testTag("edit_time_limit_${app.packageName}")) {
                     Icon(
                         imageVector = Icons.Filled.Edit,
                         contentDescription = "Edit time limit"
@@ -1225,7 +1231,8 @@ fun AppSelectionItem(
             }
             Checkbox(
                 checked = isSelected,
-                onCheckedChange = { onToggle() }
+                onCheckedChange = { onToggle() },
+                modifier = Modifier.testTag("app_selection_checkbox_${app.packageName}")
             )
         }
     }

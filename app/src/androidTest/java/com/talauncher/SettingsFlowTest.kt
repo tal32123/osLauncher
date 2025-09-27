@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.SemanticsActions
         val expectedColor = Color(0xFF422006)
         composeTestRule.onNodeWithTag("settings_title").assertTextColor(expectedColor)
     }
+import androidx.compose.ui.test.swipeLeft
 
     @Test
     fun toggleWallpaperAndChangeBlur() {
@@ -63,6 +64,35 @@ import androidx.compose.ui.semantics.SemanticsActions
         // 5. Verification: This is hard to verify visually, but you can check that the value is saved and propagated to the HomeViewModel.
         // For now, we will just check that the slider has the correct value.
         composeTestRule.onNodeWithTag("wallpaper_blur_slider").assert(SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.ProgressBarRangeInfo, androidx.compose.ui.state.ProgressBarRangeInfo(0.5f, 0f..1f)))
+    }
+
+    @Test
+    fun addAndConfigureDistractingApp() {
+        // 1. Navigate to the "Distracting Apps" tab in Settings.
+        composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
+        composeTestRule.onNodeWithTag("settings_tab_Distracting Apps").performClick()
+
+        // 2. Find a specific app in the list and check the box next to it.
+        val appName = "Calculator"
+        composeTestRule.onNodeWithTag("app_selection_checkbox_$appName").performClick()
+
+        // 3. Click the "Edit" icon next to the newly added app.
+        composeTestRule.onNodeWithTag("edit_time_limit_$appName").performClick()
+
+        // 4. Set a custom time limit (e.g., 15 minutes).
+        composeTestRule.onNodeWithTag("time_limit_input").performTextInput("15")
+
+        // 5. Click "Save".
+        composeTestRule.onNodeWithTag("time_limit_save_button").performClick()
+
+        // 6. Go back to the HomeScreen
+        composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeLeft() }
+
+        // 7. find the same app, and click to launch it.
+        composeTestRule.onNodeWithText(appName).performClick()
+
+        // 8. Assert that the "Friction Dialog" or "Time Limit Dialog" appears.
+        composeTestRule.onNodeWithTag("friction_dialog").assertExists()
     }
 }
 
