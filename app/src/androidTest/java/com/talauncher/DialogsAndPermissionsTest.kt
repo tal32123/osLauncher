@@ -45,7 +45,6 @@ class DialogsAndPermissionsTest {
     @Test
     fun appActionDialog_HideApp() {
         Log.d("DialogsAndPermissionsTest", "Running appActionDialog_HideApp test")
-        ensureOnboardingCompleted()
 
         // 1. Wait for app list to load and get first app
         composeTestRule.waitUntil(5000) {
@@ -80,7 +79,6 @@ class DialogsAndPermissionsTest {
     @Test
     fun frictionDialogForDistractingApps() {
         Log.d("DialogsAndPermissionsTest", "Running frictionDialogForDistractingApps test")
-        ensureOnboardingCompleted()
 
         // 1. Wait for app list to load and get first app
         composeTestRule.waitUntil(5000) {
@@ -138,7 +136,6 @@ class DialogsAndPermissionsTest {
     @Test
     fun contactsPermissionFlow() {
         Log.d("DialogsAndPermissionsTest", "Running contactsPermissionFlow test")
-        ensureOnboardingCompleted()
 
         // 1. Ensure contacts permission is revoked.
         val instrumentation = InstrumentationRegistry.getInstrumentation()

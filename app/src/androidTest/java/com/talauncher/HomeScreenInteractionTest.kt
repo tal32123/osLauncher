@@ -50,8 +50,6 @@ class HomeScreenInteractionTest {
     fun launchAppFromAllAppsList() {
         Log.d("HomeScreenInteractionTest", "Running launchAppFromAllAppsList test")
 
-        ensureOnboardingCompleted()
-
         // Scenario: Launch an app from the "All Apps" list
         // 1. Wait for the app list to load and find the first available app
         composeTestRule.waitUntil(5000) {
@@ -83,7 +81,6 @@ class HomeScreenInteractionTest {
     @Test
     fun launchRecentApp() {
         Log.d("HomeScreenInteractionTest", "Running launchRecentApp test")
-        ensureOnboardingCompleted()
 
         // Scenario: Launch a "Recent App"
         // 1. Wait for app list and launch the first app to make it "recent"
@@ -123,7 +120,6 @@ class HomeScreenInteractionTest {
     @Test
     fun useAlphabeticalIndexScrubber() {
         Log.d("HomeScreenInteractionTest", "Running useAlphabeticalIndexScrubber test")
-        ensureOnboardingCompleted()
 
         val targetLetter = "C"
         val alphabetIndexTag = "alphabet_index"
@@ -176,8 +172,6 @@ class HomeScreenInteractionTest {
     fun searchAndLaunchApp() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchApp test")
 
-        ensureOnboardingCompleted()
-
         // Scenario: Perform a search and launch an app
         // 1. Tap the search bar at the top
         composeTestRule.onNodeWithTag("search_field").performClick()
@@ -199,7 +193,6 @@ class HomeScreenInteractionTest {
     @Test
     fun searchAndLaunchContactAction() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchContactAction test")
-        ensureOnboardingCompleted()
 
         // Scenario: Perform a search and launch a contact action
         // 1. Tap the search bar

@@ -44,7 +44,6 @@ class SettingsFlowTest {
     @Test
     fun changeColorPalette() {
         Log.d("SettingsFlowTest", "Running changeColorPalette test")
-        ensureOnboardingCompleted()
 
         // 1. From the HomeScreen, swipe right to navigate to the SettingsScreen.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
@@ -62,7 +61,6 @@ class SettingsFlowTest {
     @Test
     fun toggleWallpaperAndChangeBlur() {
         Log.d("SettingsFlowTest", "Running toggleWallpaperAndChangeBlur test")
-        ensureOnboardingCompleted()
 
         // 1. Navigate to the "UI & Theme" tab in Settings.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
@@ -92,7 +90,6 @@ class SettingsFlowTest {
     @Test
     fun addAndConfigureDistractingApp() {
         Log.d("SettingsFlowTest", "Running addAndConfigureDistractingApp test")
-        ensureOnboardingCompleted()
 
         // 1. Navigate to the "Distracting Apps" tab in Settings
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
