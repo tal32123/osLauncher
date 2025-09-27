@@ -85,10 +85,7 @@ class OnboardingGatingFlowTest {
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
         composeTestRule.waitForIdle()
 
-        // Wait for UI to reflect the permission state change
-        composeTestRule.waitForIdle()
-
-        // Verify the permission was granted
+        // Wait for permission state to update after button click
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             permissionsHelper.permissionState.value.hasSystemAlertWindow
         }
@@ -151,10 +148,13 @@ private class FakePermissionsHelper(
     }
 
     override fun requestPermission(activity: Activity, type: PermissionType) {
+        println("FakePermissionsHelper.requestPermission called with type: $type")
         when (type) {
             PermissionType.USAGE_STATS -> setUsageStatsGranted(true)
             PermissionType.SYSTEM_ALERT_WINDOW -> {
+                println("Setting overlay permission to granted")
                 setOverlayGranted(true)
+                println("Permission state after overlay grant: ${permissionState.value}")
             }
             PermissionType.NOTIFICATIONS -> setNotificationsGranted(true)
             PermissionType.DEFAULT_LAUNCHER -> {
