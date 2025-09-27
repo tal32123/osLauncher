@@ -1,7 +1,6 @@
 @echo off
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-
 echo ========================================
 echo Running targeted Espresso UI flows
 echo ========================================
@@ -22,20 +21,18 @@ if errorlevel 1 (
     goto WAIT_FOR_INPUT
 )
 
-set DEVICE_FOUND=
-for /f "skip=1 tokens=1" %%D in ('adb devices') do (
-    if NOT "%%D"=="" (
-        set DEVICE_FOUND=1
-        goto DEVICE_CHECK_COMPLETE
-    )
-)
-:DEVICE_CHECK_COMPLETE
-if not defined DEVICE_FOUND (
+set DEVICE_LIST_FILE=%TEMP%\tal_devices.txt
+adb devices > "%DEVICE_LIST_FILE%" 2>&1
+findstr /R /C:"device$" "%DEVICE_LIST_FILE%" >nul 2>&1
+if errorlevel 1 (
     echo !!! No connected devices or emulators detected.
     echo !!! Start an emulator (e.g. Medium_Phone_API_36.0) or plug in a device and run again.
+    del "%DEVICE_LIST_FILE%" >nul 2>&1
     set EXIT_CODE=1
     goto WAIT_FOR_INPUT
 )
+
+del "%DEVICE_LIST_FILE%" >nul 2>&1
 
 for %%C in (%CLASSES%) do (
     echo ----------------------------------------
