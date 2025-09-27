@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
             this.contactHelper = ContactHelper(applicationContext, this.permissionsHelper)
             this.appRepository = AppRepository(
                 database.appDao(),
-                this,
+                applicationContext,
                 settingsRepository,
                 this.sessionRepository,
                 this.errorHandler

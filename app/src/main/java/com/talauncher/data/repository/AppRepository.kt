@@ -24,16 +24,18 @@ data class AppTimeLimitInfo(
 /**
  * Repository providing app data and launch helpers.
  *
- * @param context Application context used for package queries and launching intents. Pass an
- * application context so launches work correctly from non-Activity components.
+ * @param context Context used for package queries and launching intents. An application context
+ * is stored internally so launches work correctly from non-Activity components without holding
+ * on to an activity reference.
  */
 class AppRepository(
     private val appDao: AppDao,
-    private val context: Context,
+    context: Context,
     private val settingsRepository: SettingsRepository,
     private val sessionRepository: SessionRepository? = null,
     private val errorHandler: ErrorHandler? = null
 ) {
+    private val applicationContext: Context = context.applicationContext
     companion object {
         private const val TAG = "AppRepository"
     }
@@ -151,7 +153,7 @@ class AppRepository(
 
     private suspend fun getAppInfoFromPackage(packageName: String): AppInfo? =
         withContext(Dispatchers.IO) {
-            val packageManager = context.packageManager
+            val packageManager = applicationContext.packageManager
             try {
                 val appInfo = packageManager.getApplicationInfo(packageName, 0)
                 val appName = packageManager.getApplicationLabel(appInfo).toString()
@@ -175,7 +177,7 @@ class AppRepository(
 
     suspend fun getInstalledApps(): List<InstalledApp> = withContext(Dispatchers.IO) {
         try {
-            val packageManager = context.packageManager
+            val packageManager = applicationContext.packageManager
             val intent = Intent(Intent.ACTION_MAIN, null).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
             }
@@ -230,12 +232,12 @@ class AppRepository(
                 val intent = Intent(Settings.ACTION_SETTINGS).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
-                context.startActivity(intent)
+                applicationContext.startActivity(intent)
             } else {
-                val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+                val intent = applicationContext.packageManager.getLaunchIntentForPackage(packageName)
                 if (intent != null) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(intent)
+                    applicationContext.startActivity(intent)
                 } else {
                     Log.w(TAG, "No launch intent found for package: $packageName")
                     errorHandler?.showError(
@@ -325,7 +327,7 @@ class AppRepository(
                 addCategory(Intent.CATEGORY_HOME)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
-            context.startActivity(intent)
+            applicationContext.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
             Log.e(TAG, "No home app available to close current app", e)
             errorHandler?.showError(
