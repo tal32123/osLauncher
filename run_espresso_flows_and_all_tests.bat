@@ -5,6 +5,18 @@ echo ========================================
 echo Running targeted Espresso UI flows
 echo ========================================
 
+rem Check for UI mode parameter
+set "UI_MODE="
+if /i "%~1"=="--ui" set "UI_MODE=--info"
+if /i "%~1"=="-ui" set "UI_MODE=--info"
+if /i "%~1"=="ui" set "UI_MODE=--info"
+
+if defined UI_MODE (
+    echo [UI MODE] Running with detailed output enabled
+) else (
+    echo [HEADLESS MODE] Running in quiet mode ^(use --ui for detailed output^)
+)
+
 echo.
 echo Checking for connected Android devices or emulators...
 
@@ -44,7 +56,11 @@ call :run_test_class "com.talauncher.ComprehensiveTestSuite"
 echo ========================================
 echo Running complete unit and instrumentation suites
 echo ========================================
-call .\gradlew.bat test connectedAndroidTest --info
+if defined UI_MODE (
+    call .\gradlew.bat test connectedAndroidTest --info
+) else (
+    call .\gradlew.bat test connectedAndroidTest --quiet
+)
 if errorlevel 1 (
     echo !!! Failure detected while running the full test suite
     set /a FAILURES+=1
@@ -73,7 +89,11 @@ if "%CLASS%"=="" goto :eof
 echo ----------------------------------------
 echo Running Espresso flow: %CLASS%
 echo ----------------------------------------
-call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --info
+if defined UI_MODE (
+    call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --info
+) else (
+    call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --quiet
+)
 if errorlevel 1 (
     echo !!! Failure detected in %CLASS%
     set /a FAILURES+=1
