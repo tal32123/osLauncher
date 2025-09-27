@@ -119,11 +119,25 @@ class OnboardingGatingFlowTest {
 
         // Ensure default launcher is set for test completion
         (usageStatsHelper as FakeUsageStatsHelper).setDefaultLauncher(true)
+        composeTestRule.waitForIdle()
+
+        // Give UI time to recompose with all permission states
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            val allPermissionsGranted = permissionsHelper.permissionState.value.allOnboardingPermissionsGranted
+            val isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
+            println("All permissions granted: $allPermissionsGranted, Is default launcher: $isDefaultLauncher")
+            allPermissionsGranted && isDefaultLauncher
+        }
 
         // Now should show success card and complete onboarding
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            composeTestRule.onNodeWithTag("onboarding_success_card").assertExists()
-            true
+            try {
+                composeTestRule.onNodeWithTag("onboarding_success_card").assertExists()
+                true
+            } catch (e: AssertionError) {
+                println("Success card not found, checking what's visible...")
+                false
+            }
         }
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertDoesNotExist()
 
