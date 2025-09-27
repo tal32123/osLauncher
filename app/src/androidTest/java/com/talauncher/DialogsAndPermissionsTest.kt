@@ -26,7 +26,6 @@ class DialogsAndPermissionsTest {
     @Before
     fun setUp() {
         IdlingRegistry.getInstance().register(EspressoIdlingResource.getIdlingResource())
-        ensureOnboardingCompleted()
     }
 
     @After
@@ -34,46 +33,57 @@ class DialogsAndPermissionsTest {
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.getIdlingResource())
     }
 
-    private fun ensureOnboardingCompleted() {
-        try {
-            // Check if we're on onboarding screen
-            composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertExists()
-
-            // Complete all onboarding steps
-            composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
-            composeTestRule.waitForIdle()
-
-            // Grant notifications permission if required (Android 13+)
+    private fun ensureOnHomeScreen() {
+        // Wait for either onboarding screen or main app to appear
+        composeTestRule.waitUntil(timeoutMillis = 15_000) {
             try {
-                composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
-                composeTestRule.waitForIdle()
-            } catch (e: Exception) {
-                // Notifications permission not required on this API level
-            }
-
-            composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
-            composeTestRule.waitForIdle()
-
-            composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
-            composeTestRule.waitForIdle()
-
-            // Wait for onboarding completion and navigation to main app
-            composeTestRule.waitUntil(timeoutMillis = 10_000) {
+                // Check if we're already on the main app
+                composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
+                return@waitUntil true
+            } catch (e: AssertionError) {
+                // Check if we're on onboarding screen
                 try {
-                    composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
-                    true
-                } catch (e: AssertionError) {
-                    false
+                    composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertExists()
+                    // Complete onboarding flow
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Already completed */ }
+
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Not required or already completed */ }
+
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Already completed */ }
+
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Already completed */ }
+
+                    // Check if we reached main app after onboarding
+                    try {
+                        composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
+                        return@waitUntil true
+                    } catch (ex: AssertionError) {
+                        return@waitUntil false
+                    }
+                } catch (e2: AssertionError) {
+                    // Neither onboarding nor main app found yet
+                    return@waitUntil false
                 }
             }
-        } catch (e: Exception) {
-            // Onboarding might already be completed, or we're already on the main app
         }
     }
 
     @Test
     fun appActionDialog_HideApp() {
         Log.d("DialogsAndPermissionsTest", "Running appActionDialog_HideApp test")
+        ensureOnHomeScreen()
 
         // 1. Wait for app list to load and get first app
         composeTestRule.waitUntil(5000) {
@@ -108,6 +118,7 @@ class DialogsAndPermissionsTest {
     @Test
     fun frictionDialogForDistractingApps() {
         Log.d("DialogsAndPermissionsTest", "Running frictionDialogForDistractingApps test")
+        ensureOnHomeScreen()
 
         // 1. Wait for app list to load and get first app
         composeTestRule.waitUntil(5000) {
@@ -165,6 +176,7 @@ class DialogsAndPermissionsTest {
     @Test
     fun contactsPermissionFlow() {
         Log.d("DialogsAndPermissionsTest", "Running contactsPermissionFlow test")
+        ensureOnHomeScreen()
 
         // 1. Ensure contacts permission is revoked.
         val instrumentation = InstrumentationRegistry.getInstrumentation()

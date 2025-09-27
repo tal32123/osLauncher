@@ -29,7 +29,6 @@ class HomeScreenInteractionTest {
     fun setUp() {
         Intents.init()
         IdlingRegistry.getInstance().register(EspressoIdlingResource.getIdlingResource())
-        ensureOnboardingCompleted()
     }
 
     @After
@@ -38,46 +37,57 @@ class HomeScreenInteractionTest {
         Intents.release()
     }
 
-    private fun ensureOnboardingCompleted() {
-        try {
-            // Check if we're on onboarding screen
-            composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertExists()
-
-            // Complete all onboarding steps
-            composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
-            composeTestRule.waitForIdle()
-
-            // Grant notifications permission if required (Android 13+)
+    private fun ensureOnHomeScreen() {
+        // Wait for either onboarding screen or main app to appear
+        composeTestRule.waitUntil(timeoutMillis = 15_000) {
             try {
-                composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
-                composeTestRule.waitForIdle()
-            } catch (e: Exception) {
-                // Notifications permission not required on this API level
-            }
-
-            composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
-            composeTestRule.waitForIdle()
-
-            composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
-            composeTestRule.waitForIdle()
-
-            // Wait for onboarding completion and navigation to main app
-            composeTestRule.waitUntil(timeoutMillis = 10_000) {
+                // Check if we're already on the main app
+                composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
+                return@waitUntil true
+            } catch (e: AssertionError) {
+                // Check if we're on onboarding screen
                 try {
-                    composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
-                    true
-                } catch (e: AssertionError) {
-                    false
+                    composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertExists()
+                    // Complete onboarding flow
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Already completed */ }
+
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Not required or already completed */ }
+
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Already completed */ }
+
+                    try {
+                        composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
+                        composeTestRule.waitForIdle()
+                    } catch (ex: Exception) { /* Already completed */ }
+
+                    // Check if we reached main app after onboarding
+                    try {
+                        composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
+                        return@waitUntil true
+                    } catch (ex: AssertionError) {
+                        return@waitUntil false
+                    }
+                } catch (e2: AssertionError) {
+                    // Neither onboarding nor main app found yet
+                    return@waitUntil false
                 }
             }
-        } catch (e: Exception) {
-            // Onboarding might already be completed, or we're already on the main app
         }
     }
 
     @Test
     fun launchAppFromAllAppsList() {
         Log.d("HomeScreenInteractionTest", "Running launchAppFromAllAppsList test")
+        ensureOnHomeScreen()
 
         // Scenario: Launch an app from the "All Apps" list
         // 1. Wait for the app list to load and find the first available app
@@ -110,6 +120,7 @@ class HomeScreenInteractionTest {
     @Test
     fun launchRecentApp() {
         Log.d("HomeScreenInteractionTest", "Running launchRecentApp test")
+        ensureOnHomeScreen()
 
         // Scenario: Launch a "Recent App"
         // 1. Wait for app list and launch the first app to make it "recent"
@@ -149,6 +160,7 @@ class HomeScreenInteractionTest {
     @Test
     fun useAlphabeticalIndexScrubber() {
         Log.d("HomeScreenInteractionTest", "Running useAlphabeticalIndexScrubber test")
+        ensureOnHomeScreen()
 
         val targetLetter = "C"
         val alphabetIndexTag = "alphabet_index"
@@ -200,6 +212,7 @@ class HomeScreenInteractionTest {
     @Test
     fun searchAndLaunchApp() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchApp test")
+        ensureOnHomeScreen()
 
         // Scenario: Perform a search and launch an app
         // 1. Tap the search bar at the top
@@ -222,6 +235,7 @@ class HomeScreenInteractionTest {
     @Test
     fun searchAndLaunchContactAction() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchContactAction test")
+        ensureOnHomeScreen()
 
         // Scenario: Perform a search and launch a contact action
         // 1. Tap the search bar
