@@ -472,21 +472,25 @@ fun UIThemeSettings(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf(
+                        ChipGrid(
+                            items = listOf(
                                 "system" to "System",
                                 "black" to "Black",
                                 "white" to "White"
-                            ).forEach { (value, label) ->
-                                FilterChip(
-                                    selected = backgroundColor == value,
-                                    onClick = { onUpdateBackgroundColor(value) },
-                                    label = { Text(label) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) { (value, label) ->
+                            FilterChip(
+                                selected = backgroundColor == value,
+                                onClick = { onUpdateBackgroundColor(value) },
+                                label = {
+                                    Text(
+                                        text = label,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
+                            )
                         }
                     }
                 }
@@ -552,18 +556,47 @@ fun UIThemeSettings(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        UiDensityOption.entries.forEach { option ->
-                            FilterChip(
-                                selected = uiDensity == option,
-                                onClick = { onUpdateUiDensity(option) },
-                                label = { Text(option.label) },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                    ChipGrid(
+                        items = UiDensityOption.entries,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { option ->
+                        FilterChip(
+                            selected = uiDensity == option,
+                            onClick = { onUpdateUiDensity(option) },
+                            label = {
+                                Text(
+                                    text = option.label,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                        )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T> ChipGrid(
+    items: List<T>,
+    modifier: Modifier = Modifier,
+    itemsPerRow: Int = 2,
+    horizontalSpacing: Dp = 8.dp,
+    verticalSpacing: Dp = 8.dp,
+    itemContent: @Composable (T) -> Unit
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(verticalSpacing)
+    ) {
+        items.chunked(itemsPerRow).forEach { rowItems ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(horizontalSpacing)
+            ) {
+                rowItems.forEach { item ->
+                    itemContent(item)
                 }
             }
         }
