@@ -41,16 +41,30 @@ class HomeScreenInteractionTest {
     fun launchAppFromAllAppsList() {
         Log.d("HomeScreenInteractionTest", "Running launchAppFromAllAppsList test")
         // Scenario: Launch an app from the "All Apps" list
-        // 1. Scroll down to the "All Apps" list.
-        // Note: Scrolling is not explicitly implemented, assuming the app is visible.
-        // 2. Find an app with a known name (e.g., "Calculator").
-        val appNameToLaunch = "Calculator"
-        composeTestRule.onNodeWithText(appNameToLaunch).assertExists()
+        // 1. Wait for the app list to load and find the first available app
+        composeTestRule.waitUntil(5000) {
+            try {
+                composeTestRule.onNodeWithTag("app_list")
+                    .onChildren()
+                    .onFirst()
+                    .fetchSemanticsNode()
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
 
-        // 3. Click on the app item.
-        composeTestRule.onNodeWithText(appNameToLaunch).performClick()
+        // 2. Get the first app from the list
+        val firstAppNode = composeTestRule.onNodeWithTag("app_list")
+            .onChildren()
+            .onFirst()
 
-        // 4. Verification: Assert that an intent to launch an app was sent.
+        firstAppNode.assertExists()
+
+        // 3. Click on the first app item
+        firstAppNode.performClick()
+
+        // 4. Verification: Assert that an intent to launch an app was sent
         Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_MAIN))
     }
 
@@ -58,25 +72,38 @@ class HomeScreenInteractionTest {
     fun launchRecentApp() {
         Log.d("HomeScreenInteractionTest", "Running launchRecentApp test")
         // Scenario: Launch a "Recent App"
-        // 1. Launch an app to make it "recent".
-        val appNameToLaunch = "Calculator"
-        composeTestRule.onNodeWithText(appNameToLaunch).performClick()
+        // 1. Wait for app list and launch the first app to make it "recent"
+        composeTestRule.waitUntil(5000) {
+            try {
+                composeTestRule.onNodeWithTag("app_list")
+                    .onChildren()
+                    .onFirst()
+                    .fetchSemanticsNode()
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
+
+        val firstAppNode = composeTestRule.onNodeWithTag("app_list")
+            .onChildren()
+            .onFirst()
+
+        firstAppNode.performClick()
         Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_MAIN))
 
-        // 2. Return to the launcher.
+        // 2. Return to the launcher
         composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
 
-        // 3. Find the same app in the "Recent Apps" section at the top.
-        // Assuming the recent app appears on the home screen without needing to scroll.
-        // We are looking for the same app, so we can use the same name.
-        composeTestRule.onNodeWithText(appNameToLaunch).assertExists()
+        // 3. Wait a moment for the recent app to appear
+        composeTestRule.waitForIdle()
 
-        // 4. Click on it.
-        composeTestRule.onNodeWithText(appNameToLaunch).performClick()
+        // 4. Find and click the same app (should now be in recent apps)
+        firstAppNode.performClick()
 
-        // 5. Verification: Assert that the app launches successfully.
-        // We expect two intents for the same action, since we launched the app twice.
-        Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_MAIN), Intents.times(2))
+        // 5. Verification: Assert that the app launches successfully
+        // We expect two intents for the same action, since we launched the app twice
+        Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_MAIN), times(2))
     }
 
     @Test
@@ -133,18 +160,21 @@ class HomeScreenInteractionTest {
     fun searchAndLaunchApp() {
         Log.d("HomeScreenInteractionTest", "Running searchAndLaunchApp test")
         // Scenario: Perform a search and launch an app
-        // 1. Tap the search bar at the top.
+        // 1. Tap the search bar at the top
         val searchBarPlaceholder = "Search apps, contacts, and web..."
         composeTestRule.onNodeWithText(searchBarPlaceholder).performClick()
 
-        // 2. Type the name of a known app (e.g., "Clock").
-        val appNameToSearch = "Clock"
+        // 2. Type the name of a common system app (Settings)
+        val appNameToSearch = "Settings"
         composeTestRule.onNodeWithText(searchBarPlaceholder).performTextInput(appNameToSearch)
 
-        // 3. In the search results, click on the app item.
-        composeTestRule.onNodeWithText(appNameToSearch).performClick()
+        // 3. Wait for search results
+        composeTestRule.waitForIdle()
 
-        // 4. Verification: Assert that the app launches successfully.
+        // 4. In the search results, click on the first result or the Settings app
+        composeTestRule.onNodeWithText(appNameToSearch, substring = true).performClick()
+
+        // 5. Verification: Assert that the app launches successfully
         Intents.intended(IntentMatchers.hasAction(android.content.Intent.ACTION_MAIN))
     }
 

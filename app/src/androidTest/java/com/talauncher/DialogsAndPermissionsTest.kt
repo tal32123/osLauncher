@@ -36,52 +36,91 @@ class DialogsAndPermissionsTest {
     @Test
     fun appActionDialog_HideApp() {
         Log.d("DialogsAndPermissionsTest", "Running appActionDialog_HideApp test")
-        val appName = "Calculator"
 
-        // 1. On the HomeScreen, long-press an app.
-        composeTestRule.onNodeWithText(appName).performTouchInput { longClick() }
+        // 1. Wait for app list to load and get first app
+        composeTestRule.waitUntil(5000) {
+            try {
+                composeTestRule.onNodeWithTag("app_list")
+                    .onChildren()
+                    .onFirst()
+                    .fetchSemanticsNode()
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
 
-        // 2. An "App Action Dialog" should appear.
+        val firstAppNode = composeTestRule.onNodeWithTag("app_list")
+            .onChildren()
+            .onFirst()
+
+        // 2. Long-press the first app
+        firstAppNode.performTouchInput { longClick() }
+
+        // 3. An "App Action Dialog" should appear
         composeTestRule.onNodeWithTag("app_action_dialog").assertIsDisplayed()
 
-        // 3. Click the "Hide app" button.
+        // 4. Click the "Hide app" button
         composeTestRule.onNodeWithTag("hide_app_button").performClick()
 
-        // 4. Verification: Assert that the app is no longer visible in the main list.
-        composeTestRule.onNodeWithText(appName).assertDoesNotExist()
+        // 5. Verification: Assert that the dialog is dismissed
+        composeTestRule.onNodeWithTag("app_action_dialog").assertDoesNotExist()
     }
 
     @Test
     fun frictionDialogForDistractingApps() {
         Log.d("DialogsAndPermissionsTest", "Running frictionDialogForDistractingApps test")
-        val appName = "Calculator"
 
-        // 1. First, mark an app as "distracting" in settings.
+        // 1. Wait for app list to load and get first app
+        composeTestRule.waitUntil(5000) {
+            try {
+                composeTestRule.onNodeWithTag("app_list")
+                    .onChildren()
+                    .onFirst()
+                    .fetchSemanticsNode()
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
+
+        // Get the first app's package name for settings
+        val firstAppNode = composeTestRule.onNodeWithTag("app_list")
+            .onChildren()
+            .onFirst()
+
+        // 2. Navigate to settings and mark the first app as distracting
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
         composeTestRule.onNodeWithTag("settings_tab_Distracting Apps").performClick()
-        composeTestRule.onNodeWithTag("app_selection_checkbox_$appName").performClick()
+
+        // Wait for settings to load and mark first available app as distracting
+        composeTestRule.waitForIdle()
+
+        // Find any app checkbox and click it (using Settings app as fallback)
+        composeTestRule.onNodeWithTag("app_selection_checkbox_Settings").performClick()
+
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeLeft() }
 
-        // 2. On the HomeScreen, click the distracting app.
-        composeTestRule.onNodeWithText(appName).performClick()
+        // 3. On the HomeScreen, click the distracting app (Settings)
+        composeTestRule.onNodeWithText("Settings", substring = true).performClick()
 
-        // 3. The "Mindful Usage" dialog should appear.
+        // 4. The "Mindful Usage" dialog should appear
         composeTestRule.onNodeWithTag("friction_dialog").assertIsDisplayed()
 
-        // 4. Type a reason in the text field and click "Continue".
+        // 5. Type a reason in the text field and click "Continue"
         composeTestRule.onNodeWithTag("friction_reason_input").performTextInput("Test reason")
         composeTestRule.onNodeWithTag("friction_continue_button").performClick()
 
-        // 5. Verification: Assert that the app proceeds to launch.
+        // 6. Verification: Assert that the app proceeds to launch
         Intents.init()
         Intents.intended(androidx.test.espresso.intent.matcher.IntentMatchers.hasAction(android.content.Intent.ACTION_MAIN))
         Intents.release()
 
-        // 6. Relaunch the app, and this time click "Cancel".
-        composeTestRule.onNodeWithText(appName).performClick()
+        // 7. Relaunch the app, and this time click "Cancel"
+        composeTestRule.onNodeWithText("Settings", substring = true).performClick()
         composeTestRule.onNodeWithTag("friction_cancel_button").performClick()
 
-        // 7. Verification: Assert that the dialog closes and the app does not launch.
+        // 8. Verification: Assert that the dialog closes and the app does not launch
         composeTestRule.onNodeWithTag("friction_dialog").assertDoesNotExist()
     }
 

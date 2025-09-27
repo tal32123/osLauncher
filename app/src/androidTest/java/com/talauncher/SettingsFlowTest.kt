@@ -79,30 +79,32 @@ class SettingsFlowTest {
     @Test
     fun addAndConfigureDistractingApp() {
         Log.d("SettingsFlowTest", "Running addAndConfigureDistractingApp test")
-        // 1. Navigate to the "Distracting Apps" tab in Settings.
+        // 1. Navigate to the "Distracting Apps" tab in Settings
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
         composeTestRule.onNodeWithTag("settings_tab_Distracting Apps").performClick()
 
-        // 2. Find a specific app in the list and check the box next to it.
-        val appName = "Calculator"
-        composeTestRule.onNodeWithTag("app_selection_checkbox_$appName").performClick()
+        // 2. Wait for settings to load and find Settings app checkbox
+        composeTestRule.waitForIdle()
 
-        // 3. Click the "Edit" icon next to the newly added app.
-        composeTestRule.onNodeWithTag("edit_time_limit_$appName").performClick()
+        val appToUse = "Settings"
+        composeTestRule.onNodeWithTag("app_selection_checkbox_$appToUse").performClick()
 
-        // 4. Set a custom time limit (e.g., 15 minutes).
+        // 3. Click the "Edit" icon next to the newly added app
+        composeTestRule.onNodeWithTag("edit_time_limit_$appToUse").performClick()
+
+        // 4. Set a custom time limit (e.g., 15 minutes)
         composeTestRule.onNodeWithTag("time_limit_input").performTextInput("15")
 
-        // 5. Click "Save".
+        // 5. Click "Save"
         composeTestRule.onNodeWithTag("time_limit_save_button").performClick()
 
         // 6. Go back to the HomeScreen
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeLeft() }
 
-        // 7. find the same app, and click to launch it.
-        composeTestRule.onNodeWithText(appName).performClick()
+        // 7. Find the same app and click to launch it
+        composeTestRule.onNodeWithText(appToUse, substring = true).performClick()
 
-        // 8. Assert that the "Friction Dialog" or "Time Limit Dialog" appears.
+        // 8. Assert that the "Friction Dialog" or "Time Limit Dialog" appears
         composeTestRule.onNodeWithTag("friction_dialog").assertExists()
     }
 }
