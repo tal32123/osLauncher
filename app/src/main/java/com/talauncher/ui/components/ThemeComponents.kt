@@ -14,8 +14,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Brightness2
+import androidx.compose.material.icons.filled.Brightness7
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -117,8 +117,8 @@ private fun ThemeModeChip(
 
     val icon = when (mode) {
         ThemeModeOption.SYSTEM -> Icons.Filled.Settings
-        ThemeModeOption.LIGHT -> Icons.Filled.LightMode
-        ThemeModeOption.DARK -> Icons.Filled.DarkMode
+        ThemeModeOption.LIGHT -> Icons.Filled.Brightness7
+        ThemeModeOption.DARK -> Icons.Filled.Brightness2
     }
 
     val label = when (mode) {
@@ -299,9 +299,6 @@ private fun ColorPaletteCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(40.dp)
-                    .semantics {
-                        contentDescription = stringResource(R.string.theme_preview_description)
-                    }
             )
         }
     }
