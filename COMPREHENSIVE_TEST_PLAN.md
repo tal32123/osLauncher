@@ -110,7 +110,7 @@ This suite focuses on verifying the behavior of various dialogs and permission r
     7. **Verification:** Assert the app's display name is updated in the list.
 - **TODO:** The rename functionality is not currently implemented in the `HomeViewModel`. This test cannot be completed until the feature is implemented.
 
-#### Scenario: Friction dialog for distracting apps
+#### Scenario: Friction dialog for distracting apps [COMPLETED]
 - **Goal:** Ensure the friction barrier works as intended.
 - **Steps:**
     1. First, mark an app as "distracting" in settings.

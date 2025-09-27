@@ -603,7 +603,7 @@ fun FrictionDialog(
                 OutlinedTextField(
                     value = reason,
                     onValueChange = { reason = it },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("friction_reason_input"),
                     placeholder = { Text("Type your reason here...") },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     shape = PrimerShapes.small,
@@ -633,14 +633,16 @@ fun FrictionDialog(
                         onProceed(reason.trim())
                     }
                 },
-                enabled = reason.trim().isNotEmpty()
+                enabled = reason.trim().isNotEmpty(),
+                modifier = Modifier.testTag("friction_continue_button")
             ) {
                 Text("Continue")
             }
         },
         dismissButton = {
             PrimerSecondaryButton(
-                onClick = onDismiss
+                onClick = onDismiss,
+                modifier = Modifier.testTag("friction_cancel_button")
             ) {
                 Text("Cancel")
             }
