@@ -83,6 +83,7 @@ fun ModernGlassCard(
         }
     )
     val highlightColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+    val surfaceColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f)
 
     Card(
         modifier = modifier,
@@ -116,7 +117,7 @@ fun ModernGlassCard(
                         drawRoundRect(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f),
+                                    surfaceColor,
                                     Color.Transparent
                                 ),
                                 startY = 0f,
