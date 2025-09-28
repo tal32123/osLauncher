@@ -87,17 +87,6 @@
     <color name="sunset_surface_light">#FFFFF7ED</color>
     <color name="sunset_surface_dark">#FF292524</color>
 
-    <!-- Forest palette colors -->
-    <color name="forest_primary_light">#FF166534</color>
-    <color name="forest_primary_dark">#FF4ADE80</color>
-    <color name="forest_secondary_light">#FF15803D</color>
-    <color name="forest_secondary_dark">#FF22C55E</color>
-    <color name="forest_tertiary_light">#FF365314</color>
-    <color name="forest_tertiary_dark">#FF84CC16</color>
-    <color name="forest_background_light">#FFF0FDF4</color>
-    <color name="forest_background_dark">#FF0F1B0F</color>
-    <color name="forest_surface_light">#FFECFDF5</color>
-    <color name="forest_surface_dark">#FF14532D</color>
 
     <!-- Lavender palette colors -->
     <color name="lavender_primary_light">#FF7C3AED</color>

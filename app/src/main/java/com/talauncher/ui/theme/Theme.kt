@@ -8,6 +8,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.colorResource
+import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
 
@@ -241,30 +243,6 @@ private val PaletteCatalog = mapOf(
             onSurface = Color(0xFFFED7AA),
             onSurfaceVariant = Color(0xFFFFBF69),
             outline = Color(0xFFFB923C)
-        )
-    ),
-    ColorPaletteOption.FOREST to PaletteDefinition(
-        light = PaletteVariant(
-            primary = Color(0xFF166534),
-            secondary = Color(0xFF15803D),
-            tertiary = Color(0xFF365314),
-            background = Color(0xFFF0FDF4),
-            surface = Color(0xFFECFDF5),
-            surfaceVariant = Color(0xFFBBF7D0),
-            onSurface = Color(0xFF14532D),
-            onSurfaceVariant = Color(0xFF166534),
-            outline = Color(0xFF22C55E)
-        ),
-        dark = PaletteVariant(
-            primary = Color(0xFF4ADE80),
-            secondary = Color(0xFF22C55E),
-            tertiary = Color(0xFF84CC16),
-            background = Color(0xFF0F1B0F),
-            surface = Color(0xFF14532D),
-            surfaceVariant = Color(0xFF1F2937),
-            onSurface = Color(0xFFBBF7D0),
-            onSurfaceVariant = Color(0xFF86EFAC),
-            outline = Color(0xFF4ADE80)
         )
     ),
     ColorPaletteOption.LAVENDER to PaletteDefinition(

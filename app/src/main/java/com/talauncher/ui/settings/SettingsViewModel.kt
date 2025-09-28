@@ -73,6 +73,7 @@ class SettingsViewModel(
                     buildBranch = settings?.buildBranch,
                     buildTime = settings?.buildTime,
                     colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
+                    customColorOption = settings?.customColorOption,
                     themeMode = settings?.themeMode ?: ThemeModeOption.SYSTEM,
                     wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                     backgroundOpacity = settings?.backgroundOpacity ?: 1f,
@@ -187,6 +188,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateCustomColorOption(colorOption: String) {
+        viewModelScope.launch {
+            settingsRepository.updateCustomColorOption(colorOption)
+        }
+    }
+
     fun updateThemeMode(mode: ThemeModeOption) {
         viewModelScope.launch {
             settingsRepository.updateThemeMode(mode)
@@ -298,6 +305,7 @@ data class SettingsUiState(
     val buildBranch: String? = null,
     val buildTime: String? = null,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val customColorOption: String? = null,
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val wallpaperBlurAmount: Float = 0f,
     val backgroundOpacity: Float = 1f,

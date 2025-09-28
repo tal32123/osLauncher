@@ -54,13 +54,12 @@ enum class ColorPaletteOption(val label: String) {
     WARM("Warm"),
     COOL("Cool"),
     MONOCHROME("Mono"),
-    CUSTOM("Custom"),
     NATURE("Nature"),
     OCEANIC("Oceanic"),
     SUNSET("Sunset"),
-    FOREST("Forest"),
     LAVENDER("Lavender"),
-    CHERRY("Cherry");
+    CHERRY("Cherry"),
+    CUSTOM("Custom");
 
     val storageValue: String
         get() = name

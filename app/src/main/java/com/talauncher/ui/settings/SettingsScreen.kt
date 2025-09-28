@@ -152,6 +152,8 @@ fun SettingsScreen(
                 onToggleShowWallpaper = viewModel::updateShowWallpaper,
                 colorPalette = uiState.colorPalette,
                 onUpdateColorPalette = viewModel::updateColorPalette,
+                customColorOption = uiState.customColorOption,
+                onUpdateCustomColorOption = viewModel::updateCustomColorOption,
                 themeMode = uiState.themeMode,
                 onUpdateThemeMode = viewModel::updateThemeMode,
                 wallpaperBlurAmount = uiState.wallpaperBlurAmount,
@@ -274,6 +276,8 @@ fun UIThemeSettings(
     onToggleShowWallpaper: (Boolean) -> Unit,
     colorPalette: ColorPaletteOption,
     onUpdateColorPalette: (ColorPaletteOption) -> Unit,
+    customColorOption: String?,
+    onUpdateCustomColorOption: (String) -> Unit,
     themeMode: ThemeModeOption,
     onUpdateThemeMode: (ThemeModeOption) -> Unit,
     wallpaperBlurAmount: Float,
@@ -300,7 +304,9 @@ fun UIThemeSettings(
         item {
             ColorPaletteSelector(
                 selectedPalette = colorPalette,
-                onPaletteSelected = onUpdateColorPalette
+                onPaletteSelected = onUpdateColorPalette,
+                currentCustomColor = customColorOption,
+                onCustomColorSelected = onUpdateCustomColorOption
             )
         }
 
