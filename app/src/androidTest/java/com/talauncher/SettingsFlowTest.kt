@@ -93,8 +93,31 @@ class SettingsFlowTest {
         // 3. Locate the "Color Palette" section and click a new palette option (e.g., "Warm").
         composeTestRule.onNodeWithTag("color_palette_WARM").performClick()
 
-        // 4. Verification: Assert that the color of a known element (like a button or header) changes to the expected color from the new palette.
-        composeTestRule.onNodeWithTag("color_palette_WARM").assertExists()
+        // 4. Verification: Assert that the color palette card shows as selected.
+        composeTestRule.onNodeWithTag("color_palette_WARM").assertIsSelected()
+    }
+
+    @Test
+    fun changeThemeMode() {
+        Log.d("SettingsFlowTest", "Running changeThemeMode test")
+        ensureOnHomeScreen()
+
+        // 1. From the HomeScreen, swipe right to navigate to the SettingsScreen.
+        composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
+
+        // 2. Click on the "UI & Theme" tab.
+        composeTestRule.onNodeWithTag("settings_tab_UI & Theme").performClick()
+
+        // 3. Locate the "Theme Mode" section and click Dark mode.
+        composeTestRule.onNodeWithTag("theme_mode_DARK").performClick()
+
+        // 4. Verification: Assert that Dark mode is selected.
+        composeTestRule.onNodeWithTag("theme_mode_DARK").assertIsSelected()
+
+        // 5. Test Light mode.
+        composeTestRule.onNodeWithTag("theme_mode_LIGHT").performClick()
+        composeTestRule.onNodeWithTag("theme_mode_LIGHT").assertIsSelected()
+        composeTestRule.onNodeWithTag("theme_mode_DARK").assertIsNotSelected()
     }
 
     @Test

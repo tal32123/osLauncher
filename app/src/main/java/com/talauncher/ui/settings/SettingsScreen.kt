@@ -33,11 +33,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.MathDifficulty
+import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.ui.theme.ColorPalettes
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.ui.components.ModernButton
+import com.talauncher.ui.components.ThemeModeSelector
+import com.talauncher.ui.components.ColorPaletteSelector
 import com.talauncher.ui.insights.InsightsScreen
 import com.talauncher.ui.insights.InsightsViewModel
 import kotlin.math.roundToInt
@@ -149,6 +152,8 @@ fun SettingsScreen(
                 onToggleShowWallpaper = viewModel::updateShowWallpaper,
                 colorPalette = uiState.colorPalette,
                 onUpdateColorPalette = viewModel::updateColorPalette,
+                themeMode = uiState.themeMode,
+                onUpdateThemeMode = viewModel::updateThemeMode,
                 wallpaperBlurAmount = uiState.wallpaperBlurAmount,
                 onUpdateWallpaperBlur = viewModel::updateWallpaperBlur,
                 backgroundOpacity = uiState.backgroundOpacity,
@@ -269,6 +274,8 @@ fun UIThemeSettings(
     onToggleShowWallpaper: (Boolean) -> Unit,
     colorPalette: ColorPaletteOption,
     onUpdateColorPalette: (ColorPaletteOption) -> Unit,
+    themeMode: ThemeModeOption,
+    onUpdateThemeMode: (ThemeModeOption) -> Unit,
     wallpaperBlurAmount: Float,
     onUpdateWallpaperBlur: (Float) -> Unit,
     backgroundOpacity: Float,
@@ -284,69 +291,17 @@ fun UIThemeSettings(
 ) {
     SettingsLazyColumn {
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(
-                        text = "Color Palette",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            ThemeModeSelector(
+                selectedMode = themeMode,
+                onModeSelected = onUpdateThemeMode
+            )
+        }
 
-                    Text(
-                        text = "Choose your preferred color scheme",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val colorPaletteRows = listOf(
-                            listOf(
-                                ColorPaletteOption.DEFAULT,
-                                ColorPaletteOption.WARM,
-                                ColorPaletteOption.COOL
-                            ),
-                            listOf(
-                                ColorPaletteOption.MONOCHROME,
-                                ColorPaletteOption.CUSTOM
-                            )
-                        )
-
-                        colorPaletteRows.forEach { rowOptions ->
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                rowOptions.forEach { option ->
-                                    FilterChip(
-                                        selected = colorPalette == option,
-                                        onClick = { onUpdateColorPalette(option) },
-                                        modifier = Modifier.testTag("color_palette_${option.name}"),
-                                        label = {
-                                            Text(
-                                                text = option.label,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Clip,
-                                                softWrap = false
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        item {
+            ColorPaletteSelector(
+                selectedPalette = colorPalette,
+                onPaletteSelected = onUpdateColorPalette
+            )
         }
 
         item {

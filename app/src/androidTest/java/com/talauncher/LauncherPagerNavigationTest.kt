@@ -20,6 +20,7 @@ import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.ui.theme.TALauncherTheme
 import com.talauncher.utils.ContactHelper
+import com.talauncher.utils.BackgroundOverlayManager
 import com.talauncher.utils.PermissionState
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
@@ -56,6 +57,7 @@ class LauncherPagerNavigationTest {
         val permissionsHelper = TestPermissionsHelper(context)
         val usageStatsHelper = TestUsageStatsHelper(context)
         val contactHelper = ContactHelper(context, permissionsHelper)
+        val backgroundOverlayManager = BackgroundOverlayManager.getInstance(context)
 
         val recordedAnimations = mutableListOf<Int>()
         var pagerState: PagerState? = null
@@ -70,6 +72,7 @@ class LauncherPagerNavigationTest {
                     usageStatsHelper = usageStatsHelper,
                     sessionRepository = sessionRepository,
                     contactHelper = contactHelper,
+                    backgroundOverlayManager = backgroundOverlayManager,
                     shouldNavigateToHome = shouldNavigateToHomeState.value,
                     onNavigatedToHome = { shouldNavigateToHomeState.value = false },
                     pagerStateListener = { pagerState = it },
