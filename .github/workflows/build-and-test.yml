@@ -85,6 +85,41 @@ jobs:
           uitests/build/reports/lint-*.html
         retention-days: 30
 
+    - name: Comment on PR with APK download links
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          try {
+            const runId = context.runId;
+            const repo = context.repo;
+
+            const comment = `## 📱 APK Build Artifacts
+
+            The debug APK has been built successfully! You can download it from the workflow artifacts:
+
+            **🔗 [Download Debug APK](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})**
+
+            ### Available Downloads:
+            - **debug-apk**: Main application debug build
+            - **ui-test-apk**: UI test APK for testing
+            - **test-reports**: Unit test results
+            - **lint-reports**: Code quality reports
+
+            *Note: You need to be logged into GitHub to download artifacts. Artifacts expire after 30 days.*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: repo.owner,
+              repo: repo.repo,
+              body: comment
+            });
+
+            console.log('Successfully added PR comment with download links');
+          } catch (error) {
+            console.log('Unable to comment on PR (likely due to permissions):', error.message);
+            console.log('Build artifacts are still available in the Actions tab');
+          }
 
   # Instrumentation tests would require an emulator - skipping for now
   # but can be added later if needed
