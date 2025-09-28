@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -23,8 +24,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -39,7 +44,11 @@ import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 /**
  * Beautiful theme mode toggle component following Material Design 3 principles
@@ -591,7 +600,7 @@ fun CustomColorPickerDialog(
                     Tab(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        text = { Text("Custom") }
+                        text = { Text("Color Wheel") }
                     )
                 }
 
@@ -636,165 +645,11 @@ fun CustomColorPickerDialog(
                         }
                     }
                     1 -> {
-                        // Custom color creation tab
-                        Text(
-                            text = "Create your perfect color:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                        AdvancedColorWheelPicker(
+                            customHexColor = customHexColor,
+                            onHexColorChange = { customHexColor = it },
+                            onColorSelected = onColorSelected
                         )
-
-                        // Color preview
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = sliderColor
-                            )
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "◉",
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.headlineLarge
-                                )
-                            }
-                        }
-
-                        // Hex input
-                        OutlinedTextField(
-                            value = customHexColor,
-                            onValueChange = {
-                                if (it.startsWith("#") && it.length <= 7) {
-                                    customHexColor = it.uppercase()
-                                }
-                            },
-                            label = { Text("Hex Color Code") },
-                            placeholder = { Text("#6366F1") },
-                            leadingIcon = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .background(sliderColor, CircleShape)
-                                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                                )
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Ascii
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        // RGB Sliders
-                        Text(
-                            text = "Or adjust RGB values:",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        // Red slider
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Red",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Color(0xFFEF4444)
-                                )
-                                Text(
-                                    text = redValue.roundToInt().toString(),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            Slider(
-                                value = redValue,
-                                onValueChange = { redValue = it },
-                                valueRange = 0f..255f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = Color(0xFFEF4444),
-                                    activeTrackColor = Color(0xFFEF4444)
-                                )
-                            )
-                        }
-
-                        // Green slider
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Green",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Color(0xFF10B981)
-                                )
-                                Text(
-                                    text = greenValue.roundToInt().toString(),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            Slider(
-                                value = greenValue,
-                                onValueChange = { greenValue = it },
-                                valueRange = 0f..255f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = Color(0xFF10B981),
-                                    activeTrackColor = Color(0xFF10B981)
-                                )
-                            )
-                        }
-
-                        // Blue slider
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Blue",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = Color(0xFF3B82F6)
-                                )
-                                Text(
-                                    text = blueValue.roundToInt().toString(),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            Slider(
-                                value = blueValue,
-                                onValueChange = { blueValue = it },
-                                valueRange = 0f..255f,
-                                colors = SliderDefaults.colors(
-                                    thumbColor = Color(0xFF3B82F6),
-                                    activeTrackColor = Color(0xFF3B82F6)
-                                )
-                            )
-                        }
-
-                        // Apply custom color button
-                        Button(
-                            onClick = {
-                                onColorSelected(customHexColor)
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = sliderColor
-                            )
-                        ) {
-                            Text(
-                                text = "Use This Color",
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
                     }
                 }
             }
@@ -1072,4 +927,440 @@ private fun parseHexColorSafe(hexColor: String): Color {
     } catch (e: NumberFormatException) {
         Color(0xFF6366F1) // Default fallback
     }
+}
+
+@Composable
+private fun AdvancedColorWheelPicker(
+    customHexColor: String,
+    onHexColorChange: (String) -> Unit,
+    onColorSelected: (String) -> Unit
+) {
+    var hueValue by remember { mutableFloatStateOf(180f) }
+    var saturationValue by remember { mutableFloatStateOf(1f) }
+    var brightnessValue by remember { mutableFloatStateOf(1f) }
+
+    // Convert current hex to HSV for initialization
+    LaunchedEffect(customHexColor) {
+        runCatching {
+            val color = parseHexColorSafe(customHexColor)
+            val hsv = color.toHSV()
+            hueValue = hsv.hue
+            saturationValue = hsv.saturation
+            brightnessValue = hsv.value
+        }
+    }
+
+    // Update hex when HSV changes with animated color transitions
+    val currentColor by animateColorAsState(
+        targetValue = HSVColor(hueValue, saturationValue, brightnessValue).toColor(),
+        animationSpec = tween(durationMillis = 150),
+        label = "ColorTransition"
+    )
+
+    LaunchedEffect(hueValue, saturationValue, brightnessValue) {
+        val baseColor = HSVColor(hueValue, saturationValue, brightnessValue).toColor()
+        val argb = baseColor.toArgb()
+        val hex = String.format("#%06X", 0xFFFFFF and argb)
+        onHexColorChange(hex)
+    }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Use the color wheel to select any color:",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        // Large color preview
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = currentColor
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = customHexColor,
+                    color = if (brightnessValue > 0.5f) Color.Black else Color.White,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        // Hue spectrum bar
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Hue Spectrum",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                HueSpectrumBar(
+                    hue = hueValue,
+                    onHueChange = { hueValue = it }
+                )
+
+                Text(
+                    text = "Hue: ${hueValue.roundToInt()}°",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // 2D Saturation/Brightness picker
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Saturation & Brightness",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                SaturationBrightnessSquare(
+                    hue = hueValue,
+                    saturation = saturationValue,
+                    brightness = brightnessValue,
+                    onColorChange = { sat, bright ->
+                        saturationValue = sat
+                        brightnessValue = bright
+                    }
+                )
+            }
+        }
+
+        // Saturation slider
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Saturation",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "${(saturationValue * 100).roundToInt()}%",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Slider(
+                    value = saturationValue,
+                    onValueChange = { saturationValue = it },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = currentColor,
+                        activeTrackColor = currentColor.copy(alpha = 0.8f)
+                    )
+                )
+            }
+        }
+
+        // Brightness slider
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Brightness",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "${(brightnessValue * 100).roundToInt()}%",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Slider(
+                    value = brightnessValue,
+                    onValueChange = { brightnessValue = it },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = currentColor,
+                        activeTrackColor = currentColor.copy(alpha = 0.8f)
+                    )
+                )
+            }
+        }
+
+        // Hex input
+        OutlinedTextField(
+            value = customHexColor,
+            onValueChange = {
+                if (it.startsWith("#") && it.length <= 7) {
+                    onHexColorChange(it.uppercase())
+                }
+            },
+            label = { Text("Hex Color Code") },
+            placeholder = { Text("#6366F1") },
+            leadingIcon = {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(currentColor, CircleShape)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                )
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Ascii
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Apply button
+        Button(
+            onClick = {
+                onColorSelected(customHexColor)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = currentColor
+            )
+        ) {
+            Text(
+                text = "Use This Color",
+                color = if (brightnessValue > 0.5f) Color.Black else Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun HueSpectrumBar(
+    hue: Float,
+    onHueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .clip(RoundedCornerShape(20.dp))
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            val newHue = (offset.x / size.width) * 360f
+                            onHueChange(newHue.coerceIn(0f, 360f))
+                        },
+                        onDragEnd = {
+                            // Optional: Add haptic feedback here if needed
+                        }
+                    ) { change, _ ->
+                        val newHue = (change.position.x / size.width) * 360f
+                        onHueChange(newHue.coerceIn(0f, 360f))
+                    }
+                }
+        ) {
+            // Draw hue spectrum
+            val width = size.width
+            val height = size.height
+
+            for (x in 0 until width.toInt()) {
+                val hueAtX = (x / width) * 360f
+                val color = HSVColor(hueAtX, 1f, 1f).toColor()
+                drawRect(
+                    color = color,
+                    topLeft = Offset(x.toFloat(), 0f),
+                    size = androidx.compose.ui.geometry.Size(1f, height)
+                )
+            }
+
+            // Draw hue indicator
+            val indicatorX = (hue / 360f) * width
+            drawCircle(
+                color = Color.White,
+                radius = height * 0.4f,
+                center = Offset(indicatorX, height / 2f)
+            )
+            drawCircle(
+                color = Color.Black,
+                radius = height * 0.3f,
+                center = Offset(indicatorX, height / 2f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SaturationBrightnessSquare(
+    hue: Float,
+    saturation: Float,
+    brightness: Float,
+    onColorChange: (saturation: Float, brightness: Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            val newSaturation = (offset.x / size.width).coerceIn(0f, 1f)
+                            val newBrightness = 1f - (offset.y / size.height).coerceIn(0f, 1f)
+                            onColorChange(newSaturation, newBrightness)
+                        },
+                        onDragEnd = {
+                            // Optional: Add haptic feedback here if needed
+                        }
+                    ) { change, _ ->
+                        val newSaturation = (change.position.x / size.width).coerceIn(0f, 1f)
+                        val newBrightness = 1f - (change.position.y / size.height).coerceIn(0f, 1f)
+                        onColorChange(newSaturation, newBrightness)
+                    }
+                }
+        ) {
+            val width = size.width
+            val height = size.height
+            val stepSize = 4f // Adjust for performance vs quality
+
+            // Draw the saturation/brightness square
+            for (x in 0 until (width / stepSize).toInt()) {
+                for (y in 0 until (height / stepSize).toInt()) {
+                    val sat = (x * stepSize) / width
+                    val bright = 1f - ((y * stepSize) / height)
+                    val color = HSVColor(hue, sat, bright).toColor()
+
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(x * stepSize, y * stepSize),
+                        size = androidx.compose.ui.geometry.Size(stepSize, stepSize)
+                    )
+                }
+            }
+
+            // Draw selection indicator
+            val indicatorX = saturation * width
+            val indicatorY = (1f - brightness) * height
+            val indicatorRadius = 8.dp.toPx()
+
+            // White outer ring
+            drawCircle(
+                color = Color.White,
+                radius = indicatorRadius + 2.dp.toPx(),
+                center = Offset(indicatorX, indicatorY)
+            )
+
+            // Black inner ring
+            drawCircle(
+                color = Color.Black,
+                radius = indicatorRadius,
+                center = Offset(indicatorX, indicatorY)
+            )
+
+            // Current color dot
+            val currentColor = HSVColor(hue, saturation, brightness).toColor()
+            drawCircle(
+                color = currentColor,
+                radius = indicatorRadius - 2.dp.toPx(),
+                center = Offset(indicatorX, indicatorY)
+            )
+        }
+    }
+}
+
+data class HSVColor(
+    val hue: Float,        // 0-360
+    val saturation: Float, // 0-1
+    val value: Float       // 0-1
+)
+
+private fun Color.toHSV(): HSVColor {
+    val r = red
+    val g = green
+    val b = blue
+
+    val max = maxOf(r, g, b)
+    val min = minOf(r, g, b)
+    val delta = max - min
+
+    val hue = when {
+        delta == 0f -> 0f
+        max == r -> 60f * (((g - b) / delta) % 6f)
+        max == g -> 60f * ((b - r) / delta + 2f)
+        else -> 60f * ((r - g) / delta + 4f)
+    }.let { if (it < 0) it + 360f else it }
+
+    val saturation = if (max == 0f) 0f else delta / max
+    val value = max
+
+    return HSVColor(hue, saturation, value)
+}
+
+private fun HSVColor.toColor(): Color {
+    val c = value * saturation
+    val x = c * (1f - kotlin.math.abs((hue / 60f) % 2f - 1f))
+    val m = value - c
+
+    val (r, g, b) = when ((hue / 60f).toInt()) {
+        0 -> Triple(c, x, 0f)
+        1 -> Triple(x, c, 0f)
+        2 -> Triple(0f, c, x)
+        3 -> Triple(0f, x, c)
+        4 -> Triple(x, 0f, c)
+        5 -> Triple(c, 0f, x)
+        else -> Triple(0f, 0f, 0f)
+    }
+
+    return Color(r + m, g + m, b + m)
 }
