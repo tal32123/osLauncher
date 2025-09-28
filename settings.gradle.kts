@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "TALauncher"
 include(":app")
+include(":uitests")

@@ -206,7 +206,7 @@ echo.
 
 REM Validate test compilation first
 echo Validating test code compilation...
-call "%~dp0gradlew.bat" compileDebugAndroidTestKotlin --quiet
+call "%~dp0gradlew.bat" :uitests:compileDebugAndroidTestKotlin --quiet
 if errorlevel 1 (
     echo !!! Test compilation failed! Cannot proceed with testing.
     echo !!! This usually indicates import errors, syntax issues, or missing dependencies.
@@ -232,7 +232,7 @@ echo.
 
 REM Run full test suite (reuses already compiled code)
 echo Running complete unit and instrumentation suites...
-call "%~dp0gradlew.bat" test connectedAndroidTest --quiet
+call "%~dp0gradlew.bat" test :uitests:connectedAndroidTest --quiet
 if errorlevel 1 (
     echo !!! Failure detected in full test suite
     set /a TEST_FAILURES+=1
@@ -255,7 +255,7 @@ set "CLASS=%~1"
 if "%CLASS%"=="" goto :eof
 
 echo Running: %CLASS%
-call "%~dp0gradlew.bat" connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --quiet
+call "%~dp0gradlew.bat" :uitests:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --quiet
 if errorlevel 1 (
     echo !!! FAILURE in %CLASS%
     set /a TEST_FAILURES+=1
