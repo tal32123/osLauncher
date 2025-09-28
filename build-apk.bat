@@ -204,6 +204,18 @@ if not defined DEVICE_FOUND (
 echo Device found! Running comprehensive test suite...
 echo.
 
+REM Validate test compilation first
+echo Validating test code compilation...
+call "%~dp0gradlew.bat" compileDebugAndroidTestKotlin --quiet
+if errorlevel 1 (
+    echo !!! Test compilation failed! Cannot proceed with testing.
+    echo !!! This usually indicates import errors, syntax issues, or missing dependencies.
+    set "TEST_EXIT_CODE=1"
+    goto :eof
+)
+echo Test compilation successful. Proceeding with tests...
+echo.
+
 REM Run individual test classes first for better debugging
 echo Running targeted Espresso UI flows...
 call :run_test_class "com.talauncher.OnboardingGatingFlowTest"
