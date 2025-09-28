@@ -84,9 +84,20 @@ class OnboardingGatingFlowTest {
 
         // Grant notifications permission if required
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Log.d("OnboardingGatingFlowTest", "Granting notifications permission")
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsNotEnabled()
+
+            // Wait for notification permission state to update and button to become disabled
+            composeTestRule.waitUntil(timeoutMillis = 5_000) {
+                try {
+                    composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsNotEnabled()
+                    true
+                } catch (e: AssertionError) {
+                    false
+                }
+            }
+            Log.d("OnboardingGatingFlowTest", "✓ Notifications button disabled after click")
         }
 
         // Grant overlay permission
