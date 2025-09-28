@@ -301,9 +301,10 @@ fun AppDrawerScreen(
                             start = PrimerSpacing.md,
                             end = PrimerSpacing.md + 48.dp,
                             top = PrimerSpacing.sm,
-                            bottom = PrimerSpacing.xl
+                            bottom = PrimerSpacing.xl + 80.dp // Extra bottom padding for accessibility
                         ),
-                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
+                        flingBehavior = androidx.compose.foundation.gestures.scrollable.ScrollableDefaults.flingBehavior()
                     ) {
                         sections.forEachIndexed { index, section ->
                             item {
@@ -419,9 +420,10 @@ fun AppDrawerScreen(
                             start = PrimerSpacing.md,
                             end = PrimerSpacing.md,
                             top = PrimerSpacing.sm,
-                            bottom = PrimerSpacing.xl
+                            bottom = PrimerSpacing.xl + 80.dp // Extra bottom padding for accessibility
                         ),
-                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
+                        flingBehavior = androidx.compose.foundation.gestures.scrollable.ScrollableDefaults.flingBehavior()
                     ) {
                         items(uiState.contacts) { contact ->
                             ContactItem(

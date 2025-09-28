@@ -53,6 +53,10 @@ import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import kotlin.math.exp
+import kotlin.math.max
+import kotlin.math.min
+import com.talauncher.BuildConfig
 
 internal const val RECENT_APPS_INDEX_KEY = "*"
 
@@ -296,16 +300,63 @@ class HomeViewModel(
             normalizedName.startsWith(normalizedQuery) -> 80 // Starts with
             normalizedName.contains(" $normalizedQuery") -> 60 // Word boundary match
             normalizedName.contains(normalizedQuery) -> 40 // Contains
-            else -> 0 // No match
+            else -> calculateFuzzyScore(normalizedQuery, normalizedName) // Fuzzy match
         }
+    }
+
+    private fun calculateFuzzyScore(query: String, target: String): Int {
+        if (query.isEmpty() || target.isEmpty()) return 0
+
+        // Calculate Levenshtein distance ratio
+        val distance = calculateLevenshteinDistance(query, target)
+        val maxLength = max(query.length, target.length)
+        val similarity = 1.0 - (distance.toDouble() / maxLength)
+
+        // Only consider fuzzy matches above a threshold
+        return if (similarity >= 0.6) {
+            (similarity * 35).toInt() // Max fuzzy score of 35
+        } else {
+            0
+        }
+    }
+
+    private fun calculateLevenshteinDistance(s1: String, s2: String): Int {
+        val dp = Array(s1.length + 1) { IntArray(s2.length + 1) }
+
+        for (i in 0..s1.length) dp[i][0] = i
+        for (j in 0..s2.length) dp[0][j] = j
+
+        for (i in 1..s1.length) {
+            for (j in 1..s2.length) {
+                val cost = if (s1[i - 1] == s2[j - 1]) 0 else 1
+                dp[i][j] = min(
+                    min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+                    dp[i - 1][j - 1] + cost
+                )
+            }
+        }
+
+        return dp[s1.length][s2.length]
     }
 
     private fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
         if (query.isBlank()) return emptyList()
 
+        // Get recent usage data for recency scoring
+        val hasUsageStatsPermission = resolvedPermissionsHelper?.permissionState?.value?.hasUsageStats ?: false
+        val usageStats = if (hasUsageStatsPermission && usageStatsHelper != null) {
+            usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
+        } else {
+            emptyMap()
+        }
+
         val appItems = apps.mapNotNull { app ->
-            val score = calculateRelevanceScore(query, app.appName)
-            if (score > 0) SearchItem.App(app, score) else null
+            val baseScore = calculateRelevanceScore(query, app.appName)
+            if (baseScore > 0) {
+                val recencyScore = calculateRecencyScore(app.packageName, usageStats)
+                val finalScore = baseScore + recencyScore
+                SearchItem.App(app, finalScore)
+            } else null
         }
 
         val contactItems = contacts.mapNotNull { contact ->
@@ -316,6 +367,23 @@ class HomeViewModel(
         return (appItems + contactItems)
             .sortedWith(compareByDescending<SearchItem> { it.relevanceScore }
                 .thenBy { it.name.lowercase() })
+    }
+
+    private fun calculateRecencyScore(packageName: String, usageStats: Map<String, com.talauncher.data.model.UsageApp>): Int {
+        val usageApp = usageStats[packageName] ?: return 0
+
+        // Calculate recency boost based on usage time and frequency
+        val usageTimeHours = TimeUnit.MILLISECONDS.toHours(usageApp.timeInForeground)
+        val now = System.currentTimeMillis()
+        val lastUsedHours = TimeUnit.MILLISECONDS.toHours(now - usageApp.lastTimeUsed)
+
+        // Exponential decay for recency (higher boost for more recent usage)
+        val recencyFactor = exp(-lastUsedHours / 24.0) // Decay over 24 hours
+
+        // Usage time factor (more used apps get higher boost)
+        val usageFactor = min(usageTimeHours / 2.0, 5.0) // Cap at 5 points
+
+        return (recencyFactor * usageFactor * 20).toInt() // Max recency boost of ~20 points
     }
 
     private fun updateTime() {
@@ -764,7 +832,7 @@ class HomeViewModel(
             if (usageStatsHelper != null && permissionsHelper != null) {
                 val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != packageName) {
-                    Log.d("HomeViewModel", "User left target app ($packageName) before math challenge, current app: $currentApp. Cancelling.")
+                    if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($packageName) before math challenge, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
                     hideOverlay()
                     finalizeExpiredSession()
@@ -835,7 +903,7 @@ class HomeViewModel(
             if (usageStatsHelper != null && permissionsHelper != null) {
                 val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != session.packageName) {
-                    Log.d("HomeViewModel", "User not in target app (${session.packageName}) when session expired, current app: $currentApp. Skipping popup.")
+                    if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User not in target app (${session.packageName}) when session expired, current app: $currentApp. Skipping popup.")
                     // User is not in the target app, don't show popup and clean up
                     finalizeExpiredSession()
                     return@launch
@@ -881,7 +949,7 @@ class HomeViewModel(
                 if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
                     val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                     if (currentApp != targetPackageName) {
-                        Log.d("HomeViewModel", "User left target app ($targetPackageName), current app: $currentApp. Cancelling countdown.")
+                        if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($targetPackageName), current app: $currentApp. Cancelling countdown.")
                         // User has left the target app, cancel countdown and hide overlay
                         hideOverlay()
                         finalizeExpiredSession()
@@ -912,7 +980,7 @@ class HomeViewModel(
             if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
                 val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                 if (currentApp != targetPackageName) {
-                    Log.d("HomeViewModel", "User left target app ($targetPackageName) before decision dialog, current app: $currentApp. Cancelling.")
+                    if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($targetPackageName) before decision dialog, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
                     hideOverlay()
                     finalizeExpiredSession()
@@ -1102,7 +1170,7 @@ class HomeViewModel(
             } else {
                 appContext.startService(intent)
             }
-            Log.d("HomeViewModel", "Overlay service started successfully")
+            if (BuildConfig.DEBUG) Log.d("HomeViewModel", "Overlay service started successfully")
         } catch (illegalState: IllegalStateException) {
             Log.w("HomeViewModel", "Failed to start service, trying fallback approach", illegalState)
             // Fallback: Show dialog in launcher app instead of overlay
@@ -1261,7 +1329,7 @@ class HomeViewModel(
                 isReceiverRegistered = false
             } catch (e: IllegalArgumentException) {
                 // Receiver was not registered, which is fine
-                Log.d("HomeViewModel", "Broadcast receiver was not registered")
+                if (BuildConfig.DEBUG) Log.d("HomeViewModel", "Broadcast receiver was not registered")
             } catch (e: Exception) {
                 // Log other unexpected errors but don't crash
                 Log.e("HomeViewModel", "Unexpected error unregistering broadcast receiver", e)

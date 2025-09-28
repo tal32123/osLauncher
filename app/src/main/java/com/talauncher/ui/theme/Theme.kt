@@ -169,30 +169,7 @@ private val PaletteCatalog = mapOf(
             outline = Color(0xFF6B7280)
         )
     ),
-    ColorPaletteOption.NATURE to PaletteDefinition(
-        light = PaletteVariant(
-            primary = Color(0xFF256B37),
-            secondary = Color(0xFF3A7D44),
-            tertiary = Color(0xFF4F8F65),
-            background = Color(0xFFE8F5EB),
-            surface = Color(0xFFF4FBF6),
-            surfaceVariant = Color(0xFFD0E8D8),
-            onSurface = Color(0xFF0F2F1C),
-            onSurfaceVariant = Color(0xFF285239),
-            outline = Color(0xFF7AA98C)
-        ),
-        dark = PaletteVariant(
-            primary = Color(0xFF6DD9A3),
-            secondary = Color(0xFF5FBB84),
-            tertiary = Color(0xFF7CC7A4),
-            background = Color(0xFF071B11),
-            surface = Color(0xFF0C2618),
-            surfaceVariant = Color(0xFF133323),
-            onSurface = Color(0xFFDCEFE1),
-            onSurfaceVariant = Color(0xFFA9D5B8),
-            outline = Color(0xFF6FB995)
-        )
-    )
+    // CUSTOM palette will be generated dynamically based on user selection
 )
 
 // Modern 2025 Minimalist Color Schemes
@@ -272,6 +249,7 @@ private val ZenLightColorScheme = PrimerLightColorScheme
 fun TALauncherTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    customColorOption: String? = null,
     content: @Composable () -> Unit
 ) {
     val baseColorScheme = when {
@@ -279,12 +257,59 @@ fun TALauncherTheme(
         else -> MinimalLightColorScheme
     }
 
-    val paletteDefinition = PaletteCatalog[colorPalette] ?: PaletteCatalog.getValue(ColorPaletteOption.DEFAULT)
+    val paletteDefinition = when {
+        colorPalette == ColorPaletteOption.CUSTOM && customColorOption != null -> {
+            createCustomPaletteDefinition(customColorOption)
+        }
+        else -> PaletteCatalog[colorPalette] ?: PaletteCatalog.getValue(ColorPaletteOption.DEFAULT)
+    }
     val colorScheme = baseColorScheme.applyPalette(paletteDefinition, darkTheme)
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = PrimerTypography,
         content = content
+    )
+}
+
+private fun createCustomPaletteDefinition(customColorOption: String): PaletteDefinition {
+    val customColors = ColorPalettes.CustomColorOptions[customColorOption]
+        ?: ColorPalettes.CustomColorOptions["Purple"]!! // Fallback to Purple
+
+    val primary = customColors["primary"]!!
+    val surface = customColors["surface"]!!
+    val background = customColors["background"]!!
+    val onSurface = customColors["onSurface"]!!
+
+    // Generate additional colors based on the primary color
+    val secondary = primary.copy(alpha = 0.8f)
+    val tertiary = primary.copy(alpha = 0.6f)
+    val surfaceVariant = surface.copy(alpha = 0.9f)
+    val onSurfaceVariant = onSurface.copy(alpha = 0.7f)
+    val outline = primary.copy(alpha = 0.4f)
+
+    return PaletteDefinition(
+        light = PaletteVariant(
+            primary = primary,
+            secondary = secondary,
+            tertiary = tertiary,
+            background = background,
+            surface = surface,
+            surfaceVariant = surfaceVariant,
+            onSurface = onSurface,
+            onSurfaceVariant = onSurfaceVariant,
+            outline = outline
+        ),
+        dark = PaletteVariant(
+            primary = primary.copy(alpha = 0.9f),
+            secondary = secondary.copy(alpha = 0.8f),
+            tertiary = tertiary.copy(alpha = 0.7f),
+            background = Color(0xFF0A0A0A),
+            surface = Color(0xFF141414),
+            surfaceVariant = Color(0xFF1E1E1E),
+            onSurface = Color(0xFFE5E5E5),
+            onSurfaceVariant = Color(0xFFB0B0B0),
+            outline = primary.copy(alpha = 0.5f)
+        )
     )
 }

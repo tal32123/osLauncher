@@ -58,12 +58,44 @@ object ColorPalettes {
         "onSurface" to Color(0xFF000000)     // Black text
     )
 
-    // Nature palette
-    val Nature = mapOf(
-        "primary" to Color(0xFF059669),      // Emerald
-        "surface" to Color(0xFFf0fdf4),      // Mint white
-        "background" to Color(0xFFdcfce7),   // Pale green
-        "onSurface" to Color(0xFF064e3b)     // Forest green
+    // Available custom color options for user selection
+    val CustomColorOptions = mapOf(
+        "Purple" to mapOf(
+            "primary" to Color(0xFF7c3aed),      // Purple
+            "surface" to Color(0xFFfaf5ff),      // Purple white
+            "background" to Color(0xFFf3e8ff),   // Pale purple
+            "onSurface" to Color(0xFF581c87)     // Dark purple
+        ),
+        "Pink" to mapOf(
+            "primary" to Color(0xFFec4899),      // Pink
+            "surface" to Color(0xFFfdf2f8),      // Pink white
+            "background" to Color(0xFFfce7f3),   // Pale pink
+            "onSurface" to Color(0xFF9d174d)     // Dark pink
+        ),
+        "Green" to mapOf(
+            "primary" to Color(0xFF10b981),      // Emerald
+            "surface" to Color(0xFFf0fdf4),      // Green white
+            "background" to Color(0xFFdcfce7),   // Pale green
+            "onSurface" to Color(0xFF065f46)     // Dark green
+        ),
+        "Orange" to mapOf(
+            "primary" to Color(0xFFf97316),      // Orange
+            "surface" to Color(0xFFfff7ed),      // Orange white
+            "background" to Color(0xFFfed7aa),   // Pale orange
+            "onSurface" to Color(0xFF9a3412)     // Dark orange
+        ),
+        "Red" to mapOf(
+            "primary" to Color(0xFFef4444),      // Red
+            "surface" to Color(0xFFfef2f2),      // Red white
+            "background" to Color(0xFFfecaca),   // Pale red
+            "onSurface" to Color(0xFF991b1b)     // Dark red
+        ),
+        "Teal" to mapOf(
+            "primary" to Color(0xFF14b8a6),      // Teal
+            "surface" to Color(0xFFf0fdfa),      // Teal white
+            "background" to Color(0xFFccfbf1),   // Pale teal
+            "onSurface" to Color(0xFF0f766e)     // Dark teal
+        )
     )
 }
 

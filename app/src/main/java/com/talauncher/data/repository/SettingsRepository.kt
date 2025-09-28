@@ -130,6 +130,11 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(colorPalette = palette))
     }
 
+    suspend fun updateCustomColorOption(customColorOption: String?) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(customColorOption = customColorOption))
+    }
+
     suspend fun updateWallpaperBlurAmount(blur: Float) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(wallpaperBlurAmount = blur.coerceIn(0f, 1f)))

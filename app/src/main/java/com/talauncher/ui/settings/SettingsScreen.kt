@@ -34,6 +34,7 @@ import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.UiDensityOption
+import com.talauncher.ui.theme.ColorPalettes
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.ui.components.ModernButton
@@ -317,7 +318,7 @@ fun UIThemeSettings(
                             ),
                             listOf(
                                 ColorPaletteOption.MONOCHROME,
-                                ColorPaletteOption.NATURE
+                                ColorPaletteOption.CUSTOM
                             )
                         )
 
