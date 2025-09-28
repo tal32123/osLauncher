@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -583,7 +584,9 @@ class AppDrawerViewModel(
             // Use fuzzy search with recency scoring for better results
             val hasUsageStatsPermission = permissionsHelper.permissionState.value.hasUsageStats
             val usageStats = if (hasUsageStatsPermission) {
-                usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
+                runBlocking {
+                    usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
+                }
             } else {
                 emptyMap()
             }
@@ -731,7 +734,7 @@ class AppDrawerViewModel(
         return dp[s1.length][s2.length]
     }
 
-    private fun calculateRecencyScore(packageName: String, usageStats: Map<String, com.talauncher.data.model.UsageApp>): Int {
+    private fun calculateRecencyScore(packageName: String, usageStats: Map<String, com.talauncher.data.model.AppUsage>): Int {
         val usageApp = usageStats[packageName] ?: return 0
 
         // Calculate recency boost based on usage time and frequency

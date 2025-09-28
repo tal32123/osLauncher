@@ -339,7 +339,7 @@ class HomeViewModel(
         return dp[s1.length][s2.length]
     }
 
-    private fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
+    private suspend fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
         if (query.isBlank()) return emptyList()
 
         // Get recent usage data for recency scoring
@@ -369,7 +369,7 @@ class HomeViewModel(
                 .thenBy { it.name.lowercase() })
     }
 
-    private fun calculateRecencyScore(packageName: String, usageStats: Map<String, com.talauncher.data.model.UsageApp>): Int {
+    private fun calculateRecencyScore(packageName: String, usageStats: Map<String, com.talauncher.data.model.AppUsage>): Int {
         val usageApp = usageStats[packageName] ?: return 0
 
         // Calculate recency boost based on usage time and frequency
