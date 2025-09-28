@@ -1,5 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Default palette colors -->
+    <color name="default_primary_light">#FF6366F1</color>
+    <color name="default_primary_dark">#FF818CF8</color>
+    <color name="default_secondary">#FF06B6D4</color>
+    <color name="default_tertiary_light">#FF4B5563</color>
+    <color name="default_tertiary_dark">#FF9CA3AF</color>
+    <color name="default_background_light">#FFFAFAFA</color>
+    <color name="default_background_dark">#FF080808</color>
+    <color name="default_surface_light">#FFFFFFFF</color>
+    <color name="default_surface_dark">#FF0F0F0F</color>
+
+    <!-- Warm palette colors -->
+    <color name="warm_primary_light">#FFB94517</color>
+    <color name="warm_primary_dark">#FFFFB68D</color>
+    <color name="warm_secondary_light">#FF9C4421</color>
+    <color name="warm_secondary_dark">#FFE8A572</color>
+    <color name="warm_tertiary_light">#FF825632</color>
+    <color name="warm_tertiary_dark">#FFDDB889</color>
+    <color name="warm_background_light">#FFFCF1E6</color>
+    <color name="warm_background_dark">#FF2B160C</color>
+    <color name="warm_surface_light">#FFFFF7F0</color>
+    <color name="warm_surface_dark">#FF361E12</color>
+
+    <!-- Cool palette colors -->
+    <color name="cool_primary_light">#FF0EA5E9</color>
+    <color name="cool_primary_dark">#FF38BDF8</color>
+    <color name="cool_secondary_light">#FF6366F1</color>
+    <color name="cool_secondary_dark">#FF8B5CF6</color>
+    <color name="cool_tertiary_light">#FF1F2937</color>
+    <color name="cool_tertiary_dark">#FF93C5FD</color>
+    <color name="cool_background_light">#FFE0F2FE</color>
+    <color name="cool_background_dark">#FF0B1120</color>
+    <color name="cool_surface_light">#FFF0F9FF</color>
+    <color name="cool_surface_dark">#FF0F172A</color>
+
+    <!-- Monochrome palette colors -->
+    <color name="mono_primary_light">#FF1F2937</color>
+    <color name="mono_primary_dark">#FF9CA3AF</color>
+    <color name="mono_secondary_light">#FF4B5563</color>
+    <color name="mono_secondary_dark">#FF6B7280</color>
+    <color name="mono_tertiary_light">#FF9CA3AF</color>
+    <color name="mono_tertiary_dark">#FF4B5563</color>
+    <color name="mono_background_light">#FFF5F5F5</color>
+    <color name="mono_background_dark">#FF090A0B</color>
+    <color name="mono_surface_light">#FFFFFFFF</color>
+    <color name="mono_surface_dark">#FF111827</color>
+
+    <!-- Nature palette colors -->
+    <color name="nature_primary_light">#FF256B37</color>
+    <color name="nature_primary_dark">#FF6DD9A3</color>
+    <color name="nature_secondary_light">#FF3A7D44</color>
+    <color name="nature_secondary_dark">#FF5FBB84</color>
+    <color name="nature_tertiary_light">#FF4F8F65</color>
+    <color name="nature_tertiary_dark">#FF7CC7A4</color>
+    <color name="nature_background_light">#FFE8F5EB</color>
+    <color name="nature_background_dark">#FF071B11</color>
+    <color name="nature_surface_light">#FFF4FBF6</color>
+    <color name="nature_surface_dark">#FF0C2618</color>
+
+    <!-- Oceanic palette colors -->
+    <color name="oceanic_primary_light">#FF0891B2</color>
+    <color name="oceanic_primary_dark">#FF06B6D4</color>
+    <color name="oceanic_secondary_light">#FF0284C7</color>
+    <color name="oceanic_secondary_dark">#FF38BDF8</color>
+    <color name="oceanic_tertiary_light">#FF164E63</color>
+    <color name="oceanic_tertiary_dark">#FF67E8F9</color>
+    <color name="oceanic_background_light">#FFF0F9FF</color>
+    <color name="oceanic_background_dark">#FF083344</color>
+    <color name="oceanic_surface_light">#FFECFEFF</color>
+    <color name="oceanic_surface_dark">#FF0F172A</color>
+
+    <!-- Sunset palette colors -->
+    <color name="sunset_primary_light">#FFEA580C</color>
+    <color name="sunset_primary_dark">#FFFB923C</color>
+    <color name="sunset_secondary_light">#FFDC2626</color>
+    <color name="sunset_secondary_dark">#FFEF4444</color>
+    <color name="sunset_tertiary_light">#FFA21CAF</color>
+    <color name="sunset_tertiary_dark">#FFC084FC</color>
+    <color name="sunset_background_light">#FFFEF2F2</color>
+    <color name="sunset_background_dark">#FF1F1917</color>
+    <color name="sunset_surface_light">#FFFFF7ED</color>
+    <color name="sunset_surface_dark">#FF292524</color>
+
+    <!-- Forest palette colors -->
+    <color name="forest_primary_light">#FF166534</color>
+    <color name="forest_primary_dark">#FF4ADE80</color>
+    <color name="forest_secondary_light">#FF15803D</color>
+    <color name="forest_secondary_dark">#FF22C55E</color>
+    <color name="forest_tertiary_light">#FF365314</color>
+    <color name="forest_tertiary_dark">#FF84CC16</color>
+    <color name="forest_background_light">#FFF0FDF4</color>
+    <color name="forest_background_dark">#FF0F1B0F</color>
+    <color name="forest_surface_light">#FFECFDF5</color>
+    <color name="forest_surface_dark">#FF14532D</color>
+
+    <!-- Lavender palette colors -->
+    <color name="lavender_primary_light">#FF7C3AED</color>
+    <color name="lavender_primary_dark">#FFA78BFA</color>
+    <color name="lavender_secondary_light">#FF8B5CF6</color>
+    <color name="lavender_secondary_dark">#FFC084FC</color>
+    <color name="lavender_tertiary_light">#FF6D28D9</color>
+    <color name="lavender_tertiary_dark">#FFDDD6FE</color>
+    <color name="lavender_background_light">#FFFAF5FF</color>
+    <color name="lavender_background_dark">#FF1E1B3A</color>
+    <color name="lavender_surface_light">#FFF3E8FF</color>
+    <color name="lavender_surface_dark">#FF2E1065</color>
+
+    <!-- Cherry palette colors -->
+    <color name="cherry_primary_light">#FFE11D48</color>
+    <color name="cherry_primary_dark">#FFF87171</color>
+    <color name="cherry_secondary_light">#FFDB2777</color>
+    <color name="cherry_secondary_dark">#FFFBBF24</color>
+    <color name="cherry_tertiary_light">#FF9F1239</color>
+    <color name="cherry_tertiary_dark">#FFFED7AA</color>
+    <color name="cherry_background_light">#FFFEF2F2</color>
+    <color name="cherry_background_dark">#FF2D1B1B</color>
+    <color name="cherry_surface_light">#FFFEF7F7</color>
+    <color name="cherry_surface_dark">#FF3F1F1F</color>
+
+    <!-- Neutral colors for all palettes -->
+    <color name="neutral_50">#FFF9FAFB</color>
+    <color name="neutral_100">#FFF3F4F6</color>
+    <color name="neutral_200">#FFE5E7EB</color>
+    <color name="neutral_300">#FFD1D5DB</color>
+    <color name="neutral_400">#FF9CA3AF</color>
+    <color name="neutral_500">#FF6B7280</color>
+    <color name="neutral_600">#FF4B5563</color>
+    <color name="neutral_700">#FF374151</color>
+    <color name="neutral_800">#FF1F2937</color>
+    <color name="neutral_900">#FF111827</color>
+
+    <!-- Status colors -->
+    <color name="success_light">#FF059669</color>
+    <color name="success_dark">#FF10B981</color>
+    <color name="warning_light">#FFF59E0B</color>
+    <color name="warning_dark">#FFFBBF24</color>
+    <color name="error_light">#FFDC2626</color>
+    <color name="error_dark">#FFEF4444</color>
+    <color name="info_light">#FF2563EB</color>
+    <color name="info_dark">#FF60A5FA</color>
 </resources>

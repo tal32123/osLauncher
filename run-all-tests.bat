@@ -49,9 +49,28 @@ if not defined DEVICE_FOUND (
     goto WAIT_FOR_INPUT
 )
 
-rem Run individual test classes with detailed logging
-echo Running Espresso UI flow tests individually for better debugging...
+echo ========================================
+echo Pre-test compilation validation
+echo ========================================
+echo Checking that test code compiles correctly...
+if defined UI_MODE (
+    call .\gradlew.bat compileDebugAndroidTestKotlin --info
+) else (
+    call .\gradlew.bat compileDebugAndroidTestKotlin --quiet
+)
+if errorlevel 1 (
+    echo !!! Test compilation failed! Cannot proceed with testing.
+    echo !!! This usually indicates import errors, syntax issues, or missing dependencies.
+    set "EXIT_CODE=1"
+    goto WAIT_FOR_INPUT
+)
+echo Test compilation successful. Proceeding with test execution...
 echo.
+
+rem Run individual test classes with detailed logging
+echo ========================================
+echo Running targeted Espresso UI flows
+echo ========================================
 call :run_test_class "com.talauncher.OnboardingGatingFlowTest"
 if not "%EXIT_CODE%"=="0" goto WAIT_FOR_INPUT
 echo.

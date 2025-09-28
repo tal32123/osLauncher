@@ -12,7 +12,7 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -216,6 +216,14 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN themeMode TEXT NOT NULL DEFAULT 'SYSTEM'"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -234,7 +242,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_9_10,
                     MIGRATION_10_11,
                     MIGRATION_11_12,
-                    MIGRATION_12_13
+                    MIGRATION_12_13,
+                    MIGRATION_13_14
                 ).build()
                 INSTANCE = instance
                 instance

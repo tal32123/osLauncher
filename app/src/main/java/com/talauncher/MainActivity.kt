@@ -141,7 +141,10 @@ class MainActivity : ComponentActivity() {
                 }
                 val mainUiState by mainViewModel.uiState.collectAsState()
 
-                TALauncherTheme(colorPalette = mainUiState.colorPalette) {
+                TALauncherTheme(
+                    themeMode = mainUiState.themeMode,
+                    colorPalette = mainUiState.colorPalette
+                ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background

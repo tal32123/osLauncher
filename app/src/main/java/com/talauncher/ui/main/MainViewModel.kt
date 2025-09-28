@@ -3,6 +3,7 @@ package com.talauncher.ui.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.ui.theme.UiSettings
@@ -35,6 +36,7 @@ class MainViewModel(
                 _uiState.value = _uiState.value.copy(
                     isOnboardingCompleted = isOnboardingCompleted,
                     colorPalette = uiSettings.colorPalette,
+                    themeMode = uiSettings.themeMode,
                     uiSettings = uiSettings,
                     isLoading = false
                 )
@@ -64,5 +66,6 @@ data class MainUiState(
     val isOnboardingCompleted: Boolean = false,
     val isLoading: Boolean = true,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val uiSettings: UiSettings = UiSettings()
 )
