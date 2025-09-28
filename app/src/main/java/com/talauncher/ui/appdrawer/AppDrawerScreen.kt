@@ -444,7 +444,13 @@ fun AppDrawerScreen(
                     LaunchedEffect(uiState.scrollToIndex) {
                         uiState.scrollToIndex?.let { index ->
                             coroutineScope.launch {
-                                listState.scrollToItem(index)
+                                try {
+                                    // Use animateScrollToItem for smooth scrolling
+                                    listState.animateScrollToItem(index, scrollOffset = 0)
+                                } catch (e: Exception) {
+                                    // Fallback to instant scroll if animation fails
+                                    listState.scrollToItem(index)
+                                }
                                 viewModel.onScrollHandled()
                             }
                         }
@@ -655,10 +661,10 @@ private fun AlphabetIndex(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(vertical = PrimerSpacing.md),
-            verticalArrangement = Arrangement.SpaceEvenly,
+            verticalArrangement = Arrangement.spacedBy(0.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            entries.forEach { entry ->
+            entries.forEachIndexed { index, entry ->
                 val isActive = isEnabled && entry.hasApps && entry.key == activeKey
                 val color = when {
                     !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
@@ -666,19 +672,35 @@ private fun AlphabetIndex(
                     entry.hasApps -> MaterialTheme.colorScheme.onSurfaceVariant
                     else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                 }
-                Text(
-                    text = entry.displayLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = color,
+
+                Box(
                     modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                         .testTag("alphabet_index_entry_${entry.key}")
+                        .clickable(
+                            enabled = isEnabled && entry.hasApps
+                        ) {
+                            if (entry.hasApps) {
+                                entry.targetIndex?.let { targetIndex ->
+                                    onEntryFocused(entry, index.toFloat() / (entries.size - 1).coerceAtLeast(1))
+                                }
+                            }
+                        }
                         .onGloballyPositioned { coordinates ->
                             val position = coordinates.positionInParent()
                             val start = position.y
                             val end = start + coordinates.size.height
                             entryBounds[entry.key] = start..end
-                        }
-                )
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = entry.displayLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = color
+                    )
+                }
             }
         }
     }

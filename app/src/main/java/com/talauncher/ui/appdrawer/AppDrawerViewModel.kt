@@ -30,6 +30,7 @@ import kotlinx.coroutines.Job
 import java.util.concurrent.TimeUnit
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
+import com.talauncher.utils.AppSectioningHelper
 import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.theme.toUiSettingsOrDefault
 import java.text.Collator
@@ -55,23 +56,7 @@ data class AlphabetIndexEntry(
     val previewAppName: String?
 )
 
-private data class SectionPosition(
-    val index: Int,
-    val previewAppName: String?
-)
 
-private fun sectionKeyForApp(label: String, locale: Locale): String {
-    val trimmed = label.trim()
-    if (trimmed.isEmpty()) {
-        return "#"
-    }
-    val firstChar = trimmed.firstOrNull { it.isLetterOrDigit() } ?: return "#"
-    if (!firstChar.isLetter()) {
-        return "#"
-    }
-    val upper = firstChar.toString().uppercase(locale)
-    return upper.take(1)
-}
 
 data class AppDrawerUiState(
     val sections: List<AppDrawerSection> = emptyList(),
@@ -631,80 +616,19 @@ class AppDrawerViewModel(
     private fun buildSectionsAndIndexSync(filteredApps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
 
         val sortedFilteredApps = if (searchQuery.isBlank()) {
-            filteredApps.sortedWith { left, right ->
-                val labelComparison = collator.compare(left.appName, right.appName)
-                if (labelComparison != 0) {
-                    labelComparison
-                } else {
-                    left.packageName.compareTo(right.packageName)
-                }
-            }
+            filteredApps.sortedWith(AppSectioningHelper.createAppComparator(collator))
         } else {
             filteredApps // Already sorted by relevance score
         }
 
-        val sections = buildList {
-            if (recentApps.isNotEmpty() && searchQuery.isEmpty()) {
-                add(
-                    AppDrawerSection(
-                        key = RECENT_SECTION_KEY,
-                        label = "Recently Used",
-                        apps = recentApps,
-                        isIndexable = false
-                    )
-                )
-            }
+        val sections = AppSectioningHelper.groupAppsBySection(
+            apps = sortedFilteredApps,
+            locale = locale,
+            recentApps = recentApps,
+            includeRecentSection = searchQuery.isEmpty()
+        )
 
-            if (sortedFilteredApps.isNotEmpty()) {
-                val grouped = linkedMapOf<String, MutableList<AppInfo>>()
-                sortedFilteredApps.forEach { app ->
-                    val sectionKey = sectionKeyForApp(app.appName, locale)
-                    val sectionApps = grouped.getOrPut(sectionKey) { mutableListOf() }
-                    sectionApps += app
-                }
-                grouped.forEach { (key, apps) ->
-                    add(
-                        AppDrawerSection(
-                            key = key,
-                            label = key,
-                            apps = apps,
-                            isIndexable = true
-                        )
-                    )
-                }
-            }
-        }
-
-        val sectionPositions = mutableMapOf<String, SectionPosition>()
-        var currentIndex = 0
-        sections.forEach { section ->
-            if (section.isIndexable && section.apps.isNotEmpty()) {
-                sectionPositions[section.key] = SectionPosition(
-                    index = currentIndex,
-                    previewAppName = section.apps.first().appName
-                )
-            }
-            currentIndex += 1 + section.apps.size
-        }
-
-        val alphabetIndexEntries = if (sectionPositions.isEmpty()) {
-            emptyList()
-        } else {
-            val baseAlphabet = ('A'..'Z').map { it.toString() }
-            val sectionKeys = sections.filter { it.isIndexable }.map { it.key }
-            val extraKeys = sectionKeys.filter { it !in baseAlphabet && it != "#" }
-            val orderedKeys = (baseAlphabet + extraKeys + listOf("#")).distinct()
-            orderedKeys.map { key ->
-                val position = sectionPositions[key]
-                AlphabetIndexEntry(
-                    key = key,
-                    displayLabel = key,
-                    targetIndex = position?.index,
-                    hasApps = position != null,
-                    previewAppName = position?.previewAppName
-                )
-            }
-        }
+        val alphabetIndexEntries = AppSectioningHelper.createAlphabetIndexEntries(sections)
 
         _uiState.value = _uiState.value.copy(
             sections = sections,
