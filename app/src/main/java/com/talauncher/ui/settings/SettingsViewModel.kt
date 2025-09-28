@@ -74,6 +74,8 @@ class SettingsViewModel(
                     buildTime = settings?.buildTime,
                     colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
                     customColorOption = settings?.customColorOption,
+                    customPrimaryColor = settings?.customPrimaryColor,
+                    customSecondaryColor = settings?.customSecondaryColor,
                     themeMode = settings?.themeMode ?: ThemeModeOption.SYSTEM,
                     wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                     backgroundOpacity = settings?.backgroundOpacity ?: 1f,
@@ -194,6 +196,18 @@ class SettingsViewModel(
         }
     }
 
+    fun updateCustomPrimaryColor(primaryColor: String?) {
+        viewModelScope.launch {
+            settingsRepository.updateCustomPrimaryColor(primaryColor)
+        }
+    }
+
+    fun updateCustomSecondaryColor(secondaryColor: String?) {
+        viewModelScope.launch {
+            settingsRepository.updateCustomSecondaryColor(secondaryColor)
+        }
+    }
+
     fun updateThemeMode(mode: ThemeModeOption) {
         viewModelScope.launch {
             settingsRepository.updateThemeMode(mode)
@@ -306,6 +320,8 @@ data class SettingsUiState(
     val buildTime: String? = null,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val customColorOption: String? = null,
+    val customPrimaryColor: String? = null,
+    val customSecondaryColor: String? = null,
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val wallpaperBlurAmount: Float = 0f,
     val backgroundOpacity: Float = 1f,

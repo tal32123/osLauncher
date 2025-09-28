@@ -517,7 +517,7 @@ private fun CustomColorOption(
         "Teal" to Color(0xFF14b8a6)
     )
 
-    val color = colorMap[colorName] ?: Color.Gray
+    val color = colorMap[colorName] ?: MaterialTheme.colorScheme.outline
 
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) {
@@ -556,7 +556,7 @@ private fun CustomColorOption(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = "Selected",
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(20.dp)
                 )
             }

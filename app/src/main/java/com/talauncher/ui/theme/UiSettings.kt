@@ -21,7 +21,9 @@ data class UiSettings(
     val wallpaperBlurAmount: Float = 0f,
     val backgroundColor: String = "system",
     val backgroundOpacity: Float = 1f,
-    val customWallpaperPath: String? = null
+    val customWallpaperPath: String? = null,
+    val customPrimaryColor: String? = null,
+    val customSecondaryColor: String? = null
 )
 
 /**
@@ -38,7 +40,9 @@ fun LauncherSettings.toUiSettings(): UiSettings = UiSettings(
     wallpaperBlurAmount = this.wallpaperBlurAmount,
     backgroundColor = this.backgroundColor,
     backgroundOpacity = this.backgroundOpacity,
-    customWallpaperPath = this.customWallpaperPath
+    customWallpaperPath = this.customWallpaperPath,
+    customPrimaryColor = this.customPrimaryColor,
+    customSecondaryColor = this.customSecondaryColor
 )
 
 /**

@@ -116,7 +116,7 @@ fun ModernGlassCard(
                         drawRoundRect(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.White.copy(alpha = 0.16f),
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.16f),
                                     Color.Transparent
                                 ),
                                 startY = 0f,
@@ -363,8 +363,8 @@ fun ModernBackdrop(
     }
 
     val backgroundColorValue = when (backgroundColor) {
-        "black" -> Color.Black
-        "white" -> Color.White
+        "black" -> MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
+        "white" -> MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
         "system" -> MaterialTheme.colorScheme.background
         else -> runCatching { Color(android.graphics.Color.parseColor(backgroundColor)) }
             .getOrElse { MaterialTheme.colorScheme.background }

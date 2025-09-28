@@ -373,6 +373,8 @@ fun TALauncherTheme(
     themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     customColorOption: String? = null,
+    customPrimaryColor: String? = null,
+    customSecondaryColor: String? = null,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -387,8 +389,8 @@ fun TALauncherTheme(
     }
 
     val paletteDefinition = when {
-        colorPalette == ColorPaletteOption.CUSTOM && customColorOption != null -> {
-            createCustomPaletteDefinition(customColorOption)
+        colorPalette == ColorPaletteOption.CUSTOM && (customColorOption != null || customPrimaryColor != null) -> {
+            createCustomPaletteDefinition(customColorOption, customPrimaryColor, customSecondaryColor)
         }
         else -> PaletteCatalog[colorPalette] ?: PaletteCatalog.getValue(ColorPaletteOption.DEFAULT)
     }
@@ -401,17 +403,46 @@ fun TALauncherTheme(
     )
 }
 
-private fun createCustomPaletteDefinition(customColorOption: String): PaletteDefinition {
-    val customColors = ColorPalettes.CustomColorOptions[customColorOption]
-        ?: ColorPalettes.CustomColorOptions["Purple"]!! // Fallback to Purple
+private fun createCustomPaletteDefinition(
+    customColorOption: String? = null,
+    customPrimaryColor: String? = null,
+    customSecondaryColor: String? = null
+): PaletteDefinition {
+    // Priority: direct color values > named option > fallback
+    val primary = when {
+        customPrimaryColor != null -> parseHexColor(customPrimaryColor) ?: Color(0xFF6366F1)
+        customColorOption != null -> {
+            ColorPalettes.CustomColorOptions[customColorOption]?.get("primary")
+                ?: ColorPalettes.CustomColorOptions["Purple"]!!["primary"]!!
+        }
+        else -> Color(0xFF6366F1) // Default purple
+    }
 
-    val primary = customColors["primary"]!!
-    val surface = customColors["surface"]!!
-    val background = customColors["background"]!!
-    val onSurface = customColors["onSurface"]!!
+    val secondary = when {
+        customSecondaryColor != null -> parseHexColor(customSecondaryColor) ?: primary.copy(alpha = 0.8f)
+        customColorOption != null -> {
+            ColorPalettes.CustomColorOptions[customColorOption]?.get("primary")?.copy(alpha = 0.8f)
+                ?: primary.copy(alpha = 0.8f)
+        }
+        else -> primary.copy(alpha = 0.8f)
+    }
+
+    // Use colors from named option if available, otherwise generate from primary
+    val baseColors = if (customColorOption != null) {
+        ColorPalettes.CustomColorOptions[customColorOption] ?: ColorPalettes.CustomColorOptions["Purple"]!!
+    } else {
+        mapOf(
+            "surface" to Color(0xFFFFFFFF),
+            "background" to Color(0xFFF8F9FA),
+            "onSurface" to Color(0xFF1A1A1A)
+        )
+    }
+
+    val surface = baseColors["surface"] ?: Color(0xFFFFFFFF)
+    val background = baseColors["background"] ?: Color(0xFFF8F9FA)
+    val onSurface = baseColors["onSurface"] ?: Color(0xFF1A1A1A)
 
     // Generate additional colors based on the primary color
-    val secondary = primary.copy(alpha = 0.8f)
     val tertiary = primary.copy(alpha = 0.6f)
     val surfaceVariant = surface.copy(alpha = 0.9f)
     val onSurfaceVariant = onSurface.copy(alpha = 0.7f)
@@ -441,4 +472,18 @@ private fun createCustomPaletteDefinition(customColorOption: String): PaletteDef
             outline = primary.copy(alpha = 0.5f)
         )
     )
+}
+
+private fun parseHexColor(hexColor: String): Color? {
+    return try {
+        val cleanHex = hexColor.removePrefix("#")
+        val rgb = when (cleanHex.length) {
+            6 -> cleanHex.toLong(16)
+            8 -> cleanHex.toLong(16)
+            else -> return null
+        }
+        Color(rgb.toULong())
+    } catch (e: NumberFormatException) {
+        null
+    }
 }

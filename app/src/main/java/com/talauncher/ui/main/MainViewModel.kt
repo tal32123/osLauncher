@@ -36,6 +36,7 @@ class MainViewModel(
                 _uiState.value = _uiState.value.copy(
                     isOnboardingCompleted = isOnboardingCompleted,
                     colorPalette = uiSettings.colorPalette,
+                    customColorOption = settings?.customColorOption,
                     themeMode = uiSettings.themeMode,
                     uiSettings = uiSettings,
                     isLoading = false
@@ -66,6 +67,7 @@ data class MainUiState(
     val isOnboardingCompleted: Boolean = false,
     val isLoading: Boolean = true,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val customColorOption: String? = null,
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val uiSettings: UiSettings = UiSettings()
 )
