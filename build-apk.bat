@@ -255,7 +255,7 @@ set "CLASS=%~1"
 if "%CLASS%"=="" goto :eof
 
 echo Running: %CLASS%
-call "%~dp0gradlew.bat" :uitests:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --quiet
+call "%~dp0gradlew.bat" :uitests:connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=%CLASS%" --quiet
 if errorlevel 1 (
     echo !!! FAILURE in %CLASS%
     set /a TEST_FAILURES+=1

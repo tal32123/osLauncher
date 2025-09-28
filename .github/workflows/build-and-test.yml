@@ -164,11 +164,12 @@ jobs:
       with:
         api-level: 29
         target: default
-        arch: x86_64
+        arch: arm64-v8a
         profile: Nexus 6
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
         disable-animations: true
         enable-hw-keyboard: true
+        emulator-boot-timeout: 30
         script: |
           echo "Starting emulator diagnostics..."
           adb devices -l
