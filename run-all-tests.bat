@@ -2,7 +2,7 @@
 setlocal enableextensions enabledelayedexpansion
 
 echo ========================================
-echo Running targeted Espresso UI flows
+echo Running TALauncher Test Suite
 echo ========================================
 
 rem Check for quiet mode parameter (UI mode is now default)
@@ -50,49 +50,35 @@ if not defined DEVICE_FOUND (
 )
 
 echo ========================================
-echo Pre-test compilation validation
+echo Running Unit Tests (matching CI)
 echo ========================================
-echo Checking that test code compiles correctly...
+echo Running unit tests with gradlew test...
 if defined UI_MODE (
-    call .\gradlew.bat compileDebugAndroidTestKotlin --info
+    call .\gradlew.bat test --no-daemon --stacktrace --info
 ) else (
-    call .\gradlew.bat compileDebugAndroidTestKotlin --quiet
+    call .\gradlew.bat test --no-daemon --stacktrace
 )
 if errorlevel 1 (
-    echo !!! Test compilation failed! Cannot proceed with testing.
-    echo !!! This usually indicates import errors, syntax issues, or missing dependencies.
-    set "EXIT_CODE=1"
-    goto WAIT_FOR_INPUT
-)
-echo Test compilation successful. Proceeding with test execution...
-echo.
-
-rem Run individual test classes with detailed logging
-echo ========================================
-echo Running targeted Espresso UI flows
-echo ========================================
-call :run_test_class "com.talauncher.OnboardingGatingFlowTest"
-if not "%EXIT_CODE%"=="0" goto WAIT_FOR_INPUT
-echo.
-call :run_test_class "com.talauncher.LauncherPagerNavigationTest"
-if not "%EXIT_CODE%"=="0" goto WAIT_FOR_INPUT
-echo.
-call :run_test_class "com.talauncher.ComprehensiveTestSuite"
-if not "%EXIT_CODE%"=="0" goto WAIT_FOR_INPUT
-echo.
-echo All individual Espresso test classes completed successfully!
-
-echo ========================================
-echo Running complete unit and instrumentation suites
-echo ========================================
-if defined UI_MODE (
-    call .\gradlew.bat test connectedAndroidTest --info
-) else (
-    call .\gradlew.bat test connectedAndroidTest --quiet
-)
-if errorlevel 1 (
-    echo !!! Failure detected while running the full test suite
+    echo !!! Unit test failures detected
     set /a FAILURES+=1
+    set "EXIT_CODE=1"
+)
+echo Unit tests completed.
+echo.
+
+echo ========================================
+echo Running Android Instrumentation Tests (matching CI)
+echo ========================================
+echo Running instrumentation tests with gradlew connectedAndroidTest...
+if defined UI_MODE (
+    call .\gradlew.bat connectedAndroidTest --no-daemon --stacktrace --info
+) else (
+    call .\gradlew.bat connectedAndroidTest --no-daemon --stacktrace
+)
+if errorlevel 1 (
+    echo !!! Instrumentation test failures detected
+    set /a FAILURES+=1
+    set "EXIT_CODE=1"
 )
 
 echo.
@@ -103,39 +89,10 @@ if !FAILURES! neq 0 (
     set "EXIT_CODE=1"
 ) else (
     echo ========================================
-    echo All Espresso flows and full test suite passed!
+    echo All unit tests and instrumentation tests passed!
     echo ========================================
     set "EXIT_CODE=0"
 )
-
-goto WAIT_FOR_INPUT
-
-:run_test_class
-if not "%EXIT_CODE%"=="0" goto :eof
-set "CLASS=%~1"
-if "%CLASS%"=="" goto :eof
-
-echo ----------------------------------------
-echo Running Espresso flow: %CLASS%
-echo Start time: %TIME%
-echo ----------------------------------------
-if defined UI_MODE (
-    echo [DEBUG] Running with detailed output...
-    call .\gradlew.bat connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=%CLASS%" --info
-) else (
-    echo [DEBUG] Running in quiet mode...
-    call .\gradlew.bat connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=%CLASS%" --quiet
-)
-if errorlevel 1 (
-    echo !!! FAILURE detected in %CLASS% at %TIME%
-    echo !!! Check the logs above for specific error details
-    set /a FAILURES+=1
-    set "EXIT_CODE=1"
-) else (
-    echo === SUCCESS: %CLASS% completed at %TIME%
-)
-echo.
-goto :eof
 
 :WAIT_FOR_INPUT
 echo.
