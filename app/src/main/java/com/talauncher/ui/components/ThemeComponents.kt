@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -31,11 +32,14 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
+import kotlin.math.roundToInt
 
 /**
  * Beautiful theme mode toggle component following Material Design 3 principles
@@ -310,14 +314,48 @@ private fun ColorPaletteCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    // Show current custom color selection for CUSTOM palette
+                    // Show visual preview of custom color instead of text
                     if (palette == ColorPaletteOption.CUSTOM && currentCustomColor != null) {
-                        Text(
-                            text = currentCustomColor,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 2.dp)
+                        val customColorMap = mapOf(
+                            "Deep Purple" to Color(0xFF673AB7),
+                            "Pink Rose" to Color(0xFFE91E63),
+                            "Forest Green" to Color(0xFF4CAF50),
+                            "Sunset Orange" to Color(0xFFFF9800),
+                            "Cherry Red" to Color(0xFFF44336),
+                            "Ocean Teal" to Color(0xFF009688),
+                            "Sky Blue" to Color(0xFF2196F3),
+                            "Royal Indigo" to Color(0xFF3F51B5),
+                            "Emerald" to Color(0xFF00C853),
+                            "Crimson" to Color(0xFFD32F2F),
+                            "Amber" to Color(0xFFFFC107),
+                            "Cyan" to Color(0xFF00BCD4)
                         )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            val displayColor = if (currentCustomColor.startsWith("#")) {
+                                parseHexColorSafe(currentCustomColor)
+                            } else {
+                                customColorMap[currentCustomColor] ?: MaterialTheme.colorScheme.primary
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clip(CircleShape)
+                                    .background(displayColor)
+                                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
+                            )
+                            Text(
+                                text = if (currentCustomColor.startsWith("#")) "Custom" else currentCustomColor,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
 
@@ -331,11 +369,40 @@ private fun ColorPaletteCard(
                 }
             }
 
-            // Color preview
+            // Color preview - Show actual custom colors if selected
+            val previewColors = if (palette == ColorPaletteOption.CUSTOM && currentCustomColor != null) {
+                val customColorMap = mapOf(
+                    "Deep Purple" to Color(0xFF673AB7),
+                    "Pink Rose" to Color(0xFFE91E63),
+                    "Forest Green" to Color(0xFF4CAF50),
+                    "Sunset Orange" to Color(0xFFFF9800),
+                    "Cherry Red" to Color(0xFFF44336),
+                    "Ocean Teal" to Color(0xFF009688),
+                    "Sky Blue" to Color(0xFF2196F3),
+                    "Royal Indigo" to Color(0xFF3F51B5),
+                    "Emerald" to Color(0xFF00C853),
+                    "Crimson" to Color(0xFFD32F2F),
+                    "Amber" to Color(0xFFFFC107),
+                    "Cyan" to Color(0xFF00BCD4)
+                )
+                val selectedColor = if (currentCustomColor.startsWith("#")) {
+                    parseHexColorSafe(currentCustomColor)
+                } else {
+                    customColorMap[currentCustomColor] ?: colors.primary
+                }
+                PalettePreviewColors(
+                    primary = selectedColor,
+                    secondary = selectedColor.copy(alpha = 0.8f),
+                    background = selectedColor.copy(alpha = 0.12f)
+                )
+            } else {
+                colors
+            }
+
             ColorPreview(
-                primaryColor = colors.primary,
-                secondaryColor = colors.secondary,
-                backgroundColor = colors.background,
+                primaryColor = previewColors.primary,
+                secondaryColor = previewColors.secondary,
+                backgroundColor = previewColors.background,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(40.dp)
@@ -440,7 +507,7 @@ private data class PalettePreviewColors(
 )
 
 /**
- * Custom color picker dialog for selecting custom palette colors
+ * Advanced custom color picker dialog with presets and true color selection
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -453,6 +520,38 @@ fun CustomColorPickerDialog(
     onAdvancedRequested: () -> Unit = {}
 ) {
     if (!isVisible) return
+
+    var selectedTab by remember { mutableIntStateOf(0) }
+    var customHexColor by remember { mutableStateOf("#6366F1") }
+    var redValue by remember { mutableFloatStateOf(99f) }
+    var greenValue by remember { mutableFloatStateOf(102f) }
+    var blueValue by remember { mutableFloatStateOf(241f) }
+
+    // Update sliders when hex changes
+    LaunchedEffect(customHexColor) {
+        runCatching {
+            val color = parseHexColorSafe(customHexColor)
+            val argb = color.toArgb()
+            redValue = ((argb shr 16) and 0xFF).toFloat()
+            greenValue = ((argb shr 8) and 0xFF).toFloat()
+            blueValue = (argb and 0xFF).toFloat()
+        }
+    }
+
+    // Update hex when sliders change
+    val sliderColor = Color(
+        red = redValue / 255f,
+        green = greenValue / 255f,
+        blue = blueValue / 255f
+    )
+
+    LaunchedEffect(redValue, greenValue, blueValue) {
+        customHexColor = String.format("#%02X%02X%02X",
+            redValue.roundToInt(),
+            greenValue.roundToInt(),
+            blueValue.roundToInt()
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -479,38 +578,222 @@ fun CustomColorPickerDialog(
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Select from these beautiful color options:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                // Custom color options grid
-                val customColors = listOf(
-                    "Purple", "Pink", "Green", "Orange", "Red", "Teal"
-                )
-
-                val colorRows = customColors.chunked(3)
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                // Tab selector
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    colorRows.forEach { rowColors ->
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = { Text("Presets") }
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = { Text("Custom") }
+                    )
+                }
+
+                when (selectedTab) {
+                    0 -> {
+                        // Preset colors tab
+                        Text(
+                            text = "Select from these beautiful color options:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        val customColors = listOf(
+                            "Deep Purple", "Pink Rose", "Forest Green",
+                            "Sunset Orange", "Cherry Red", "Ocean Teal",
+                            "Sky Blue", "Royal Indigo", "Emerald",
+                            "Crimson", "Amber", "Cyan"
+                        )
+
+                        val colorRows = customColors.chunked(3)
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            rowColors.forEach { colorName ->
-                                CustomColorOption(
-                                    colorName = colorName,
-                                    isSelected = currentCustomColor == colorName,
-                                    onSelected = { onColorSelected(colorName) },
-                                    modifier = Modifier.weight(1f)
+                            colorRows.forEach { rowColors ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    rowColors.forEach { colorName ->
+                                        CustomColorOption(
+                                            colorName = colorName,
+                                            isSelected = currentCustomColor == colorName,
+                                            onSelected = { onColorSelected(colorName) },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    repeat(3 - rowColors.size) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    1 -> {
+                        // Custom color creation tab
+                        Text(
+                            text = "Create your perfect color:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        // Color preview
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = sliderColor
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "◉",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.headlineLarge
                                 )
                             }
-                            // Add spacers for incomplete rows
-                            repeat(3 - rowColors.size) {
-                                Spacer(modifier = Modifier.weight(1f))
+                        }
+
+                        // Hex input
+                        OutlinedTextField(
+                            value = customHexColor,
+                            onValueChange = {
+                                if (it.startsWith("#") && it.length <= 7) {
+                                    customHexColor = it.uppercase()
+                                }
+                            },
+                            label = { Text("Hex Color Code") },
+                            placeholder = { Text("#6366F1") },
+                            leadingIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(sliderColor, CircleShape)
+                                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                                )
+                            },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Ascii
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        // RGB Sliders
+                        Text(
+                            text = "Or adjust RGB values:",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        // Red slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Red",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color(0xFFEF4444)
+                                )
+                                Text(
+                                    text = redValue.roundToInt().toString(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
+                            Slider(
+                                value = redValue,
+                                onValueChange = { redValue = it },
+                                valueRange = 0f..255f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = Color(0xFFEF4444),
+                                    activeTrackColor = Color(0xFFEF4444)
+                                )
+                            )
+                        }
+
+                        // Green slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Green",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color(0xFF10B981)
+                                )
+                                Text(
+                                    text = greenValue.roundToInt().toString(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Slider(
+                                value = greenValue,
+                                onValueChange = { greenValue = it },
+                                valueRange = 0f..255f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = Color(0xFF10B981),
+                                    activeTrackColor = Color(0xFF10B981)
+                                )
+                            )
+                        }
+
+                        // Blue slider
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Blue",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color(0xFF3B82F6)
+                                )
+                                Text(
+                                    text = blueValue.roundToInt().toString(),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Slider(
+                                value = blueValue,
+                                onValueChange = { blueValue = it },
+                                valueRange = 0f..255f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = Color(0xFF3B82F6),
+                                    activeTrackColor = Color(0xFF3B82F6)
+                                )
+                            )
+                        }
+
+                        // Apply custom color button
+                        Button(
+                            onClick = {
+                                onColorSelected(customHexColor)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = sliderColor
+                            )
+                        ) {
+                            Text(
+                                text = "Use This Color",
+                                color = Color.White,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
@@ -529,12 +812,18 @@ private fun CustomColorOption(
     modifier: Modifier = Modifier
 ) {
     val colorMap = mapOf(
-        "Purple" to Color(0xFF7c3aed),
-        "Pink" to Color(0xFFec4899),
-        "Green" to Color(0xFF10b981),
-        "Orange" to Color(0xFFf97316),
-        "Red" to Color(0xFFef4444),
-        "Teal" to Color(0xFF14b8a6)
+        "Deep Purple" to Color(0xFF673AB7),
+        "Pink Rose" to Color(0xFFE91E63),
+        "Forest Green" to Color(0xFF4CAF50),
+        "Sunset Orange" to Color(0xFFFF9800),
+        "Cherry Red" to Color(0xFFF44336),
+        "Ocean Teal" to Color(0xFF009688),
+        "Sky Blue" to Color(0xFF2196F3),
+        "Royal Indigo" to Color(0xFF3F51B5),
+        "Emerald" to Color(0xFF00C853),
+        "Crimson" to Color(0xFFD32F2F),
+        "Amber" to Color(0xFFFFC107),
+        "Cyan" to Color(0xFF00BCD4)
     )
 
     val color = colorMap[colorName] ?: MaterialTheme.colorScheme.outline
@@ -554,14 +843,14 @@ private fun CustomColorOption(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Color circle
+        // Color circle - Much larger for easier tapping
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(72.dp)  // Increased from 48dp to 72dp for much easier tapping
                 .clip(CircleShape)
                 .background(color)
                 .border(
-                    width = if (isSelected) 3.dp else 1.dp,
+                    width = if (isSelected) 4.dp else 2.dp,  // Thicker borders
                     color = borderColor,
                     shape = CircleShape
                 )
@@ -576,8 +865,8 @@ private fun CustomColorOption(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = "Selected",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(20.dp)
+                    tint = Color.White,  // Always white for better contrast
+                    modifier = Modifier.size(28.dp)  // Larger icon
                 )
             }
         }
@@ -585,13 +874,15 @@ private fun CustomColorOption(
         // Color name
         Text(
             text = colorName,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,  // Slightly larger text
             color = if (isSelected) {
                 MaterialTheme.colorScheme.primary
             } else {
                 MaterialTheme.colorScheme.onSurface
             },
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            maxLines = 2,  // Allow wrapping for longer names
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
