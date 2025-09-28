@@ -70,7 +70,7 @@ class AppSectioningHelperTest {
             includeRecentSection = true
         )
 
-        assertEquals(4, sections.size)
+        assertEquals(5, sections.size)
 
         // Check recent section
         assertEquals("recent", sections[0].key)
@@ -79,18 +79,24 @@ class AppSectioningHelperTest {
         assertEquals("Apple", sections[0].apps[0].appName)
         assertFalse(sections[0].isIndexable)
 
-        // Check alphabetical sections
-        assertEquals("A", sections[1].key)
-        assertEquals(3, sections[1].apps.size) // Apple, Android, 123App (non-letter goes to A section? No, should be #)
+        // Check # section (numbers)
+        assertEquals("#", sections[1].key)
+        assertEquals(1, sections[1].apps.size)
+        assertEquals("123App", sections[1].apps[0].appName)
         assertTrue(sections[1].isIndexable)
 
-        assertEquals("B", sections[2].key)
-        assertEquals(1, sections[2].apps.size)
-        assertEquals("Banana", sections[2].apps[0].appName)
+        // Check alphabetical sections
+        assertEquals("A", sections[2].key)
+        assertEquals(2, sections[2].apps.size) // Apple, Android (123App goes to # section)
+        assertTrue(sections[2].isIndexable)
 
-        assertEquals("Z", sections[3].key)
+        assertEquals("B", sections[3].key)
         assertEquals(1, sections[3].apps.size)
-        assertEquals("Zebra", sections[3].apps[0].appName)
+        assertEquals("Banana", sections[3].apps[0].appName)
+
+        assertEquals("Z", sections[4].key)
+        assertEquals(1, sections[4].apps.size)
+        assertEquals("Zebra", sections[4].apps[0].appName)
     }
 
     @Test
