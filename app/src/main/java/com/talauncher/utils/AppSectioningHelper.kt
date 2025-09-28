@@ -56,7 +56,18 @@ object AppSectioningHelper {
                 val sectionApps = grouped.getOrPut(sectionKey) { mutableListOf() }
                 sectionApps += app
             }
-            grouped.forEach { (key, appList) ->
+
+            // Sort sections: # first, then alphabetically
+            val sortedKeys = grouped.keys.sortedWith { a, b ->
+                when {
+                    a == "#" && b != "#" -> -1
+                    a != "#" && b == "#" -> 1
+                    else -> a.compareTo(b)
+                }
+            }
+
+            sortedKeys.forEach { key ->
+                val appList = grouped[key]!!
                 sections.add(
                     AppDrawerSection(
                         key = key,
