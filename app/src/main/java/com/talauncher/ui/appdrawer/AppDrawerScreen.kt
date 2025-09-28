@@ -304,7 +304,6 @@ fun AppDrawerScreen(
                             bottom = PrimerSpacing.xl + 80.dp // Extra bottom padding for accessibility
                         ),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
-                        flingBehavior = androidx.compose.foundation.lazy.LazyListDefaults.flingBehavior()
                     ) {
                         sections.forEachIndexed { index, section ->
                             item {
@@ -423,7 +422,6 @@ fun AppDrawerScreen(
                             bottom = PrimerSpacing.xl + 80.dp // Extra bottom padding for accessibility
                         ),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
-                        flingBehavior = androidx.compose.foundation.lazy.LazyListDefaults.flingBehavior()
                     ) {
                         items(uiState.contacts) { contact ->
                             ContactItem(

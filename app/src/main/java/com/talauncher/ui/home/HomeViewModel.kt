@@ -47,6 +47,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.ArrayDeque
@@ -472,14 +473,14 @@ class HomeViewModel(
         val helper = resolvedPermissionsHelper
         if (contactHelper == null || helper == null) {
             // Only show apps if no contact helper
-            val unifiedResults = createUnifiedSearchResults(sanitized, appResults, emptyList())
+            val unifiedResults = runBlocking { createUnifiedSearchResults(sanitized, appResults, emptyList()) }
             _uiState.value = _uiState.value.copy(unifiedSearchResults = unifiedResults)
             return
         }
 
         if (!helper.permissionState.value.hasContacts) {
             // Only show apps if no contacts permission
-            val unifiedResults = createUnifiedSearchResults(sanitized, appResults, emptyList())
+            val unifiedResults = runBlocking { createUnifiedSearchResults(sanitized, appResults, emptyList()) }
             _uiState.value = _uiState.value.copy(
                 unifiedSearchResults = unifiedResults,
                 isContactsPermissionMissing = true

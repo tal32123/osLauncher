@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.foundation.lazy.LazyListDefaults
+// import androidx.compose.foundation.lazy.LazyListDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -49,7 +49,6 @@ fun UnifiedSearchResults(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
         contentPadding = PaddingValues(bottom = 80.dp), // Extra bottom padding for accessibility
-        flingBehavior = LazyListDefaults.flingBehavior()
     ) {
         // Always show Google search as first option
         item {
@@ -204,7 +203,6 @@ fun AppDrawerUnifiedSearchResults(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
         contentPadding = PaddingValues(bottom = 80.dp), // Extra bottom padding for accessibility
-        flingBehavior = LazyListDefaults.flingBehavior()
     ) {
         // Always show Google search as first option
         if (searchQuery.isNotBlank()) {
