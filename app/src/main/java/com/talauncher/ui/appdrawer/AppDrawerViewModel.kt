@@ -500,13 +500,16 @@ class AppDrawerViewModel(
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
         searchQueryFlow.value = query
-        buildSectionsAndIndex(
-            _uiState.value.allApps,
-            _uiState.value.recentApps,
-            query,
-            _uiState.value.locale ?: Locale.getDefault(),
-            _uiState.value.collator ?: Collator.getInstance()
-        )
+
+        // Execute search with usage stats lookup on background thread
+        viewModelScope.launch {
+            val apps = _uiState.value.allApps
+            val recentApps = _uiState.value.recentApps
+            val locale = _uiState.value.locale ?: Locale.getDefault()
+            val collator = _uiState.value.collator ?: Collator.getInstance()
+
+            buildSectionsAndIndexAsync(apps, recentApps, query, locale, collator)
+        }
     }
 
     fun clearSearchOnNavigation() {
@@ -577,14 +580,14 @@ class AppDrawerViewModel(
         )
     }
 
-    private fun buildSectionsAndIndex(apps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
+    private suspend fun buildSectionsAndIndexAsync(apps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
         val filteredApps = if (searchQuery.isBlank()) {
             apps.filter { !it.isHidden }
         } else {
             // Use fuzzy search with recency scoring for better results
             val hasUsageStatsPermission = permissionsHelper.permissionState.value.hasUsageStats
             val usageStats = if (hasUsageStatsPermission) {
-                runBlocking {
+                withContext(Dispatchers.IO) {
                     usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
                 }
             } else {
@@ -602,6 +605,30 @@ class AppDrawerViewModel(
                 .sortedByDescending { it.second }
                 .map { it.first }
         }
+
+        buildSectionsAndIndexSync(filteredApps, recentApps, searchQuery, locale, collator)
+    }
+
+    private fun buildSectionsAndIndex(apps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
+        val filteredApps = if (searchQuery.isBlank()) {
+            apps.filter { !it.isHidden }
+        } else {
+            // For non-search queries or when called synchronously, skip usage stats to avoid blocking
+            apps.filter { !it.isHidden }
+                .mapNotNull { app ->
+                    val baseScore = calculateRelevanceScore(searchQuery, app.appName)
+                    if (baseScore > 0) {
+                        app to baseScore
+                    } else null
+                }
+                .sortedByDescending { it.second }
+                .map { it.first }
+        }
+
+        buildSectionsAndIndexSync(filteredApps, recentApps, searchQuery, locale, collator)
+    }
+
+    private fun buildSectionsAndIndexSync(filteredApps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
 
         val sortedFilteredApps = if (searchQuery.isBlank()) {
             filteredApps.sortedWith { left, right ->

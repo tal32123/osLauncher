@@ -343,10 +343,12 @@ class HomeViewModel(
     private suspend fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
         if (query.isBlank()) return emptyList()
 
-        // Get recent usage data for recency scoring
+        // Get recent usage data for recency scoring on background thread
         val hasUsageStatsPermission = resolvedPermissionsHelper?.permissionState?.value?.hasUsageStats ?: false
         val usageStats = if (hasUsageStatsPermission && usageStatsHelper != null) {
-            usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
+            withContext(Dispatchers.IO) {
+                usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
+            }
         } else {
             emptyMap()
         }
@@ -473,18 +475,22 @@ class HomeViewModel(
         val helper = resolvedPermissionsHelper
         if (contactHelper == null || helper == null) {
             // Only show apps if no contact helper
-            val unifiedResults = runBlocking { createUnifiedSearchResults(sanitized, appResults, emptyList()) }
-            _uiState.value = _uiState.value.copy(unifiedSearchResults = unifiedResults)
+            viewModelScope.launch {
+                val unifiedResults = createUnifiedSearchResults(sanitized, appResults, emptyList())
+                _uiState.value = _uiState.value.copy(unifiedSearchResults = unifiedResults)
+            }
             return
         }
 
         if (!helper.permissionState.value.hasContacts) {
             // Only show apps if no contacts permission
-            val unifiedResults = runBlocking { createUnifiedSearchResults(sanitized, appResults, emptyList()) }
-            _uiState.value = _uiState.value.copy(
-                unifiedSearchResults = unifiedResults,
-                isContactsPermissionMissing = true
-            )
+            viewModelScope.launch {
+                val unifiedResults = createUnifiedSearchResults(sanitized, appResults, emptyList())
+                _uiState.value = _uiState.value.copy(
+                    unifiedSearchResults = unifiedResults,
+                    isContactsPermissionMissing = true
+                )
+            }
             if (!hasShownContactsPermissionPrompt) {
                 hasShownContactsPermissionPrompt = true
                 _uiState.value = _uiState.value.copy(showContactsPermissionDialog = true)

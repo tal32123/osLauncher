@@ -12,7 +12,7 @@ import com.talauncher.data.model.LauncherSettings
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -224,6 +224,14 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN customColorOption TEXT"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -243,7 +251,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_10_11,
                     MIGRATION_11_12,
                     MIGRATION_12_13,
-                    MIGRATION_13_14
+                    MIGRATION_13_14,
+                    MIGRATION_14_15
                 ).build()
                 INSTANCE = instance
                 instance
