@@ -166,7 +166,17 @@ jobs:
         target: default
         arch: x86_64
         profile: Nexus 6
-        script: ./gradlew connectedAndroidTest --no-daemon --stacktrace
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        enable-hw-keyboard: true
+        script: |
+          echo "Starting emulator diagnostics..."
+          adb devices -l
+          adb shell getprop ro.build.version.sdk
+          adb shell getprop ro.product.cpu.abi
+          adb shell getprop ro.kernel.version
+          echo "Running connected Android tests..."
+          ./gradlew connectedAndroidTest --no-daemon --stacktrace --info
 
     - name: Upload UI test reports
       uses: actions/upload-artifact@v4
