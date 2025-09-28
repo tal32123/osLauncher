@@ -154,6 +154,10 @@ fun SettingsScreen(
                 onUpdateColorPalette = viewModel::updateColorPalette,
                 customColorOption = uiState.customColorOption,
                 onUpdateCustomColorOption = viewModel::updateCustomColorOption,
+                customPrimaryColor = uiState.customPrimaryColor,
+                onUpdateCustomPrimaryColor = viewModel::updateCustomPrimaryColor,
+                customSecondaryColor = uiState.customSecondaryColor,
+                onUpdateCustomSecondaryColor = viewModel::updateCustomSecondaryColor,
                 themeMode = uiState.themeMode,
                 onUpdateThemeMode = viewModel::updateThemeMode,
                 wallpaperBlurAmount = uiState.wallpaperBlurAmount,
@@ -278,6 +282,10 @@ fun UIThemeSettings(
     onUpdateColorPalette: (ColorPaletteOption) -> Unit,
     customColorOption: String?,
     onUpdateCustomColorOption: (String) -> Unit,
+    customPrimaryColor: String?,
+    onUpdateCustomPrimaryColor: (String) -> Unit,
+    customSecondaryColor: String?,
+    onUpdateCustomSecondaryColor: (String) -> Unit,
     themeMode: ThemeModeOption,
     onUpdateThemeMode: (ThemeModeOption) -> Unit,
     wallpaperBlurAmount: Float,
@@ -306,7 +314,11 @@ fun UIThemeSettings(
                 selectedPalette = colorPalette,
                 onPaletteSelected = onUpdateColorPalette,
                 currentCustomColor = customColorOption,
-                onCustomColorSelected = onUpdateCustomColorOption
+                onCustomColorSelected = onUpdateCustomColorOption,
+                currentCustomPrimaryColor = customPrimaryColor,
+                currentCustomSecondaryColor = customSecondaryColor,
+                onCustomPrimaryColorSelected = onUpdateCustomPrimaryColor,
+                onCustomSecondaryColorSelected = onUpdateCustomSecondaryColor
             )
         }
 
