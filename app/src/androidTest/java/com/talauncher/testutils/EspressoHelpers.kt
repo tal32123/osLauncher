@@ -8,6 +8,7 @@ import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.idling.CountingIdlingResource
 import com.talauncher.utils.EspressoIdlingResource
 import org.hamcrest.Matcher
+import org.hamcrest.CoreMatchers.allOf
 import android.view.View
 import androidx.test.espresso.ViewInteraction
 
@@ -105,7 +106,7 @@ object CustomMatchers {
      * Matcher for views that are visible and clickable
      */
     fun isVisibleAndClickable(): Matcher<View> {
-        return ViewMatchers.allOf(
+        return allOf(
             ViewMatchers.isDisplayed(),
             ViewMatchers.isClickable()
         )
