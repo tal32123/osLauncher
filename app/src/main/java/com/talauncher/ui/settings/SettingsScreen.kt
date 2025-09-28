@@ -35,6 +35,7 @@ import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
+import com.talauncher.ui.theme.ColorPalettes
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.ui.components.ModernButton
@@ -151,6 +152,12 @@ fun SettingsScreen(
                 onToggleShowWallpaper = viewModel::updateShowWallpaper,
                 colorPalette = uiState.colorPalette,
                 onUpdateColorPalette = viewModel::updateColorPalette,
+                customColorOption = uiState.customColorOption,
+                onUpdateCustomColorOption = viewModel::updateCustomColorOption,
+                customPrimaryColor = uiState.customPrimaryColor,
+                onUpdateCustomPrimaryColor = viewModel::updateCustomPrimaryColor,
+                customSecondaryColor = uiState.customSecondaryColor,
+                onUpdateCustomSecondaryColor = viewModel::updateCustomSecondaryColor,
                 themeMode = uiState.themeMode,
                 onUpdateThemeMode = viewModel::updateThemeMode,
                 wallpaperBlurAmount = uiState.wallpaperBlurAmount,
@@ -273,6 +280,12 @@ fun UIThemeSettings(
     onToggleShowWallpaper: (Boolean) -> Unit,
     colorPalette: ColorPaletteOption,
     onUpdateColorPalette: (ColorPaletteOption) -> Unit,
+    customColorOption: String?,
+    onUpdateCustomColorOption: (String) -> Unit,
+    customPrimaryColor: String?,
+    onUpdateCustomPrimaryColor: (String) -> Unit,
+    customSecondaryColor: String?,
+    onUpdateCustomSecondaryColor: (String) -> Unit,
     themeMode: ThemeModeOption,
     onUpdateThemeMode: (ThemeModeOption) -> Unit,
     wallpaperBlurAmount: Float,
@@ -299,7 +312,13 @@ fun UIThemeSettings(
         item {
             ColorPaletteSelector(
                 selectedPalette = colorPalette,
-                onPaletteSelected = onUpdateColorPalette
+                onPaletteSelected = onUpdateColorPalette,
+                currentCustomColor = customColorOption,
+                onCustomColorSelected = onUpdateCustomColorOption,
+                currentCustomPrimaryColor = customPrimaryColor,
+                currentCustomSecondaryColor = customSecondaryColor,
+                onCustomPrimaryColorSelected = onUpdateCustomPrimaryColor,
+                onCustomSecondaryColorSelected = onUpdateCustomSecondaryColor
             )
         }
 

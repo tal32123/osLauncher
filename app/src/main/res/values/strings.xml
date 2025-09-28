@@ -97,9 +97,9 @@
     <string name="color_palette_nature">Nature</string>
     <string name="color_palette_oceanic">Oceanic</string>
     <string name="color_palette_sunset">Sunset</string>
-    <string name="color_palette_forest">Forest</string>
     <string name="color_palette_lavender">Lavender</string>
     <string name="color_palette_cherry">Cherry</string>
+    <string name="color_palette_custom">Custom</string>
 
     <string name="color_palette_preview_title">Preview</string>
     <string name="color_palette_preview_primary">Primary</string>

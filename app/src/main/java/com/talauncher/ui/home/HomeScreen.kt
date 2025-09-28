@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+// import androidx.compose.foundation.lazy.LazyListDefaults
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -315,7 +316,8 @@ fun HomeScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.weight(1f).testTag("app_list"),
-                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
+                        contentPadding = PaddingValues(bottom = 80.dp), // Extra bottom padding for accessibility
                     ) {
                         // Recently Used Apps Section
                         if (uiState.recentApps.isNotEmpty()) {

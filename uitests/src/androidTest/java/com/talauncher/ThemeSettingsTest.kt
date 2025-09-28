@@ -155,7 +155,6 @@ class ThemeSettingsTest {
             ColorPaletteOption.NATURE,
             ColorPaletteOption.OCEANIC,
             ColorPaletteOption.SUNSET,
-            ColorPaletteOption.FOREST,
             ColorPaletteOption.LAVENDER,
             ColorPaletteOption.CHERRY
         )

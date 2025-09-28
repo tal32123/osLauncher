@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -150,6 +151,22 @@ fun OnboardingScreen(
             buttonTestTag = "onboarding_step_overlay_button",
             onButtonClick = {
                 permissionsHelper.requestPermission(context as Activity, PermissionType.SYSTEM_ALERT_WINDOW)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Location Permission
+        OnboardingStepCard(
+            modifier = Modifier.testTag("onboarding_step_location"),
+            icon = Icons.Default.LocationOn,
+            title = "Location Permission",
+            description = "Required for weather information and location-based features",
+            isCompleted = permissionState.hasLocation,
+            buttonText = if (permissionState.hasLocation) "Completed" else "Grant Permission",
+            buttonTestTag = "onboarding_step_location_button",
+            onButtonClick = {
+                permissionsHelper.requestPermission(context as Activity, PermissionType.LOCATION)
             }
         )
 

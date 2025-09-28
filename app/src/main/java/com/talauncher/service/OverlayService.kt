@@ -28,6 +28,7 @@ import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.theme.TALauncherTheme
 import android.util.Log
+import com.talauncher.BuildConfig
 
 class OverlayService : Service() {
 
@@ -243,7 +244,7 @@ class OverlayService : Service() {
         try {
             windowManager?.addView(composeView, layoutParams)
             overlayView = composeView
-            Log.d(TAG, "Math challenge overlay displayed successfully")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Math challenge overlay displayed successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to show math challenge overlay", e)
             e.printStackTrace()
@@ -371,13 +372,13 @@ class OverlayService : Service() {
             }
 
             if (!view.isAttachedToWindow) {
-                Log.d(TAG, "Overlay view not yet attached; waiting before starting foreground service")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Overlay view not yet attached; waiting before starting foreground service")
                 scheduleForegroundStart(view, sanitizedMessage)
                 return true
             }
 
             if (view.windowVisibility != View.VISIBLE || !view.isShown) {
-                Log.d(TAG, "Overlay not visible yet; waiting before starting foreground service")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Overlay not visible yet; waiting before starting foreground service")
                 scheduleForegroundStart(view, sanitizedMessage)
                 return true
             }
@@ -453,7 +454,7 @@ class OverlayService : Service() {
             try {
                 startForeground(NOTIFICATION_ID, notification)
                 isForegroundService = true
-                Log.d(TAG, "Foreground service started successfully")
+                if (BuildConfig.DEBUG) Log.d(TAG, "Foreground service started successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start foreground service", e)
                 return false

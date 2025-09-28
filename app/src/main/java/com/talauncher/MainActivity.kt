@@ -143,7 +143,10 @@ class MainActivity : ComponentActivity() {
 
                 TALauncherTheme(
                     themeMode = mainUiState.themeMode,
-                    colorPalette = mainUiState.colorPalette
+                    colorPalette = mainUiState.colorPalette,
+                    customColorOption = mainUiState.customColorOption,
+                    customPrimaryColor = mainUiState.uiSettings.customPrimaryColor,
+                    customSecondaryColor = mainUiState.uiSettings.customSecondaryColor
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),

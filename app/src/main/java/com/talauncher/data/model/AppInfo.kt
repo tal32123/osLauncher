@@ -20,5 +20,6 @@ data class InstalledApp(
 
 data class AppUsage(
     val packageName: String,
-    val timeInForeground: Long
+    val timeInForeground: Long,
+    val lastTimeUsed: Long = 0L
 )

@@ -84,9 +84,29 @@ class OnboardingGatingFlowTest {
 
         // Grant notifications permission if required
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Log.d("OnboardingGatingFlowTest", "Granting notifications permission")
+            Log.d("OnboardingGatingFlowTest", "Notifications state before click: ${permissionsHelper.permissionState.value.hasNotifications}")
+
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsNotEnabled()
+
+            // Verify the permission state was updated in the fake helper
+            Log.d("OnboardingGatingFlowTest", "Notifications state after click: ${permissionsHelper.permissionState.value.hasNotifications}")
+
+            // Wait for notification permission state to update and button to become disabled
+            composeTestRule.waitUntil(timeoutMillis = 10_000) {
+                val currentState = permissionsHelper.permissionState.value.hasNotifications
+                Log.d("OnboardingGatingFlowTest", "Waiting for button to be disabled... notifications state: $currentState")
+                try {
+                    composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsNotEnabled()
+                    Log.d("OnboardingGatingFlowTest", "✓ Notifications button is now disabled")
+                    true
+                } catch (e: AssertionError) {
+                    Log.d("OnboardingGatingFlowTest", "Button still enabled, continuing to wait...")
+                    false
+                }
+            }
+            Log.d("OnboardingGatingFlowTest", "✓ Notifications button disabled after click")
         }
 
         // Grant overlay permission

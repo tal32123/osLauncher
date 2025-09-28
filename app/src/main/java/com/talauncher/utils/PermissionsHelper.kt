@@ -26,7 +26,7 @@ data class PermissionState(
     val hasLocation: Boolean = false
 ) {
     val allOnboardingPermissionsGranted: Boolean
-        get() = hasUsageStats && hasSystemAlertWindow && hasNotifications
+        get() = hasUsageStats && hasSystemAlertWindow && hasNotifications && hasLocation
 }
 
 enum class PermissionType {

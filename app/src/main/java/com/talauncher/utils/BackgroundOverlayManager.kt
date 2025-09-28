@@ -14,6 +14,7 @@ import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.theme.TALauncherTheme
+import com.talauncher.BuildConfig
 
 /**
  * Manages system overlay windows that can be shown from background without foreground service.
@@ -153,7 +154,7 @@ class BackgroundOverlayManager private constructor(private val applicationContex
         currentOverlayView?.let { view ->
             try {
                 windowManager?.removeViewImmediate(view)
-                Log.d(tag, "Overlay hidden successfully")
+                if (BuildConfig.DEBUG) Log.d(tag, "Overlay hidden successfully")
             } catch (e: Exception) {
                 Log.e(tag, "Error hiding overlay", e)
             }
@@ -166,7 +167,7 @@ class BackgroundOverlayManager private constructor(private val applicationContex
             val layoutParams = createLayoutParams()
             windowManager?.addView(view, layoutParams)
             currentOverlayView = view
-            Log.d(tag, "Overlay shown successfully")
+            if (BuildConfig.DEBUG) Log.d(tag, "Overlay shown successfully")
             true
         } catch (e: Exception) {
             Log.e(tag, "Failed to show overlay", e)

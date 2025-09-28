@@ -121,10 +121,10 @@ echo Start time: %TIME%
 echo ----------------------------------------
 if defined UI_MODE (
     echo [DEBUG] Running with detailed output...
-    call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --info
+    call .\gradlew.bat connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=%CLASS%" --info
 ) else (
     echo [DEBUG] Running in quiet mode...
-    call .\gradlew.bat connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=%CLASS% --quiet
+    call .\gradlew.bat connectedAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=%CLASS%" --quiet
 )
 if errorlevel 1 (
     echo !!! FAILURE detected in %CLASS% at %TIME%

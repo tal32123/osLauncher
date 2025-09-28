@@ -57,7 +57,8 @@ open class UsageStatsHelper(
             if (stats.totalTimeInForeground > 0) {
                 AppUsage(
                     packageName = stats.packageName,
-                    timeInForeground = stats.totalTimeInForeground
+                    timeInForeground = stats.totalTimeInForeground,
+                    lastTimeUsed = stats.lastTimeUsed
                 )
             } else null
         } ?: emptyList()
@@ -93,18 +94,22 @@ open class UsageStatsHelper(
 
         // Group by package name and sum usage times across multiple days
         val packageUsageMap = mutableMapOf<String, Long>()
+        val packageLastUsedMap = mutableMapOf<String, Long>()
 
         usageStats?.forEach { stats ->
             if (stats.totalTimeInForeground > 0) {
                 packageUsageMap[stats.packageName] =
                     (packageUsageMap[stats.packageName] ?: 0) + stats.totalTimeInForeground
+                packageLastUsedMap[stats.packageName] =
+                    maxOf(packageLastUsedMap[stats.packageName] ?: 0, stats.lastTimeUsed)
             }
         }
 
         val result = packageUsageMap.map { (packageName, totalTime) ->
             AppUsage(
                 packageName = packageName,
-                timeInForeground = totalTime
+                timeInForeground = totalTime,
+                lastTimeUsed = packageLastUsedMap[packageName] ?: 0
             )
         }
 

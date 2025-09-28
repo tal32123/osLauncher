@@ -8,6 +8,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.res.colorResource
+import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
 
@@ -170,6 +172,7 @@ private val PaletteCatalog = mapOf(
             outline = Color(0xFF6B7280)
         )
     ),
+    // CUSTOM palette will be generated dynamically based on user selection
     ColorPaletteOption.NATURE to PaletteDefinition(
         light = PaletteVariant(
             primary = Color(0xFF256B37),
@@ -240,30 +243,6 @@ private val PaletteCatalog = mapOf(
             onSurface = Color(0xFFFED7AA),
             onSurfaceVariant = Color(0xFFFFBF69),
             outline = Color(0xFFFB923C)
-        )
-    ),
-    ColorPaletteOption.FOREST to PaletteDefinition(
-        light = PaletteVariant(
-            primary = Color(0xFF166534),
-            secondary = Color(0xFF15803D),
-            tertiary = Color(0xFF365314),
-            background = Color(0xFFF0FDF4),
-            surface = Color(0xFFECFDF5),
-            surfaceVariant = Color(0xFFBBF7D0),
-            onSurface = Color(0xFF14532D),
-            onSurfaceVariant = Color(0xFF166534),
-            outline = Color(0xFF22C55E)
-        ),
-        dark = PaletteVariant(
-            primary = Color(0xFF4ADE80),
-            secondary = Color(0xFF22C55E),
-            tertiary = Color(0xFF84CC16),
-            background = Color(0xFF0F1B0F),
-            surface = Color(0xFF14532D),
-            surfaceVariant = Color(0xFF1F2937),
-            onSurface = Color(0xFFBBF7D0),
-            onSurfaceVariant = Color(0xFF86EFAC),
-            outline = Color(0xFF4ADE80)
         )
     ),
     ColorPaletteOption.LAVENDER to PaletteDefinition(
@@ -393,6 +372,9 @@ private val ZenLightColorScheme = PrimerLightColorScheme
 fun TALauncherTheme(
     themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    customColorOption: String? = null,
+    customPrimaryColor: String? = null,
+    customSecondaryColor: String? = null,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -406,7 +388,12 @@ fun TALauncherTheme(
         else -> MinimalLightColorScheme
     }
 
-    val paletteDefinition = PaletteCatalog[colorPalette] ?: PaletteCatalog.getValue(ColorPaletteOption.DEFAULT)
+    val paletteDefinition = when {
+        colorPalette == ColorPaletteOption.CUSTOM && (customColorOption != null || customPrimaryColor != null) -> {
+            createCustomPaletteDefinition(customColorOption, customPrimaryColor, customSecondaryColor)
+        }
+        else -> PaletteCatalog[colorPalette] ?: PaletteCatalog.getValue(ColorPaletteOption.DEFAULT)
+    }
     val colorScheme = baseColorScheme.applyPalette(paletteDefinition, darkTheme)
 
     MaterialTheme(
@@ -414,4 +401,89 @@ fun TALauncherTheme(
         typography = PrimerTypography,
         content = content
     )
+}
+
+private fun createCustomPaletteDefinition(
+    customColorOption: String? = null,
+    customPrimaryColor: String? = null,
+    customSecondaryColor: String? = null
+): PaletteDefinition {
+    // Priority: direct color values > named option > fallback
+    val primary = when {
+        customPrimaryColor != null -> parseHexColor(customPrimaryColor) ?: Color(0xFF6366F1)
+        customColorOption != null -> {
+            ColorPalettes.CustomColorOptions[customColorOption]?.get("primary")
+                ?: ColorPalettes.CustomColorOptions["Purple"]!!["primary"]!!
+        }
+        else -> Color(0xFF6366F1) // Default purple
+    }
+
+    val secondary = when {
+        customSecondaryColor != null -> parseHexColor(customSecondaryColor) ?: primary.copy(alpha = 0.8f)
+        customColorOption != null -> {
+            ColorPalettes.CustomColorOptions[customColorOption]?.get("primary")?.copy(alpha = 0.8f)
+                ?: primary.copy(alpha = 0.8f)
+        }
+        else -> primary.copy(alpha = 0.8f)
+    }
+
+    // Use colors from named option if available, otherwise generate from primary
+    val baseColors = if (customColorOption != null) {
+        ColorPalettes.CustomColorOptions[customColorOption] ?: ColorPalettes.CustomColorOptions["Purple"]!!
+    } else {
+        mapOf(
+            "surface" to Color(0xFFFFFFFF),
+            "background" to Color(0xFFF8F9FA),
+            "onSurface" to Color(0xFF1A1A1A)
+        )
+    }
+
+    val surface = baseColors["surface"] ?: Color(0xFFFFFFFF)
+    val background = baseColors["background"] ?: Color(0xFFF8F9FA)
+    val onSurface = baseColors["onSurface"] ?: Color(0xFF1A1A1A)
+
+    // Generate additional colors based on the primary color
+    val tertiary = primary.copy(alpha = 0.6f)
+    val surfaceVariant = surface.copy(alpha = 0.9f)
+    val onSurfaceVariant = onSurface.copy(alpha = 0.7f)
+    val outline = primary.copy(alpha = 0.4f)
+
+    return PaletteDefinition(
+        light = PaletteVariant(
+            primary = primary,
+            secondary = secondary,
+            tertiary = tertiary,
+            background = background,
+            surface = surface,
+            surfaceVariant = surfaceVariant,
+            onSurface = onSurface,
+            onSurfaceVariant = onSurfaceVariant,
+            outline = outline
+        ),
+        dark = PaletteVariant(
+            primary = primary.copy(alpha = 0.9f),
+            secondary = secondary.copy(alpha = 0.8f),
+            tertiary = tertiary.copy(alpha = 0.7f),
+            background = Color(0xFF0A0A0A),
+            surface = Color(0xFF141414),
+            surfaceVariant = Color(0xFF1E1E1E),
+            onSurface = Color(0xFFE5E5E5),
+            onSurfaceVariant = Color(0xFFB0B0B0),
+            outline = primary.copy(alpha = 0.5f)
+        )
+    )
+}
+
+private fun parseHexColor(hexColor: String): Color? {
+    return try {
+        val cleanHex = hexColor.removePrefix("#")
+        val rgb = when (cleanHex.length) {
+            6 -> cleanHex.toLong(16)
+            8 -> cleanHex.toLong(16)
+            else -> return null
+        }
+        Color(rgb.toULong())
+    } catch (e: NumberFormatException) {
+        null
+    }
 }

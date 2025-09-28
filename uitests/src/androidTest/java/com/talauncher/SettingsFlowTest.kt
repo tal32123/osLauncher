@@ -178,7 +178,8 @@ class SettingsFlowTest {
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeLeft() }
 
         // 7. Find the same app and click to launch it
-        composeTestRule.onNodeWithText("Settings", substring = true).performClick()
+        // Navigate to settings page using the pager test tag
+        composeTestRule.onNodeWithTag("launcher_settings_page").performClick()
 
         // 8. Assert that the "Friction Dialog" or "Time Limit Dialog" appears
         composeTestRule.onNodeWithTag("friction_dialog").assertExists()

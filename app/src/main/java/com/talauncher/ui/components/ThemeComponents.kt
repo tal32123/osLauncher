@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -169,8 +170,16 @@ private fun ThemeModeChip(
 fun ColorPaletteSelector(
     selectedPalette: ColorPaletteOption,
     onPaletteSelected: (ColorPaletteOption) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    currentCustomColor: String? = null,
+    onCustomColorSelected: (String) -> Unit = {},
+    currentCustomPrimaryColor: String? = null,
+    currentCustomSecondaryColor: String? = null,
+    onCustomPrimaryColorSelected: (String) -> Unit = {},
+    onCustomSecondaryColorSelected: (String) -> Unit = {}
 ) {
+    var showCustomColorPicker by remember { mutableStateOf(false) }
+    var showAdvancedCustomPicker by remember { mutableStateOf(false) }
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -210,7 +219,14 @@ fun ColorPaletteSelector(
                             ColorPaletteCard(
                                 palette = palette,
                                 isSelected = selectedPalette == palette,
-                                onSelected = { onPaletteSelected(palette) },
+                                currentCustomColor = if (palette == ColorPaletteOption.CUSTOM) currentCustomColor else null,
+                                onSelected = {
+                                    if (palette == ColorPaletteOption.CUSTOM) {
+                                        showCustomColorPicker = true
+                                    } else {
+                                        onPaletteSelected(palette)
+                                    }
+                                },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -223,6 +239,18 @@ fun ColorPaletteSelector(
             }
         }
     }
+
+    // Custom color picker dialog
+    CustomColorPickerDialog(
+        isVisible = showCustomColorPicker,
+        currentCustomColor = currentCustomColor,
+        onColorSelected = { colorName ->
+            onCustomColorSelected(colorName)
+            onPaletteSelected(ColorPaletteOption.CUSTOM)
+            showCustomColorPicker = false
+        },
+        onDismiss = { showCustomColorPicker = false }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -231,7 +259,8 @@ private fun ColorPaletteCard(
     palette: ColorPaletteOption,
     isSelected: Boolean,
     onSelected: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    currentCustomColor: String? = null
 ) {
     val colors = remember(palette) { getPalettePreviewColors(palette) }
 
@@ -273,12 +302,24 @@ private fun ColorPaletteCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = palette.label,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Column {
+                    Text(
+                        text = palette.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    // Show current custom color selection for CUSTOM palette
+                    if (palette == ColorPaletteOption.CUSTOM && currentCustomColor != null) {
+                        Text(
+                            text = currentCustomColor,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
 
                 if (isSelected) {
                     Icon(
@@ -371,11 +412,6 @@ private val palettePreviewColorsMap = mapOf(
         secondary = Color(0xFFDC2626),
         background = Color(0xFFFEF2F2)
     ),
-    ColorPaletteOption.FOREST to PalettePreviewColors(
-        primary = Color(0xFF166534),
-        secondary = Color(0xFF15803D),
-        background = Color(0xFFF0FDF4)
-    ),
     ColorPaletteOption.LAVENDER to PalettePreviewColors(
         primary = Color(0xFF7C3AED),
         secondary = Color(0xFF8B5CF6),
@@ -385,6 +421,11 @@ private val palettePreviewColorsMap = mapOf(
         primary = Color(0xFFE11D48),
         secondary = Color(0xFFDB2777),
         background = Color(0xFFFEF2F2)
+    ),
+    ColorPaletteOption.CUSTOM to PalettePreviewColors(
+        primary = Color(0xFF6366F1),
+        secondary = Color(0xFF8B5CF6),
+        background = Color(0xFFF8F9FA)
     )
 )
 
@@ -397,3 +438,347 @@ private data class PalettePreviewColors(
     val secondary: Color,
     val background: Color
 )
+
+/**
+ * Custom color picker dialog for selecting custom palette colors
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomColorPickerDialog(
+    isVisible: Boolean,
+    currentCustomColor: String?,
+    onColorSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    onAdvancedRequested: () -> Unit = {}
+) {
+    if (!isVisible) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Choose Custom Color",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Close"
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Select from these beautiful color options:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                // Custom color options grid
+                val customColors = listOf(
+                    "Purple", "Pink", "Green", "Orange", "Red", "Teal"
+                )
+
+                val colorRows = customColors.chunked(3)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    colorRows.forEach { rowColors ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            rowColors.forEach { colorName ->
+                                CustomColorOption(
+                                    colorName = colorName,
+                                    isSelected = currentCustomColor == colorName,
+                                    onSelected = { onColorSelected(colorName) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            // Add spacers for incomplete rows
+                            repeat(3 - rowColors.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun CustomColorOption(
+    colorName: String,
+    isSelected: Boolean,
+    onSelected: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colorMap = mapOf(
+        "Purple" to Color(0xFF7c3aed),
+        "Pink" to Color(0xFFec4899),
+        "Green" to Color(0xFF10b981),
+        "Orange" to Color(0xFFf97316),
+        "Red" to Color(0xFFef4444),
+        "Teal" to Color(0xFF14b8a6)
+    )
+
+    val color = colorMap[colorName] ?: MaterialTheme.colorScheme.outline
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+        },
+        animationSpec = tween(300, easing = EaseInOutCubic),
+        label = "customColorBorder"
+    )
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Color circle
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(color)
+                .border(
+                    width = if (isSelected) 3.dp else 1.dp,
+                    color = borderColor,
+                    shape = CircleShape
+                )
+                .clickable { onSelected() }
+                .semantics {
+                    role = Role.RadioButton
+                    contentDescription = "Select $colorName color"
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = "Selected",
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // Color name
+        Text(
+            text = colorName,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium
+        )
+    }
+}
+
+/**
+ * Advanced custom color picker dialog for selecting primary and secondary colors
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdvancedCustomColorPickerDialog(
+    isVisible: Boolean,
+    currentPrimaryColor: String?,
+    currentSecondaryColor: String?,
+    onColorsSelected: (String, String) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!isVisible) return
+
+    var selectedPrimaryColor by remember { mutableStateOf(currentPrimaryColor ?: "#6366F1") }
+    var selectedSecondaryColor by remember { mutableStateOf(currentSecondaryColor ?: "#8B5CF6") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Advanced Color Settings",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Close"
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Text(
+                    text = "Customize your primary and secondary colors for a unique theme experience.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                // Primary Color Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Primary Color",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        OutlinedTextField(
+                            value = selectedPrimaryColor,
+                            onValueChange = { selectedPrimaryColor = it },
+                            label = { Text("Hex Color") },
+                            placeholder = { Text("#6366F1") },
+                            leadingIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            color = parseHexColorSafe(selectedPrimaryColor),
+                                            shape = CircleShape
+                                        )
+                                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                // Secondary Color Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Secondary Color",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        OutlinedTextField(
+                            value = selectedSecondaryColor,
+                            onValueChange = { selectedSecondaryColor = it },
+                            label = { Text("Hex Color") },
+                            placeholder = { Text("#8B5CF6") },
+                            leadingIcon = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            color = parseHexColorSafe(selectedSecondaryColor),
+                                            shape = CircleShape
+                                        )
+                                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                // Preview Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Preview",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        ColorPreview(
+                            primaryColor = parseHexColorSafe(selectedPrimaryColor),
+                            secondaryColor = parseHexColorSafe(selectedSecondaryColor),
+                            backgroundColor = MaterialTheme.colorScheme.background,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(60.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+                Button(
+                    onClick = {
+                        onColorsSelected(selectedPrimaryColor, selectedSecondaryColor)
+                    }
+                ) {
+                    Text("Apply")
+                }
+            }
+        },
+        modifier = modifier
+    )
+}
+
+private fun parseHexColorSafe(hexColor: String): Color {
+    return try {
+        val cleanHex = hexColor.removePrefix("#")
+        when (cleanHex.length) {
+            6 -> Color(cleanHex.toLong(16) or 0xFF000000)
+            8 -> Color(cleanHex.toLong(16))
+            else -> Color(0xFF6366F1) // Default fallback
+        }
+    } catch (e: NumberFormatException) {
+        Color(0xFF6366F1) // Default fallback
+    }
+}
