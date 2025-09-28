@@ -130,6 +130,9 @@ android {
 }
 
 dependencies {
+    // UI Components Library
+    implementation(project(":ui-components"))
+
     // Compose BOM
     val composeBom = platform("androidx.compose:compose-bom:2025.09.00")
     implementation(composeBom)

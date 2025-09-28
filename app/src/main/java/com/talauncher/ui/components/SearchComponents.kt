@@ -22,6 +22,8 @@ import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.theme.getUiDensity
 import com.talauncher.data.model.AppInfo
 import com.talauncher.utils.EnhancedSearchService
+import com.talauncher.ui.components.lib.lists.GenericListItem
+import com.talauncher.ui.components.lib.toComponentDensity
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
@@ -74,8 +76,8 @@ fun UnifiedSearchResults(
             }) { searchItem ->
                 when (searchItem) {
                     is SearchItem.App -> {
-                        ModernAppItem(
-                            appName = searchItem.appInfo.appName,
+                        GenericListItem(
+                            title = searchItem.appInfo.appName,
                             onClick = {
                                 keyboardController?.hide()
                                 onAppClick(searchItem.appInfo.packageName)
@@ -85,7 +87,7 @@ fun UnifiedSearchResults(
                                 onAppLongClick(searchItem)
                             },
                             enableGlassmorphism = uiSettings.enableGlassmorphism,
-                            uiDensity = uiSettings.getUiDensity()
+                            density = uiSettings.getUiDensity().toComponentDensity()
                         )
                     }
                     is SearchItem.Contact -> {
@@ -232,8 +234,8 @@ fun AppDrawerUnifiedSearchResults(
         // Show filtered apps with long press support
         if (filteredApps.isNotEmpty()) {
             items(filteredApps, key = { it.packageName }) { app ->
-                ModernAppItem(
-                    appName = app.appName,
+                GenericListItem(
+                    title = app.appName,
                     onClick = {
                         keyboardController?.hide()
                         onAppClick(app.packageName)
@@ -243,7 +245,7 @@ fun AppDrawerUnifiedSearchResults(
                         onAppLongClick(app)
                     },
                     enableGlassmorphism = uiSettings.enableGlassmorphism,
-                    uiDensity = uiSettings.getUiDensity()
+                    density = uiSettings.getUiDensity().toComponentDensity()
                 )
             }
         }

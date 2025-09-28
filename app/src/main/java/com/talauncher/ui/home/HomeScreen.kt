@@ -58,7 +58,8 @@ import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.ModernGlassCard
 import com.talauncher.ui.components.ModernSearchField
-import com.talauncher.ui.components.ModernAppItem
+import com.talauncher.ui.components.lib.lists.GenericListItem
+import com.talauncher.ui.components.lib.toComponentDensity
 import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.components.UnifiedSearchResults
@@ -361,15 +362,15 @@ fun HomeScreen(
 
                         // All Apps Section
                         items(uiState.allVisibleApps, key = { it.packageName }) { app ->
-                            ModernAppItem(
-                                appName = app.appName,
+                            GenericListItem(
+                                title = app.appName,
                                 onClick = { viewModel.launchApp(app.packageName) },
                                 onLongClick = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.showAppActionDialog(app)
                                 },
                                 enableGlassmorphism = uiState.enableGlassmorphism,
-                                uiDensity = uiState.uiDensity.toUiDensity()
+                                density = uiState.uiDensity.toUiDensity().toComponentDensity()
                             )
                         }
                     }
