@@ -189,22 +189,21 @@ open class PermissionsHelper(
 
     private fun openUsageAccessSettings() {
         val packageName = context.packageName
-        val usageAccessIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-            data = Uri.fromParts("package", packageName, null)
+        val usageAccessListIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
             putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
 
-        if (startIntentSafely(usageAccessIntent)) {
+        if (startIntentSafely(usageAccessListIntent)) {
             return
         }
 
-        val usageAccessFallbackIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        val usageAccessDetailIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
 
-        if (startIntentSafely(usageAccessFallbackIntent)) {
+        if (startIntentSafely(usageAccessDetailIntent)) {
             return
         }
 
