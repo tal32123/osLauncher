@@ -125,6 +125,10 @@ fun OnboardingScreen(
 
         // Notification Permission (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            var notificationsRequestInProgress by remember { mutableStateOf(false) }
+            LaunchedEffect(permissionState.hasNotifications) {
+                if (permissionState.hasNotifications) notificationsRequestInProgress = false
+            }
             OnboardingStepCard(
                 modifier = Modifier.testTag("onboarding_step_notifications"),
                 icon = Icons.Default.Notifications,
@@ -133,7 +137,9 @@ fun OnboardingScreen(
                 isCompleted = permissionState.hasNotifications,
                 buttonText = if (permissionState.hasNotifications) "Completed" else "Allow Notifications",
                 buttonTestTag = "onboarding_step_notifications_button",
+                buttonEnabled = !permissionState.hasNotifications && !notificationsRequestInProgress,
                 onButtonClick = {
+                    notificationsRequestInProgress = true
                     permissionsHelper.requestPermission(context as Activity, PermissionType.NOTIFICATIONS)
                 }
             )
@@ -248,7 +254,8 @@ fun OnboardingStepCard(
     isCompleted: Boolean,
     buttonText: String,
     onButtonClick: () -> Unit,
-    buttonTestTag: String? = null
+    buttonTestTag: String? = null,
+    buttonEnabled: Boolean? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -315,7 +322,7 @@ fun OnboardingStepCard(
 
             Button(
                 onClick = onButtonClick,
-                enabled = !isCompleted,
+                enabled = buttonEnabled ?: !isCompleted,
                 modifier = buttonModifier,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
