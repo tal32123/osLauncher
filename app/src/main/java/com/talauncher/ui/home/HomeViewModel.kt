@@ -318,14 +318,37 @@ class HomeViewModel(
     private fun calculateFuzzyScore(query: String, target: String): Int {
         if (query.isEmpty() || target.isEmpty()) return 0
 
-        // Calculate Levenshtein distance ratio
-        val distance = calculateLevenshteinDistance(query, target)
-        val maxLength = max(query.length, target.length)
-        val similarity = 1.0 - (distance.toDouble() / maxLength)
+        val normalizedTarget = target.lowercase()
+        val tokens = normalizedTarget.split(Regex("[^a-z0-9]+")).filter { it.isNotBlank() }
 
-        // Only consider fuzzy matches above a threshold
-        return if (similarity >= 0.6) {
-            (similarity * 35).toInt() // Max fuzzy score of 35
+        var bestSimilarity = 0.0
+
+        fun updateBestSimilarity(candidate: String) {
+            if (candidate.isEmpty()) return
+            val distance = calculateLevenshteinDistance(query, candidate)
+            val maxLength = max(query.length, candidate.length)
+            val similarity = 1.0 - (distance.toDouble() / maxLength)
+            if (similarity > bestSimilarity) {
+                bestSimilarity = similarity
+            }
+        }
+
+        // Compare against tokens within the target (names, words, etc.)
+        tokens.forEach(::updateBestSimilarity)
+
+        // Compare against sliding windows to handle substrings inside longer tokens
+        val minWindow = max(1, query.length - 1)
+        val maxWindow = min(normalizedTarget.length, query.length + 2)
+        for (windowSize in minWindow..maxWindow) {
+            if (windowSize > normalizedTarget.length) break
+            for (start in 0..normalizedTarget.length - windowSize) {
+                val substring = normalizedTarget.substring(start, start + windowSize)
+                updateBestSimilarity(substring)
+            }
+        }
+
+        return if (bestSimilarity >= 0.6) {
+            (bestSimilarity * 35).toInt()
         } else {
             0
         }
