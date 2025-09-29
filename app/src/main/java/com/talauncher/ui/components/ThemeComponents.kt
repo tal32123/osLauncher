@@ -654,7 +654,13 @@ fun CustomColorPickerDialog(
                 }
             }
         },
-        confirmButton = {},
+        confirmButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("Done")
+            }
+        },
         modifier = modifier
     )
 }
@@ -808,12 +814,17 @@ fun AdvancedCustomColorPickerDialog(
                             fontWeight = FontWeight.SemiBold
                         )
 
-                        OutlinedTextField(
-                            value = selectedPrimaryColor,
-                            onValueChange = { selectedPrimaryColor = it },
-                            label = { Text("Hex Color") },
-                            placeholder = { Text("#6366F1") },
-                            leadingIcon = {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
@@ -823,9 +834,13 @@ fun AdvancedCustomColorPickerDialog(
                                         )
                                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                                 )
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                                Text(
+                                    text = selectedPrimaryColor,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -846,12 +861,17 @@ fun AdvancedCustomColorPickerDialog(
                             fontWeight = FontWeight.SemiBold
                         )
 
-                        OutlinedTextField(
-                            value = selectedSecondaryColor,
-                            onValueChange = { selectedSecondaryColor = it },
-                            label = { Text("Hex Color") },
-                            placeholder = { Text("#8B5CF6") },
-                            leadingIcon = {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 Box(
                                     modifier = Modifier
                                         .size(24.dp)
@@ -861,9 +881,13 @@ fun AdvancedCustomColorPickerDialog(
                                         )
                                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                                 )
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                                Text(
+                                    text = selectedSecondaryColor,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -1133,29 +1157,32 @@ private fun AdvancedColorWheelPicker(
             }
         }
 
-        // Hex input
-        OutlinedTextField(
-            value = customHexColor,
-            onValueChange = {
-                if (it.startsWith("#") && it.length <= 7) {
-                    onHexColorChange(it.uppercase())
-                }
-            },
-            label = { Text("Hex Color Code") },
-            placeholder = { Text("#6366F1") },
-            leadingIcon = {
+        // Color code display (read-only)
+        Card(
+            modifier = Modifier.fillMaxWidth(0.6f),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Box(
                     modifier = Modifier
                         .size(24.dp)
                         .background(currentColor, CircleShape)
                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Ascii
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
+                Text(
+                    text = customHexColor,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         // Apply button
         Button(
