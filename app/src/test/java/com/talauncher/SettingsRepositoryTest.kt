@@ -110,6 +110,28 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `setCustomPalette updates palette and custom colors together`() = runTest {
+        println("Running setCustomPalette updates palette and custom colors together test")
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
+        repository.setCustomPalette(
+            palette = ColorPaletteOption.CUSTOM,
+            customColorOption = "Purple",
+            customPrimaryColor = "#123456",
+            customSecondaryColor = "#654321"
+        )
+
+        verify(settingsDao).updateSettings(
+            check {
+                assertEquals(ColorPaletteOption.CUSTOM, it.colorPalette)
+                assertEquals("Purple", it.customColorOption)
+                assertEquals("#123456", it.customPrimaryColor)
+                assertEquals("#654321", it.customSecondaryColor)
+            }
+        )
+    }
+
+    @Test
     fun `updateWallpaperBlurAmount clamps value`() = runTest {
         println("Running updateWallpaperBlurAmount clamps value test")
         whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)

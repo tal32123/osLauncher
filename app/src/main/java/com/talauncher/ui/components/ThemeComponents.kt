@@ -246,7 +246,6 @@ fun ColorPaletteSelector(
         currentCustomColor = currentCustomColor,
         onColorSelected = { colorName ->
             onCustomColorSelected(colorName)
-            onPaletteSelected(ColorPaletteOption.CUSTOM)
             showCustomColorPicker = false
         },
         onDismiss = { showCustomColorPicker = false }
