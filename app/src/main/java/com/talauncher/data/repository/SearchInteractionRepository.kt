@@ -70,7 +70,13 @@ class SearchInteractionRepository(
         }
 
         val interactions = withContext(Dispatchers.IO) {
-            interactionDao.getInteractions(keys)
+            if (keys.size <= INTERACTION_QUERY_BATCH_SIZE) {
+                interactionDao.getInteractions(keys)
+            } else {
+                keys
+                    .chunked(INTERACTION_QUERY_BATCH_SIZE)
+                    .flatMap { batch -> interactionDao.getInteractions(batch) }
+            }
         }
 
         if (interactions.isEmpty()) {
@@ -114,5 +120,6 @@ class SearchInteractionRepository(
         private const val APP_PREFIX = "app"
         private const val CONTACT_PREFIX = "contact"
         private const val DELIMITER = "|"
+        private const val INTERACTION_QUERY_BATCH_SIZE = 900
     }
 }
