@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.repository.SettingsRepository
