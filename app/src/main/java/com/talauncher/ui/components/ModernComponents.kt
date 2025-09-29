@@ -206,57 +206,46 @@ fun ModernSearchField(
         modifier
     }
 
-    try {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = if (testTag != null) decoratedModifier.testTag(testTag) else decoratedModifier,
-            placeholder = { Text(placeholder) },
-            singleLine = true,
-            shape = RoundedCornerShape(16.dp),
-            colors = fieldColors,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    onSearch?.invoke(value.trim())
-                    keyboardController?.hide()
-                }
-            ),
-            trailingIcon = {
-                if (value.isNotEmpty() && onClear != null) {
-                    IconButton(onClick = onClear) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = clearContentDescription
-                        )
-                    }
-                }
-            }
-        )
-    } catch (e: android.content.res.Resources.NotFoundException) {
-        val baseModifier = if (testTag != null) decoratedModifier.testTag(testTag) else decoratedModifier
-        Box(
-            modifier = baseModifier
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
-                .padding(12.dp)
-        ) {
-            if (value.isEmpty()) {
-                Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        onSearch?.invoke(value.trim())
-                        keyboardController?.hide()
-                    }
-                )
+    val baseModifier = if (testTag != null) decoratedModifier.testTag(testTag) else decoratedModifier
+    Box(
+        modifier = baseModifier
+            .border(
+                1.dp,
+                if (enableGlassmorphism) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                else MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(16.dp)
             )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Box(modifier = Modifier.weight(1f)) {
+                if (value.isEmpty()) {
+                    Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            onSearch?.invoke(value.trim())
+                            keyboardController?.hide()
+                        }
+                    )
+                )
+            }
+            if (value.isNotEmpty() && onClear != null) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = onClear) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = clearContentDescription
+                    )
+                }
+            }
         }
     }
 }
