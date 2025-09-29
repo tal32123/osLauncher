@@ -287,9 +287,19 @@ class HomeViewModel(
         if (normalizedQuery.isEmpty()) {
             return emptyList()
         }
-        return apps.filter { app ->
-            app.appName.contains(normalizedQuery, ignoreCase = true)
-        }.sortedBy { it.appName.lowercase(Locale.getDefault()) }
+        return apps.mapNotNull { app ->
+            val score = calculateRelevanceScore(normalizedQuery, app.appName)
+            if (score > 0) {
+                app to score
+            } else {
+                null
+            }
+        }
+            .sortedWith(
+                compareByDescending<Pair<AppInfo, Int>> { it.second }
+                    .thenBy { it.first.appName.lowercase(Locale.getDefault()) }
+            )
+            .map { it.first }
     }
 
     private fun calculateRelevanceScore(query: String, name: String): Int {
