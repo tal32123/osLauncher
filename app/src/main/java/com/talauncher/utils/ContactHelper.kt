@@ -38,14 +38,18 @@ class ContactHelper(
                 ContactsContract.CommonDataKinds.Phone.NUMBER
             )
 
-            fun loadContacts(selection: String?, selectionArgs: Array<String>?) {
-                if (candidateContacts.size >= MAX_CONTACTS_TO_EVALUATE) return
+            fun loadContacts(
+                selection: String?,
+                selectionArgs: Array<String>?,
+                sortOrder: String
+            ): Int {
+                var rowsProcessed = 0
                 val cursor = context.contentResolver.query(
                     ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                     projection,
                     selection,
                     selectionArgs,
-                    "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} COLLATE NOCASE ASC"
+                    sortOrder
                 )
 
                 cursor?.use {
@@ -53,7 +57,8 @@ class ContactHelper(
                     val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
                     val phoneIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
 
-                    while (it.moveToNext() && candidateContacts.size < MAX_CONTACTS_TO_EVALUATE) {
+                    while (it.moveToNext()) {
+                        rowsProcessed++
                         val contactId = it.getString(idIndex) ?: continue
                         val name = it.getString(nameIndex) ?: continue
                         val phoneNumber = it.getString(phoneIndex)
@@ -68,16 +73,47 @@ class ContactHelper(
                         )
                     }
                 }
+                return rowsProcessed
             }
 
             // First load direct matches so they keep priority
             loadContacts(
                 selection = "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?",
-                selectionArgs = arrayOf("%$normalizedQuery%")
+                selectionArgs = arrayOf("%$normalizedQuery%"),
+                sortOrder = CONTACT_SORT_ORDER
             )
 
+            // Load partial token matches to widen the candidate pool before broad paging
+            val partialTokens = normalizedQuery
+                .split(Regex("\\s+"))
+                .map { it.trim() }
+                .filter { it.isNotEmpty() && it.length >= MIN_TOKEN_LENGTH_FOR_PARTIAL_MATCH }
+                .filter { it != normalizedQuery }
+                .distinct()
+
+            partialTokens.forEach { token ->
+                loadContacts(
+                    selection = "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?",
+                    selectionArgs = arrayOf("%$token%"),
+                    sortOrder = CONTACT_SORT_ORDER
+                )
+            }
+
             // Load additional contacts for fuzzy matching until limit reached
-            loadContacts(selection = null, selectionArgs = null)
+            var offset = 0
+            while (true) {
+                val processedRows = loadContacts(
+                    selection = null,
+                    selectionArgs = null,
+                    sortOrder = "${CONTACT_SORT_ORDER} LIMIT $CONTACT_BATCH_SIZE OFFSET $offset"
+                )
+
+                if (processedRows < CONTACT_BATCH_SIZE) {
+                    break
+                }
+
+                offset += CONTACT_BATCH_SIZE
+            }
 
             val scoredContacts = candidateContacts.values.mapNotNull { contact ->
                 val score = SearchScoring.calculateRelevanceScore(query, contact.name)
@@ -180,4 +216,7 @@ class ContactHelper(
 }
 
 private const val MAX_RESULTS = 5
-private const val MAX_CONTACTS_TO_EVALUATE = 200
+private const val CONTACT_BATCH_SIZE = 200
+private const val CONTACT_SORT_ORDER =
+    "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} COLLATE NOCASE ASC"
+private const val MIN_TOKEN_LENGTH_FOR_PARTIAL_MATCH = 2

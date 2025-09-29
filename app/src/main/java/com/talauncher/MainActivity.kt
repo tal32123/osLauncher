@@ -306,6 +306,7 @@ fun LauncherNavigationPager(
 ) {
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
+    var homeViewModelState by remember { mutableStateOf<HomeViewModel?>(null) }
 
     LaunchedEffect(Unit) {
         pagerStateListener?.invoke(pagerState)
@@ -320,6 +321,7 @@ fun LauncherNavigationPager(
     // Handle home button navigation
     LaunchedEffect(shouldNavigateToHome) {
         if (shouldNavigateToHome) {
+            homeViewModelState?.clearSearchOnNavigation()
             if (pagerState.currentPage != 1) {
                 // Only animate if we're not already on the home page
                 animateToPage(1) // Navigate to essential apps screen
@@ -331,6 +333,7 @@ fun LauncherNavigationPager(
 
     // Handle back button - navigate to home screen or stay there
     BackHandler {
+        homeViewModelState?.clearSearchOnNavigation()
         coroutineScope.launch {
             if (pagerState.currentPage != 1) {
                 // If not on home screen, go to home screen
@@ -394,6 +397,9 @@ fun LauncherNavigationPager(
                             usageStatsHelper = usageStatsHelper,
                             errorHandler = errorHandler
                         )
+                    }
+                    LaunchedEffect(homeViewModel) {
+                        homeViewModelState = homeViewModel
                     }
                     // Clear search when navigating to home screen
                     LaunchedEffect(pagerState.currentPage) {
