@@ -20,6 +20,8 @@ import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.data.repository.AppRepository
+import com.talauncher.data.repository.SearchInteractionRepository
+import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.service.OverlayService
@@ -55,9 +57,6 @@ import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.math.exp
-import kotlin.math.max
-import kotlin.math.min
 import com.talauncher.BuildConfig
 
 internal const val RECENT_APPS_INDEX_KEY = "*"
@@ -65,17 +64,20 @@ internal const val RECENT_APPS_INDEX_KEY = "*"
 sealed class SearchItem {
     abstract val name: String
     abstract val relevanceScore: Int
+    abstract val lastInteractionTimestamp: Long?
 
     data class App(
         val appInfo: AppInfo,
-        override val relevanceScore: Int
+        override val relevanceScore: Int,
+        override val lastInteractionTimestamp: Long?
     ) : SearchItem() {
         override val name: String = appInfo.appName
     }
 
     data class Contact(
         val contactInfo: ContactInfo,
-        override val relevanceScore: Int
+        override val relevanceScore: Int,
+        override val lastInteractionTimestamp: Long?
     ) : SearchItem() {
         override val name: String = contactInfo.name
     }
@@ -97,6 +99,7 @@ sealed interface HomeEvent {
 class HomeViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
+    private val searchInteractionRepository: SearchInteractionRepository? = null,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
     private val sessionRepository: SessionRepository? = null,
     private val appContext: Context,
@@ -306,50 +309,41 @@ class HomeViewModel(
     private suspend fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
         if (query.isBlank()) return emptyList()
 
-        // Get recent usage data for recency scoring on background thread
-        val hasUsageStatsPermission = resolvedPermissionsHelper?.permissionState?.value?.hasUsageStats ?: false
-        val usageStats = if (hasUsageStatsPermission && usageStatsHelper != null) {
-            withContext(Dispatchers.IO) {
-                usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
-            }
-        } else {
-            emptyMap()
-        }
+        val interactionSnapshot = searchInteractionRepository?.getLastUsedSnapshot(
+            appPackages = apps.map { it.packageName },
+            contactIds = contacts.map { it.id }
+        ) ?: SearchInteractionRepository.SearchInteractionSnapshot.EMPTY
+
+        val locale = Locale.getDefault()
 
         val appItems = apps.mapNotNull { app ->
             val baseScore = SearchScoring.calculateRelevanceScore(query, app.appName)
             if (baseScore > 0) {
-                val recencyScore = calculateRecencyScore(app.packageName, usageStats)
-                val finalScore = baseScore + recencyScore
-                SearchItem.App(app, finalScore)
+                SearchItem.App(
+                    appInfo = app,
+                    relevanceScore = baseScore,
+                    lastInteractionTimestamp = interactionSnapshot.appLastUsed[app.packageName]
+                )
             } else null
         }
 
         val contactItems = contacts.mapNotNull { contact ->
             val score = SearchScoring.calculateRelevanceScore(query, contact.name)
-            if (score > 0) SearchItem.Contact(contact, score) else null
+            if (score > 0) {
+                SearchItem.Contact(
+                    contactInfo = contact,
+                    relevanceScore = score,
+                    lastInteractionTimestamp = interactionSnapshot.contactLastUsed[contact.id]
+                )
+            } else null
         }
 
         return (appItems + contactItems)
-            .sortedWith(compareByDescending<SearchItem> { it.relevanceScore }
-                .thenBy { it.name.lowercase() })
-    }
-
-    private fun calculateRecencyScore(packageName: String, usageStats: Map<String, com.talauncher.data.model.AppUsage>): Int {
-        val usageApp = usageStats[packageName] ?: return 0
-
-        // Calculate recency boost based on usage time and frequency
-        val usageTimeHours = TimeUnit.MILLISECONDS.toHours(usageApp.timeInForeground)
-        val now = System.currentTimeMillis()
-        val lastUsedHours = TimeUnit.MILLISECONDS.toHours(now - usageApp.lastTimeUsed)
-
-        // Exponential decay for recency (higher boost for more recent usage)
-        val recencyFactor = exp(-lastUsedHours / 24.0) // Decay over 24 hours
-
-        // Usage time factor (more used apps get higher boost)
-        val usageFactor = min(usageTimeHours / 2.0, 5.0) // Cap at 5 points
-
-        return (recencyFactor * usageFactor * 20).toInt() // Max recency boost of ~20 points
+            .sortedWith(
+                compareByDescending<SearchItem> { it.relevanceScore }
+                    .thenByDescending { it.lastInteractionTimestamp ?: Long.MIN_VALUE }
+                    .thenBy { it.name.lowercase(locale) }
+            )
     }
 
     private fun updateTime() {
@@ -392,6 +386,7 @@ class HomeViewModel(
 
             val launched = appRepository.launchApp(packageName)
             if (launched) {
+                searchInteractionRepository?.recordAppLaunch(packageName)
                 clearSearch()
                 onLaunchApp?.invoke(packageName, null)
             } else {
@@ -592,6 +587,7 @@ class HomeViewModel(
         viewModelScope.launch {
             val launched = appRepository.launchApp(packageName, bypassFriction = true)
             if (launched) {
+                searchInteractionRepository?.recordAppLaunch(packageName)
                 clearSearch()
                 onLaunchApp?.invoke(packageName, null)
                 dismissFrictionDialog()
@@ -625,6 +621,7 @@ class HomeViewModel(
             )
 
             if (launched) {
+                searchInteractionRepository?.recordAppLaunch(packageName)
                 clearSearch()
                 onLaunchApp?.invoke(packageName, durationMinutes)
                 if (isExtension) {
@@ -1175,21 +1172,33 @@ class HomeViewModel(
 
     fun callContact(contact: ContactInfo) {
         contactHelper?.callContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.CALL)
+        }
         clearSearch()
     }
 
     fun messageContact(contact: ContactInfo) {
         contactHelper?.messageContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.MESSAGE)
+        }
         clearSearch()
     }
 
     fun whatsAppContact(contact: ContactInfo) {
         contactHelper?.whatsAppContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.WHATSAPP)
+        }
         clearSearch()
     }
 
     fun openContact(contact: ContactInfo) {
         contactHelper?.openContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.OPEN)
+        }
         clearSearch()
     }
 

@@ -11,11 +11,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.talauncher.data.database.AppDao
 import com.talauncher.data.database.AppSessionDao
+import com.talauncher.data.database.SearchInteractionDao
 import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.repository.AppRepository
+import com.talauncher.data.repository.SearchInteractionRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.ui.theme.TALauncherTheme
@@ -28,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.talauncher.data.model.SearchInteractionEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -58,6 +61,7 @@ class LauncherPagerNavigationTest {
         val usageStatsHelper = TestUsageStatsHelper(context)
         val contactHelper = ContactHelper(context, permissionsHelper)
         val backgroundOverlayManager = BackgroundOverlayManager.getInstance(context)
+        val searchInteractionRepository = SearchInteractionRepository(FakeSearchInteractionDao())
 
         val recordedAnimations = mutableListOf<Int>()
         var pagerState: PagerState? = null
@@ -67,6 +71,7 @@ class LauncherPagerNavigationTest {
             TALauncherTheme {
                 LauncherNavigationPager(
                     appRepository = appRepository,
+                    searchInteractionRepository = searchInteractionRepository,
                     settingsRepository = settingsRepository,
                     permissionsHelper = permissionsHelper,
                     usageStatsHelper = usageStatsHelper,
@@ -223,6 +228,21 @@ private class FakeAppSessionDao : AppSessionDao {
 
     override suspend fun deleteOldSessions(cutoffTime: Long) {
         sessions.value = sessions.value.filter { it.endTime == null || it.endTime!! >= cutoffTime }
+    }
+}
+
+private class FakeSearchInteractionDao : SearchInteractionDao {
+    private val interactions = mutableMapOf<String, SearchInteractionEntity>()
+
+    override suspend fun getInteractions(keys: List<String>): List<SearchInteractionEntity> {
+        if (keys.isEmpty()) {
+            return emptyList()
+        }
+        return keys.mapNotNull { interactions[it] }
+    }
+
+    override suspend fun upsertInteraction(interaction: SearchInteractionEntity) {
+        interactions[interaction.itemKey] = interaction
     }
 }
 
