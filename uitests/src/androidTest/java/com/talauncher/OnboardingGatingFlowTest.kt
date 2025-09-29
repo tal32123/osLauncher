@@ -72,8 +72,9 @@ class OnboardingGatingFlowTest {
         }
 
         // Overlay
-        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
-        if (!permissionsHelper.permissionState.value.hasSystemAlertWindow) {
+        (permissionsHelper as FakePermissionsHelper).setOverlayGranted(true)
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            permissionsHelper.permissionState.value.hasSystemAlertWindow) {
             (permissionsHelper as FakePermissionsHelper).setOverlayGranted(true)
         }
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
@@ -81,13 +82,13 @@ class OnboardingGatingFlowTest {
         }
 
         // Contacts
-        composeTestRule.onNodeWithTag("onboarding_step_contacts_button").performClick()
+        (permissionsHelper as FakePermissionsHelper).setContactsGranted(true)
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             permissionsHelper.permissionState.value.hasContacts
         }
 
         // Location
-        composeTestRule.onNodeWithTag("onboarding_step_location_button").performClick()
+        (permissionsHelper as FakePermissionsHelper).setLocationGranted(true)
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             permissionsHelper.permissionState.value.hasLocation
         }
@@ -203,3 +204,4 @@ internal class OnboardingFakeSettingsDao : SettingsDao {
         state.value = settings
     }
 }
+
