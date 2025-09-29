@@ -77,7 +77,7 @@ val javaToolchains = project.extensions.getByType<JavaToolchainService>()
 tasks.withType<Test>().configureEach {
     javaLauncher.set(
         javaToolchains.launcherFor {
-            languageVersion.set(JavaLanguageVersion.of(21))
+            languageVersion.set(JavaLanguageVersion.of(24))
         }
     )
 }
@@ -112,7 +112,7 @@ android {
     }
 
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(24)
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
@@ -121,10 +121,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.7.6"
     }
 
     lint {
