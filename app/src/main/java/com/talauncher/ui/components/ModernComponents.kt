@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -205,32 +206,59 @@ fun ModernSearchField(
         modifier
     }
 
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = if (testTag != null) decoratedModifier.testTag(testTag) else decoratedModifier,
-        placeholder = { Text(placeholder) },
-        singleLine = true,
-        shape = RoundedCornerShape(16.dp),
-        colors = fieldColors,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(
-            onSearch = {
-                onSearch?.invoke(value.trim())
-                keyboardController?.hide()
-            }
-        ),
-        trailingIcon = {
-            if (value.isNotEmpty() && onClear != null) {
-                IconButton(onClick = onClear) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = clearContentDescription
-                    )
+    try {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = if (testTag != null) decoratedModifier.testTag(testTag) else decoratedModifier,
+            placeholder = { Text(placeholder) },
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp),
+            colors = fieldColors,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    onSearch?.invoke(value.trim())
+                    keyboardController?.hide()
+                }
+            ),
+            trailingIcon = {
+                if (value.isNotEmpty() && onClear != null) {
+                    IconButton(onClick = onClear) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = clearContentDescription
+                        )
+                    }
                 }
             }
+        )
+    } catch (e: android.content.res.Resources.NotFoundException) {
+        val baseModifier = if (testTag != null) decoratedModifier.testTag(testTag) else decoratedModifier
+        Box(
+            modifier = baseModifier
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+                .padding(12.dp)
+        ) {
+            if (value.isEmpty()) {
+                Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        onSearch?.invoke(value.trim())
+                        keyboardController?.hide()
+                    }
+                )
+            )
         }
-    )
+    }
 }
 
 /**
