@@ -50,21 +50,11 @@ jobs:
     - name: Build debug APK
       run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-    - name: Build UI tests APK
-      run: ./gradlew :uitests:assembleDebugAndroidTest --no-daemon --stacktrace
-
     - name: Upload debug APK
       uses: actions/upload-artifact@v4
       with:
         name: debug-apk
         path: app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 30
-
-    - name: Upload UI test APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: ui-test-apk
-        path: uitests/build/outputs/apk/androidTest/debug/uitests-debug-androidTest.apk
         retention-days: 30
 
     - name: Upload test reports
@@ -74,9 +64,7 @@ jobs:
         name: test-reports
         path: |
           app/build/reports/tests/
-          uitests/build/reports/tests/
           app/build/test-results/
-          uitests/build/test-results/
         retention-days: 30
 
     - name: Upload lint reports
@@ -86,7 +74,6 @@ jobs:
         name: lint-reports
         path: |
           app/build/reports/lint-*.html
-          uitests/build/reports/lint-*.html
         retention-days: 30
 
     - name: Comment on PR with APK download links
@@ -106,7 +93,6 @@ jobs:
 
             ### Available Downloads:
             - **debug-apk**: Main application debug build
-            - **ui-test-apk**: UI test APK for testing
             - **test-reports**: Unit test results
             - **lint-reports**: Code quality reports
 
