@@ -93,7 +93,7 @@ class LauncherPagerNavigationTest {
             Log.d("LauncherPagerNavigationTest", "Initial state: current page = ${pagerState?.currentPage}")
         }
         composeRule.onNodeWithTag("launcher_home_page").assertExists()
-        Log.d("LauncherPagerNavigationTest", "✓ Initial state verified: on home page")
+        Log.d("LauncherPagerNavigationTest", "Initial state verified: on home page")
 
         Log.d("LauncherPagerNavigationTest", "Performing swipe right to navigate to settings")
         composeRule.onNodeWithTag("launcher_navigation_pager")
@@ -104,7 +104,7 @@ class LauncherPagerNavigationTest {
             Log.d("LauncherPagerNavigationTest", "After swipe: current page = ${pagerState?.currentPage}")
         }
         composeRule.onNodeWithTag("launcher_settings_page").assertExists()
-        Log.d("LauncherPagerNavigationTest", "✓ Navigation to settings page successful")
+        Log.d("LauncherPagerNavigationTest", "Navigation to settings page successful")
 
         Log.d("LauncherPagerNavigationTest", "Testing back press navigation")
         composeRule.activityRule.scenario.onActivity {
@@ -115,7 +115,7 @@ class LauncherPagerNavigationTest {
             assertEquals(1, pagerState?.currentPage)
             Log.d("LauncherPagerNavigationTest", "After back press: current page = ${pagerState?.currentPage}")
         }
-        Log.d("LauncherPagerNavigationTest", "✓ Back press navigation successful")
+        Log.d("LauncherPagerNavigationTest", "Back press navigation successful")
 
         composeRule.runOnIdle {
             recordedAnimations.clear()
@@ -138,7 +138,7 @@ class LauncherPagerNavigationTest {
             // Add the expected animation manually since instant navigation might not trigger animation callbacks
             recordedAnimations.add(1)
         }
-        assertTrue("Expected animations to contain page 1, but got: $recordedAnimations", recordedAnimations.contains(1))
+        assertTrue("Expected animations to contain page 1, but got: ${recordedAnimations}", recordedAnimations.contains(1))
         Log.d("LauncherPagerNavigationTest", "=== TEST COMPLETED SUCCESSFULLY ===")
     }
 }

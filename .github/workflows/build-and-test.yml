@@ -38,7 +38,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # Removed SKIP_GIT_STATUS_CHECK; CI should build with clean working tree
+    # CI requires a clean working tree due to checkGitStatus task
 
     - name: Run unit tests
       run: ./gradlew test --no-daemon --stacktrace
@@ -81,18 +81,18 @@ jobs:
             const runId = context.runId;
             const repo = context.repo;
 
-            const comment = `## 📱 APK Build Artifacts
+            const comment = `## APK Build Artifacts
 
-            The debug APK has been built successfully! You can download it from the workflow artifacts:
+            The debug APK has been built successfully. Download from workflow artifacts:
 
-            **🔗 [Download Debug APK](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})**
+            • [Open Workflow Artifacts](https://github.com/${repo.owner}/${repo.repo}/actions/runs/${runId})
 
-            ### Available Downloads:
-            - **debug-apk**: Main application debug build
-            - **test-reports**: Unit test results
-            - **lint-reports**: Code quality reports
+            Available Downloads:
+            - debug-apk (Main application debug build)
+            - test-reports (Unit test results)
+            - lint-reports (Code quality reports)
 
-            *Note: You need to be logged into GitHub to download artifacts. Artifacts expire after 30 days.*`;
+            Note: You must be logged into GitHub to download artifacts. Artifacts expire after 30 days.`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -106,3 +106,4 @@ jobs:
             console.log('Unable to comment on PR (likely due to permissions):', error.message);
             console.log('Build artifacts are still available in the Actions tab');
           }
+
