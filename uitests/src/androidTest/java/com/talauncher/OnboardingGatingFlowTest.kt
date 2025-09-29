@@ -67,6 +67,7 @@ class OnboardingGatingFlowTest {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsEnabled()
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
+            composeTestRule.waitForIdle()
             // Wait for permission state to update
             composeTestRule.waitUntil(timeoutMillis = 10_000) {
                 permissionsHelper.permissionState.value.hasNotifications
