@@ -1,10 +1,7 @@
 package com.talauncher
 
-import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
@@ -33,4 +30,3 @@ class LauncherPagerNavigationTest {
         composeRule.onNodeWithTag("launcher_home_page").assertExists()
     }
 }
-
