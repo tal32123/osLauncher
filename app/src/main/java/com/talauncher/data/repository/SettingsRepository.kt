@@ -131,19 +131,21 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(colorPalette = palette))
     }
 
-    suspend fun updateCustomColorOption(customColorOption: String?) {
+    suspend fun setCustomPalette(
+        palette: ColorPaletteOption,
+        customColorOption: String?,
+        customPrimaryColor: String?,
+        customSecondaryColor: String?
+    ) {
         val settings = getSettingsSync()
-        updateSettings(settings.copy(customColorOption = customColorOption))
-    }
-
-    suspend fun updateCustomPrimaryColor(customPrimaryColor: String?) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(customPrimaryColor = customPrimaryColor))
-    }
-
-    suspend fun updateCustomSecondaryColor(customSecondaryColor: String?) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(customSecondaryColor = customSecondaryColor))
+        updateSettings(
+            settings.copy(
+                colorPalette = palette,
+                customColorOption = customColorOption,
+                customPrimaryColor = customPrimaryColor,
+                customSecondaryColor = customSecondaryColor
+            )
+        )
     }
 
     suspend fun updateThemeMode(mode: ThemeModeOption) {

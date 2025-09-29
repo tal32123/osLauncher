@@ -186,25 +186,55 @@ class SettingsViewModel(
 
     fun updateColorPalette(palette: ColorPaletteOption) {
         viewModelScope.launch {
-            settingsRepository.updateColorPalette(palette)
+            if (palette == ColorPaletteOption.CUSTOM) {
+                settingsRepository.setCustomPalette(
+                    palette = ColorPaletteOption.CUSTOM,
+                    customColorOption = _uiState.value.customColorOption,
+                    customPrimaryColor = _uiState.value.customPrimaryColor,
+                    customSecondaryColor = _uiState.value.customSecondaryColor
+                )
+            } else {
+                settingsRepository.updateColorPalette(palette)
+            }
         }
     }
 
     fun updateCustomColorOption(colorOption: String) {
-        viewModelScope.launch {
-            settingsRepository.updateCustomColorOption(colorOption)
-        }
+        setCustomPalette(
+            customColorOption = colorOption,
+            customPrimaryColor = _uiState.value.customPrimaryColor,
+            customSecondaryColor = _uiState.value.customSecondaryColor
+        )
     }
 
     fun updateCustomPrimaryColor(primaryColor: String?) {
-        viewModelScope.launch {
-            settingsRepository.updateCustomPrimaryColor(primaryColor)
-        }
+        setCustomPalette(
+            customColorOption = _uiState.value.customColorOption,
+            customPrimaryColor = primaryColor,
+            customSecondaryColor = _uiState.value.customSecondaryColor
+        )
     }
 
     fun updateCustomSecondaryColor(secondaryColor: String?) {
+        setCustomPalette(
+            customColorOption = _uiState.value.customColorOption,
+            customPrimaryColor = _uiState.value.customPrimaryColor,
+            customSecondaryColor = secondaryColor
+        )
+    }
+
+    private fun setCustomPalette(
+        customColorOption: String?,
+        customPrimaryColor: String?,
+        customSecondaryColor: String?
+    ) {
         viewModelScope.launch {
-            settingsRepository.updateCustomSecondaryColor(secondaryColor)
+            settingsRepository.setCustomPalette(
+                palette = ColorPaletteOption.CUSTOM,
+                customColorOption = customColorOption,
+                customPrimaryColor = customPrimaryColor,
+                customSecondaryColor = customSecondaryColor
+            )
         }
     }
 
