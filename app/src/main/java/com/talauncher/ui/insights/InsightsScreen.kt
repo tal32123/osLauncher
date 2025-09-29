@@ -1,7 +1,5 @@
 package com.talauncher.ui.insights
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,13 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,7 +23,6 @@ fun InsightsScreen(
     viewModel: InsightsViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -57,12 +52,7 @@ fun InsightsScreen(
 
         if (!uiState.hasPermission) {
             PermissionCard(
-                onGrantPermission = {
-                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                    context.startActivity(intent)
-                }
+                onGrantPermission = viewModel::openUsageAccessSettings
             )
         } else if (uiState.isLoading) {
             Box(

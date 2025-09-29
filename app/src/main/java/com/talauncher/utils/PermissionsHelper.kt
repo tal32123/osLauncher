@@ -183,11 +183,47 @@ open class PermissionsHelper(
         }
     }
 
+    fun openUsageAccessSettingsScreen() {
+        openUsageAccessSettings()
+    }
+
     private fun openUsageAccessSettings() {
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+        val packageName = context.packageName
+        val usageAccessIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+            data = Uri.parse("package:$packageName")
+            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        context.startActivity(intent)
+
+        if (startIntentSafely(usageAccessIntent)) {
+            return
+        }
+
+        val appDetailsIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.parse("package:$packageName")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        if (startIntentSafely(appDetailsIntent)) {
+            return
+        }
+
+        val fallbackIntent = Intent(Settings.ACTION_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        startIntentSafely(fallbackIntent)
+    }
+
+    private fun startIntentSafely(intent: Intent): Boolean {
+        return runCatching {
+            if (intent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(intent)
+                true
+            } else {
+                false
+            }
+        }.getOrDefault(false)
     }
 
     private fun openDefaultLauncherSettings() {

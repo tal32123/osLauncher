@@ -25,6 +25,10 @@ class InsightsViewModel(
         loadUsageStats()
     }
 
+    fun openUsageAccessSettings() {
+        permissionsHelper.openUsageAccessSettingsScreen()
+    }
+
     fun loadUsageStats() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
