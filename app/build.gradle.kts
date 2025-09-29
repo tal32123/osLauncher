@@ -1,6 +1,8 @@
 import java.util.Date
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.api.tasks.testing.Test
+import org.gradle.jvm.toolchain.JavaToolchainService
+import org.gradle.kotlin.dsl.getByType
 
 plugins {
     id("com.android.application")
@@ -70,6 +72,16 @@ tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("bundle") 
     dependsOn("generateCommitInfo")
 }
 
+val javaToolchains = project.extensions.getByType<JavaToolchainService>()
+
+tasks.withType<Test>().configureEach {
+    javaLauncher.set(
+        javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    )
+}
+
 android {
     namespace = "com.talauncher"
     compileSdk = 36
@@ -100,6 +112,7 @@ android {
     }
 
     kotlin {
+        jvmToolchain(21)
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
@@ -174,10 +187,4 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
-
-tasks.withType<Test>().configureEach {
-    javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    })
-}
 
