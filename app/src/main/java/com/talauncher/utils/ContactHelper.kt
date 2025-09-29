@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
 import android.util.Log
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -29,36 +30,36 @@ class ContactHelper(
         }
 
         try {
-            val contacts = mutableListOf<ContactInfo>()
+            val candidateContacts = linkedMapOf<String, ContactInfo>()
             val normalizedQuery = query.trim().lowercase()
-
-            val cursor = context.contentResolver.query(
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                arrayOf(
-                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-                    ContactsContract.CommonDataKinds.Phone.NUMBER
-                ),
-                "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?",
-                arrayOf("%$normalizedQuery%"),
-                "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} ASC"
+            val projection = arrayOf(
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
             )
 
-            cursor?.use {
-                val idIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
-                val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-                val phoneIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+            fun loadContacts(selection: String?, selectionArgs: Array<String>?) {
+                if (candidateContacts.size >= MAX_CONTACTS_TO_EVALUATE) return
+                val cursor = context.contentResolver.query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} COLLATE NOCASE ASC"
+                )
 
-                val seenContacts = mutableSetOf<String>()
+                cursor?.use {
+                    val idIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
+                    val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                    val phoneIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
 
-                while (it.moveToNext() && contacts.size < 5) { // Limit to 5 contacts
-                    val contactId = it.getString(idIndex)
-                    val name = it.getString(nameIndex)
-                    val phoneNumber = it.getString(phoneIndex)
+                    while (it.moveToNext() && candidateContacts.size < MAX_CONTACTS_TO_EVALUATE) {
+                        val contactId = it.getString(idIndex) ?: continue
+                        val name = it.getString(nameIndex) ?: continue
+                        val phoneNumber = it.getString(phoneIndex)
 
-                    // Avoid duplicates by contact ID
-                    if (seenContacts.add(contactId) && name != null) {
-                        contacts.add(
+                        candidateContacts.putIfAbsent(
+                            contactId,
                             ContactInfo(
                                 id = contactId,
                                 name = name,
@@ -69,19 +70,31 @@ class ContactHelper(
                 }
             }
 
-            // Sort by relevance - exact matches first, then starts-with, then contains
-            contacts.sortedWith { a, b ->
-                val aName = a.name.lowercase()
-                val bName = b.name.lowercase()
+            // First load direct matches so they keep priority
+            loadContacts(
+                selection = "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} LIKE ?",
+                selectionArgs = arrayOf("%$normalizedQuery%")
+            )
 
-                when {
-                    aName == normalizedQuery && bName != normalizedQuery -> -1
-                    bName == normalizedQuery && aName != normalizedQuery -> 1
-                    aName.startsWith(normalizedQuery) && !bName.startsWith(normalizedQuery) -> -1
-                    bName.startsWith(normalizedQuery) && !aName.startsWith(normalizedQuery) -> 1
-                    else -> aName.compareTo(bName)
+            // Load additional contacts for fuzzy matching until limit reached
+            loadContacts(selection = null, selectionArgs = null)
+
+            val scoredContacts = candidateContacts.values.mapNotNull { contact ->
+                val score = SearchScoring.calculateRelevanceScore(query, contact.name)
+                if (score > 0) {
+                    contact to score
+                } else {
+                    null
                 }
             }
+
+            scoredContacts
+                .sortedWith(
+                    compareByDescending<Pair<ContactInfo, Int>> { it.second }
+                        .thenBy { it.first.name.lowercase(Locale.getDefault()) }
+                )
+                .take(MAX_RESULTS)
+                .map { it.first }
         } catch (e: Exception) {
             Log.e("ContactHelper", "Error searching contacts", e)
             emptyList()
@@ -165,3 +178,6 @@ class ContactHelper(
         }
     }
 }
+
+private const val MAX_RESULTS = 5
+private const val MAX_CONTACTS_TO_EVALUATE = 200
