@@ -16,7 +16,7 @@ data class UiSettings(
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val enableGlassmorphism: Boolean = true,
     val enableAnimations: Boolean = true,
-    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
+    val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val showWallpaper: Boolean = false,
     val wallpaperBlurAmount: Float = 0f,
     val backgroundColor: String = "system",
@@ -59,7 +59,7 @@ fun LauncherSettings?.toUiSettingsOrDefault(): UiSettings =
 fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
     UiDensityOption.COMPACT -> UiDensity.Compact
     UiDensityOption.SPACIOUS -> UiDensity.Spacious
-    UiDensityOption.COMFORTABLE -> UiDensity.Comfortable // Default fallback
+    UiDensityOption.COMFORTABLE -> UiDensity.Comfortable
 }
 
 /**
