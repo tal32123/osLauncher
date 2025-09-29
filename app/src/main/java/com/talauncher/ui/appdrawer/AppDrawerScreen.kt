@@ -10,7 +10,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -24,7 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-// import androidx.compose.ui.layout.offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.R
@@ -47,13 +54,13 @@ import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.MathChallengeDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.AppDrawerUnifiedSearchResults
-import com.talauncher.ui.components.NiagaraFastScroll
 import com.talauncher.ui.theme.*
 import com.talauncher.ui.theme.UiSettings
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import java.text.Collator
 import java.util.Locale
+import kotlin.math.max
 
 @Composable
 fun AppDrawerScreen(
@@ -101,7 +108,10 @@ fun AppDrawerScreen(
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    var isNiagaraScrolling by remember { mutableStateOf(false) }
+    var isScrubbing by remember { mutableStateOf(false) }
+    var previewEntry by remember { mutableStateOf<AlphabetIndexEntry?>(null) }
+    var previewFraction by remember { mutableStateOf(0f) }
+    var lastScrubbedKey by remember { mutableStateOf<String?>(null) }
 
     val showIndex = uiState.searchQuery.isEmpty() && uiState.alphabetIndexEntries.isNotEmpty()
 
@@ -228,7 +238,7 @@ fun AppDrawerScreen(
                 selectedTab = 0
             }
 
-            Box(
+            BoxWithConstraints(
                 modifier = Modifier.weight(1f)
             ) {
                 if (selectedTab == 0) {
@@ -423,28 +433,75 @@ fun AppDrawerScreen(
                         }
                     }
 
-                    NiagaraFastScroll(
-                        entries = alphabetEntries,
-                        isEnabled = showIndex,
-                        modifier = Modifier
-                            .align(
-                                if (layoutDirection == LayoutDirection.Rtl) {
-                                    Alignment.CenterStart
-                                } else {
-                                    Alignment.CenterEnd
+                    if (showIndex) {
+                        AlphabetIndex(
+                            entries = alphabetEntries,
+                            activeKey = previewEntry?.key,
+                            isEnabled = showIndex,
+                            modifier = Modifier
+                                .align(
+                                    if (layoutDirection == LayoutDirection.Rtl) {
+                                        Alignment.CenterStart
+                                    } else {
+                                        Alignment.CenterEnd
+                                    }
+                                )
+                                .padding(horizontal = PrimerSpacing.sm),
+                            onEntryFocused = { entry, fraction ->
+                                previewEntry = entry
+                                previewFraction = fraction
+                                if (entry.hasApps && entry.key != lastScrubbedKey) {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 }
-                            ),
-                        onEntryFocused = { entry, fraction ->
-                            viewModel.onAlphabetIndexFocused(entry, fraction)
-                        },
-                        onScrollingChanged = { active ->
-                            viewModel.onAlphabetScrubbingChanged(active)
-                            isNiagaraScrolling = active
-                            if (active) {
-                                keyboardController?.hide()
+                                if (entry.hasApps && entry.targetIndex != null) {
+                                    coroutineScope.launch {
+                                        listState.scrollToItem(entry.targetIndex)
+                                    }
+                                }
+                                lastScrubbedKey = entry.key
+                            },
+                            onScrubbingChanged = { active ->
+                                isScrubbing = active
+                                if (active) {
+                                    keyboardController?.hide()
+                                } else {
+                                    previewEntry = null
+                                    previewFraction = 0f
+                                    lastScrubbedKey = null
+                                }
                             }
+                        )
+                    }
+
+                    // Preview bubble for scrubbing
+                    if (isScrubbing && previewEntry != null && previewEntry!!.hasApps) {
+                        val density = LocalDensity.current
+                        val bubbleHeight = 72.dp
+                        val previewOffsetY = with(density) {
+                            val containerHeight = maxHeight.toPx().coerceAtLeast(0f)
+                            val bubblePx = bubbleHeight.toPx()
+                            val center = previewFraction * containerHeight
+                            val top = (center - bubblePx / 2f).coerceIn(0f, max(containerHeight - bubblePx, 0f))
+                            top.toDp()
                         }
-                    )
+
+                        ScrubPreviewBubble(
+                            letter = previewEntry!!.displayLabel,
+                            appName = previewEntry!!.previewAppName,
+                            modifier = Modifier
+                                .align(
+                                    if (layoutDirection == LayoutDirection.Rtl) {
+                                        Alignment.TopStart
+                                    } else {
+                                        Alignment.TopEnd
+                                    }
+                                )
+                                .offset(
+                                    x = if (layoutDirection == LayoutDirection.Rtl) 72.dp else (-72).dp,
+                                    y = previewOffsetY
+                                )
+                        )
+                    }
                 }
             }
         }
@@ -914,6 +971,124 @@ fun RecentAppItem(
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlphabetIndex(
+    entries: List<AlphabetIndexEntry>,
+    activeKey: String?,
+    isEnabled: Boolean,
+    modifier: Modifier = Modifier,
+    onEntryFocused: (AlphabetIndexEntry, Float) -> Unit,
+    onScrubbingChanged: (Boolean) -> Unit
+) {
+    var componentSize by remember { mutableStateOf(IntSize.Zero) }
+
+    fun resolveEntry(positionY: Float): Pair<AlphabetIndexEntry, Float>? {
+        if (entries.isEmpty() || componentSize.height == 0) {
+            return null
+        }
+        val totalHeight = componentSize.height.toFloat()
+        val clampedY = positionY.coerceIn(0f, totalHeight)
+        val entryHeight = totalHeight / entries.size
+        val index = (clampedY / entryHeight).toInt().coerceIn(0, entries.lastIndex)
+        val center = (index + 0.5f) * entryHeight
+        val fraction = center / totalHeight
+        return entries[index] to fraction
+    }
+
+    Box(
+        modifier = modifier
+            .width(48.dp)
+            .fillMaxHeight()
+            .onSizeChanged { componentSize = it }
+            .pointerInput(entries, isEnabled) {
+                if (!isEnabled) return@pointerInput
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    onScrubbingChanged(true)
+                    resolveEntry(down.position.y)?.let { (entry, fraction) ->
+                        onEntryFocused(entry, fraction)
+                    }
+                    try {
+                        drag(down.id) { change ->
+                            resolveEntry(change.position.y)?.let { (entry, fraction) ->
+                                onEntryFocused(entry, fraction)
+                            }
+                            change.consume()
+                        }
+                    } finally {
+                        onScrubbingChanged(false)
+                    }
+                }
+            }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = PrimerSpacing.md),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            entries.forEach { entry ->
+                val isActive = isEnabled && entry.hasApps && entry.key == activeKey
+                val color = when {
+                    !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                    entry.hasApps && isActive -> MaterialTheme.colorScheme.onSurface
+                    entry.hasApps -> MaterialTheme.colorScheme.onSurfaceVariant
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                }
+                Text(
+                    text = entry.displayLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = color
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScrubPreviewBubble(
+    letter: String,
+    appName: String?,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = PrimerShapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+        tonalElevation = 4.dp,
+        shadowElevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = PrimerSpacing.md, vertical = PrimerSpacing.sm)
+                .widthIn(min = 64.dp, max = 160.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+        ) {
+            Text(
+                text = letter,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
+            )
+
+            if (!appName.isNullOrBlank()) {
+                Text(
+                    text = appName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    textAlign = TextAlign.Center
                 )
             }
         }
