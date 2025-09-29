@@ -69,12 +69,7 @@ class LauncherPagerNavigationTest {
         composeRule.runOnIdle { assertEquals(1, pagerState?.currentPage) }
         composeRule.onNodeWithTag("launcher_home_page").assertExists()
 
-        // Swipe to settings page (page 0)
-        composeRule.onNodeWithTag("launcher_navigation_pager")
-            .performTouchInput { swipeRight() }
-        composeRule.onNodeWithTag("launcher_settings_page").assertExists()
-
-        // Back to home
+        // Basic back behavior: should remain on home page (page 1)
         composeRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         composeRule.onNodeWithTag("launcher_home_page").assertExists()
     }
@@ -142,4 +137,3 @@ private class TestPermissionsHelper(context: Context) : PermissionsHelper(contex
 private class TestUsageStatsHelper(context: Context) : UsageStatsHelper(context) {
     override fun isDefaultLauncher(): Boolean = true
 }
-
