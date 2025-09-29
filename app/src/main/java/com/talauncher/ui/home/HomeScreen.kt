@@ -245,7 +245,7 @@ fun HomeScreen(
                         viewModel.launchApp(packageName)
                     },
                     onAppLongClick = { searchItem ->
-                        // Remove pin/unpin functionality
+                        viewModel.showAppActionDialog(searchItem.appInfo)
                     },
                     onContactCall = { searchItem ->
                         viewModel.callContact(searchItem.contactInfo)
