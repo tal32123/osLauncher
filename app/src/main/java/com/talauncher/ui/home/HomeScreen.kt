@@ -94,6 +94,11 @@ fun HomeScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
+    val hasActiveDialog = uiState.showFrictionDialog ||
+        uiState.showTimeLimitDialog ||
+        uiState.showMathChallengeDialog ||
+        uiState.showSessionExpiryCountdown ||
+        uiState.showSessionExpiryDecisionDialog
 
     LaunchedEffect(viewModel, permissionsHelper, context) {
         viewModel.events.collect { event ->
@@ -114,11 +119,7 @@ fun HomeScreen(
 
     // Handle back button for dialogs - prioritize dialogs over navigation
     BackHandler(
-        enabled = uiState.showFrictionDialog ||
-            uiState.showTimeLimitDialog ||
-            uiState.showMathChallengeDialog ||
-            uiState.showSessionExpiryCountdown ||
-            uiState.showSessionExpiryDecisionDialog
+        enabled = hasActiveDialog
     ) {
         when {
             uiState.showSessionExpiryCountdown -> {
@@ -138,6 +139,13 @@ fun HomeScreen(
                 viewModel.dismissFrictionDialog()
             }
         }
+    }
+
+    BackHandler(
+        enabled = isSearching && !hasActiveDialog
+    ) {
+        viewModel.clearSearch()
+        keyboardController?.hide()
     }
 
     LaunchedEffect(uiState.showTime, uiState.showDate) {
@@ -227,6 +235,8 @@ fun HomeScreen(
                 placeholder = stringResource(R.string.home_search_placeholder),
                 enableGlassmorphism = uiState.enableGlassmorphism,
                 testTag = "search_field",
+                onClear = viewModel::clearSearch,
+                clearContentDescription = stringResource(R.string.home_search_clear),
                 onSearch = { query ->
                     if (query.isNotBlank()) {
                         viewModel.performGoogleSearch(query)
