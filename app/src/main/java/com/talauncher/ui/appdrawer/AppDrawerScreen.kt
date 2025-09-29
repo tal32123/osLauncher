@@ -228,31 +228,9 @@ fun AppDrawerScreen(
                 selectedTab = 0
             }
 
-            BoxWithConstraints(
+            Box(
                 modifier = Modifier.weight(1f)
             ) {
-                val density = LocalDensity.current
-                val bubbleHeight = 72.dp
-                val previewOffsetY = remember(
-                    isScrubbing,
-                    previewFraction,
-                    maxHeight,
-                    previewEntry,
-                    density
-                ) {
-                    if (!isScrubbing || previewEntry == null || maxHeight == Dp.Unspecified) {
-                        0.dp
-                    } else {
-                        with(density) {
-                            val containerPx = maxHeight.toPx().coerceAtLeast(0f)
-                            val bubblePx = bubbleHeight.toPx()
-                            val center = previewFraction * containerPx
-                            val top = (center - bubblePx / 2f).coerceIn(0f, max(containerPx - bubblePx, 0f))
-                            top.toDp()
-                        }
-                    }
-                }
-
                 if (selectedTab == 0) {
                 if (searchQuery.isNotBlank()) {
                     // Use unified search when searching
