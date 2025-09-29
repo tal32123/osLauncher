@@ -4,13 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.os.Build
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.assertDoesNotExist
-import androidx.compose.ui.test.assertExists
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.LauncherSettings
@@ -42,7 +36,6 @@ class OnboardingGatingFlowTest {
         val usageStatsHelper = FakeUsageStatsHelper(context)
         val permissionsHelper = FakePermissionsHelper(context, notificationsInitiallyGranted).apply {
             onDefaultLauncherRequest = {
-                setDefaultLauncher(true)
                 usageStatsHelper.setDefaultLauncher(true)
             }
         }
@@ -211,4 +204,3 @@ internal class OnboardingFakeSettingsDao : SettingsDao {
         state.value = settings
     }
 }
-
