@@ -229,14 +229,17 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
 
+            val searchPlaceholder = runCatching { stringResource(R.string.home_search_placeholder) }.getOrElse { "Search..." }
+            val clearDescription = runCatching { stringResource(R.string.home_search_clear) }.getOrElse { "Clear" }
+
             ModernSearchField(
                 value = searchQuery,
                 onValueChange = viewModel::updateSearchQuery,
-                placeholder = stringResource(R.string.home_search_placeholder),
+                placeholder = searchPlaceholder,
                 enableGlassmorphism = uiState.enableGlassmorphism,
                 testTag = "search_field",
                 onClear = viewModel::clearSearch,
-                clearContentDescription = stringResource(R.string.home_search_clear),
+                clearContentDescription = clearDescription,
                 onSearch = { query ->
                     if (query.isNotBlank()) {
                         viewModel.performGoogleSearch(query)
