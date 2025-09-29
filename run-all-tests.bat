@@ -30,9 +30,6 @@ echo.
 set "FAILURES=0"
 set "EXIT_CODE=0"
 
-rem Ensure CI-compatible env to avoid git status checks blocking builds
-set "SKIP_GIT_STATUS_CHECK=true"
-
 if defined CI_MODE goto RUN_CI_TASKS
 
 echo Checking for connected Android devices or emulators...

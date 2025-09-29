@@ -38,11 +38,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Setup environment
-      run: |
-        # Disable git status check for CI
-        export SKIP_GIT_STATUS_CHECK=true
-        echo "SKIP_GIT_STATUS_CHECK=true" >> $GITHUB_ENV
+    # Removed SKIP_GIT_STATUS_CHECK; CI should build with clean working tree
 
     - name: Run unit tests
       run: ./gradlew test --no-daemon --stacktrace
