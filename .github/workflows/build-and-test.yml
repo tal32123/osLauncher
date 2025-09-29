@@ -50,6 +50,9 @@ jobs:
     - name: Build debug APK
       run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+    - name: Run Android Lint
+      run: ./gradlew lint --no-daemon --stacktrace
+
     - name: Upload debug APK
       uses: actions/upload-artifact@v4
       with:
