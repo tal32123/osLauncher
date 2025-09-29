@@ -9,16 +9,18 @@ import android.content.Context
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.LauncherSettings
+import com.talauncher.data.model.SearchInteractionEntity
 
 @Database(
-    entities = [AppInfo::class, LauncherSettings::class, AppSession::class],
-    version = 15,
+    entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class],
+    version = 16,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
     abstract fun appDao(): AppDao
     abstract fun settingsDao(): SettingsDao
     abstract fun appSessionDao(): AppSessionDao
+    abstract fun searchInteractionDao(): SearchInteractionDao
 
     companion object {
         @Volatile
@@ -232,6 +234,17 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS search_interactions (" +
+                        "itemKey TEXT NOT NULL PRIMARY KEY," +
+                        "lastUsedAt INTEGER NOT NULL" +
+                        ")"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -252,7 +265,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_11_12,
                     MIGRATION_12_13,
                     MIGRATION_13_14,
-                    MIGRATION_14_15
+                    MIGRATION_14_15,
+                    MIGRATION_15_16
                 ).build()
                 INSTANCE = instance
                 instance

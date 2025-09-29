@@ -29,6 +29,7 @@ import com.talauncher.R
 import kotlinx.coroutines.launch
 import com.talauncher.data.database.LauncherDatabase
 import com.talauncher.data.repository.AppRepository
+import com.talauncher.data.repository.SearchInteractionRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
 // AppDrawer imports removed - functionality moved to HomeScreen
@@ -56,6 +57,7 @@ class MainActivity : ComponentActivity() {
     private var shouldNavigateToHome by mutableStateOf(false)
     private lateinit var sessionRepository: SessionRepository
     private lateinit var appRepository: AppRepository
+    private lateinit var searchInteractionRepository: SearchInteractionRepository
     private lateinit var errorHandler: MainErrorHandler
     private lateinit var permissionsHelper: PermissionsHelper
     private lateinit var usageStatsHelper: UsageStatsHelper
@@ -81,6 +83,7 @@ class MainActivity : ComponentActivity() {
                 this.sessionRepository,
                 this.errorHandler
             )
+            this.searchInteractionRepository = SearchInteractionRepository(database.searchInteractionDao())
 
             // Initialize session repository and observe expirations in a single coroutine
             // Add delay to allow UI to fully initialize first for Espresso tests
@@ -180,6 +183,7 @@ class MainActivity : ComponentActivity() {
                         } else {
                             TALauncherApp(
                                 appRepository = appRepository,
+                                searchInteractionRepository = searchInteractionRepository,
                                 settingsRepository = settingsRepository,
                                 permissionsHelper = permissionsHelper,
                                 usageStatsHelper = usageStatsHelper,
@@ -258,6 +262,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TALauncherApp(
     appRepository: AppRepository,
+    searchInteractionRepository: SearchInteractionRepository,
     settingsRepository: SettingsRepository,
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
@@ -270,6 +275,7 @@ fun TALauncherApp(
 ) {
     LauncherNavigationPager(
         appRepository = appRepository,
+        searchInteractionRepository = searchInteractionRepository,
         settingsRepository = settingsRepository,
         permissionsHelper = permissionsHelper,
         usageStatsHelper = usageStatsHelper,
@@ -285,6 +291,7 @@ fun TALauncherApp(
 @Composable
 fun LauncherNavigationPager(
     appRepository: AppRepository,
+    searchInteractionRepository: SearchInteractionRepository,
     settingsRepository: SettingsRepository,
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
@@ -377,9 +384,10 @@ fun LauncherNavigationPager(
                     val context = LocalContext.current
                     val applicationContext = context.applicationContext
                     val homeViewModel: HomeViewModel = viewModel {
-                        HomeViewModel(
-                            appRepository = appRepository,
-                            settingsRepository = settingsRepository,
+        HomeViewModel(
+            appRepository = appRepository,
+            searchInteractionRepository = searchInteractionRepository,
+            settingsRepository = settingsRepository,
                             onLaunchApp = onLaunchApp,
                             sessionRepository = sessionRepository,
                             appContext = applicationContext,
