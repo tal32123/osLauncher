@@ -24,6 +24,13 @@ import org.junit.runners.Suite
     PermissionsHelperTest::class,
     UsageStatsHelperTest::class,
 
+    // Component tests
+    NiagaraFastScrollTest::class,
+
+    // Helper tests
+    AppSectioningHelperTest::class,
+    EnhancedSearchServiceTest::class,
+
     // Edge case and error handling tests
     EdgeCaseAndErrorHandlingTest::class
 )
