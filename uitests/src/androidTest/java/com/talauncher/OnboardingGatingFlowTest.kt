@@ -74,10 +74,6 @@ class OnboardingGatingFlowTest {
         // Overlay
         (permissionsHelper as FakePermissionsHelper).setOverlayGranted(true)
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            permissionsHelper.permissionState.value.hasSystemAlertWindow) {
-            (permissionsHelper as FakePermissionsHelper).setOverlayGranted(true)
-        }
-        composeTestRule.waitUntil(timeoutMillis = 5_000) {
             permissionsHelper.permissionState.value.hasSystemAlertWindow
         }
 
