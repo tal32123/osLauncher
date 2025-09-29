@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -151,6 +152,22 @@ fun OnboardingScreen(
             buttonTestTag = "onboarding_step_overlay_button",
             onButtonClick = {
                 permissionsHelper.requestPermission(context as Activity, PermissionType.SYSTEM_ALERT_WINDOW)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Contacts Permission
+        OnboardingStepCard(
+            modifier = Modifier.testTag("onboarding_step_contacts"),
+            icon = Icons.Default.Person,
+            title = "Contacts Permission",
+            description = "Required to access your contact list for calling essentials",
+            isCompleted = permissionState.hasContacts,
+            buttonText = if (permissionState.hasContacts) "Completed" else "Grant Permission",
+            buttonTestTag = "onboarding_step_contacts_button",
+            onButtonClick = {
+                permissionsHelper.requestPermission(context as Activity, PermissionType.CONTACTS)
             }
         )
 
