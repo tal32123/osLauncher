@@ -74,6 +74,8 @@ class OnboardingGatingFlowTest {
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsEnabled()
         }
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsEnabled()
+        composeTestRule.onNodeWithTag("onboarding_step_contacts_button").assertIsEnabled()
+        composeTestRule.onNodeWithTag("onboarding_step_location_button").assertIsEnabled()
 
         // Grant usage stats permission
         Log.d("OnboardingGatingFlowTest", "Granting usage stats permission")
@@ -127,6 +129,34 @@ class OnboardingGatingFlowTest {
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             try {
                 composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsNotEnabled()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+
+        // Grant contacts permission
+        composeTestRule.onNodeWithTag("onboarding_step_contacts_button").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            permissionsHelper.permissionState.value.hasContacts
+        }
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                composeTestRule.onNodeWithTag("onboarding_step_contacts_button").assertIsNotEnabled()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+
+        // Grant location permission
+        composeTestRule.onNodeWithTag("onboarding_step_location_button").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            permissionsHelper.permissionState.value.hasLocation
+        }
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                composeTestRule.onNodeWithTag("onboarding_step_location_button").assertIsNotEnabled()
                 true
             } catch (e: AssertionError) {
                 false
@@ -205,7 +235,9 @@ private class FakePermissionsHelper(
             PermissionType.DEFAULT_LAUNCHER -> {
                 onDefaultLauncherRequest?.invoke()
             }
-            else -> Unit
+            PermissionType.CONTACTS -> setContactsGranted(true)
+            PermissionType.LOCATION -> setLocationGranted(true)
+            PermissionType.CALL_PHONE -> Unit
         }
     }
 
@@ -219,6 +251,14 @@ private class FakePermissionsHelper(
 
     fun setOverlayGranted(granted: Boolean) {
         updateState { it.copy(hasSystemAlertWindow = granted) }
+    }
+
+    fun setContactsGranted(granted: Boolean) {
+        updateState { it.copy(hasContacts = granted) }
+    }
+
+    fun setLocationGranted(granted: Boolean) {
+        updateState { it.copy(hasLocation = granted) }
     }
 
     private fun updateState(transform: (PermissionState) -> PermissionState) {
