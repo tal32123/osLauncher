@@ -291,7 +291,7 @@ fun HomeScreen(
                         val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
                         if (entry != null) {
                             if (entry.key == RECENT_APPS_INDEX_KEY) {
-                                listState.animateScrollToItem(0)
+                                listState.scrollToItem(0)
                             } else {
                                 entry.targetIndex?.let { targetIndex ->
                                     // Adjust index to account for recent apps section
@@ -301,7 +301,7 @@ fun HomeScreen(
                                     } else {
                                         targetIndex
                                     }
-                                    listState.animateScrollToItem(adjustedIndex)
+                                    listState.scrollToItem(adjustedIndex)
                                 }
                             }
                         }
