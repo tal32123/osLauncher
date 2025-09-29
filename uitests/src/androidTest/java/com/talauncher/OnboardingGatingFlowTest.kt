@@ -74,6 +74,7 @@ class OnboardingGatingFlowTest {
             composeTestRule.onNodeWithTag("onboarding_step_notifications_button").assertIsEnabled()
         }
         composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsEnabled()
+        composeTestRule.onNodeWithTag("onboarding_step_location_button").assertIsEnabled()
 
         // Grant usage stats permission
         Log.d("OnboardingGatingFlowTest", "Granting usage stats permission")
@@ -127,6 +128,17 @@ class OnboardingGatingFlowTest {
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             try {
                 composeTestRule.onNodeWithTag("onboarding_step_overlay_button").assertIsNotEnabled()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
+
+        // Grant location permission
+        composeTestRule.onNodeWithTag("onboarding_step_location_button").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            try {
+                composeTestRule.onNodeWithTag("onboarding_step_location_button").assertIsNotEnabled()
                 true
             } catch (e: AssertionError) {
                 false
@@ -202,6 +214,7 @@ private class FakePermissionsHelper(
                 println("Permission state after overlay grant: ${permissionState.value}")
             }
             PermissionType.NOTIFICATIONS -> setNotificationsGranted(true)
+            PermissionType.LOCATION -> setLocationGranted(true)
             PermissionType.DEFAULT_LAUNCHER -> {
                 onDefaultLauncherRequest?.invoke()
             }
@@ -219,6 +232,10 @@ private class FakePermissionsHelper(
 
     fun setOverlayGranted(granted: Boolean) {
         updateState { it.copy(hasSystemAlertWindow = granted) }
+    }
+
+    fun setLocationGranted(granted: Boolean) {
+        updateState { it.copy(hasLocation = granted) }
     }
 
     private fun updateState(transform: (PermissionState) -> PermissionState) {
