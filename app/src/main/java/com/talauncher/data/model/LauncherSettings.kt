@@ -40,7 +40,7 @@ data class LauncherSettings(
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM, // System, Light, or Dark theme
     val wallpaperBlurAmount: Float = 0f, // 0.0 (no blur) to 1.0 (max blur)
     val enableGlassmorphism: Boolean = true, // Enable glass-like translucent effects
-    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
+    val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val cardCornerRadius: Int = 12, // Corner radius for cards in dp (8-24)
     val enableDynamicColors: Boolean = false, // Use Material You dynamic colors when available
     val backgroundOpacity: Float = 1.0f, // Background opacity when wallpaper is shown (0.0-1.0)

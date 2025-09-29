@@ -246,7 +246,7 @@ class HomeViewModel(
                             wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                             customWallpaperPath = settings?.customWallpaperPath,
                             enableGlassmorphism = settings?.enableGlassmorphism ?: true,
-                            uiDensity = settings?.uiDensity ?: UiDensityOption.COMFORTABLE,
+                            uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                             enableAnimations = settings?.enableAnimations ?: true,
                             // App drawer functionality moved to home screen
                             recentApps = recentApps,
@@ -1554,7 +1554,7 @@ data class HomeUiState(
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val wallpaperBlurAmount: Float = 0f,
     val enableGlassmorphism: Boolean = true,
-    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
+    val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     // App drawer functionality moved to home screen
     val recentApps: List<AppInfo> = emptyList(),

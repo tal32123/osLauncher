@@ -99,7 +99,7 @@ enum class UiDensityOption(val label: String) {
     companion object {
         fun fromStorageValue(value: String?): UiDensityOption {
             val normalized = value?.lowercase(Locale.US)
-            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: COMFORTABLE
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: COMPACT
         }
     }
 }

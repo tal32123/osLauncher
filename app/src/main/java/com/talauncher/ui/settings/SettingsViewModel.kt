@@ -80,7 +80,7 @@ class SettingsViewModel(
                     wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                     backgroundOpacity = settings?.backgroundOpacity ?: 1f,
                     enableGlassmorphism = settings?.enableGlassmorphism ?: true,
-                    uiDensity = settings?.uiDensity ?: UiDensityOption.COMFORTABLE,
+                    uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                     enableAnimations = settings?.enableAnimations ?: true,
                     customWallpaperPath = settings?.customWallpaperPath,
                     availableApps = allInstalledApps,
@@ -356,7 +356,7 @@ data class SettingsUiState(
     val wallpaperBlurAmount: Float = 0f,
     val backgroundOpacity: Float = 1f,
     val enableGlassmorphism: Boolean = true,
-    val uiDensity: UiDensityOption = UiDensityOption.COMFORTABLE,
+    val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     val customWallpaperPath: String? = null
 )
