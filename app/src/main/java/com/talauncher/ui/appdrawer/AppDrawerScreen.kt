@@ -441,15 +441,6 @@ fun AppDrawerScreen(
                 if (showIndex && selectedTab == 0) {
                     val alphabetEntries = uiState.alphabetIndexEntries
 
-                    LaunchedEffect(uiState.scrollToIndex) {
-                        uiState.scrollToIndex?.let { index ->
-                            coroutineScope.launch {
-                                listState.scrollToItem(index)
-                                viewModel.onScrollHandled()
-                            }
-                        }
-                    }
-
                     AlphabetIndex(
                         entries = alphabetEntries,
                         activeKey = uiState.alphabetIndexActiveKey,
@@ -463,10 +454,43 @@ fun AppDrawerScreen(
                                 }
                             )
                             .padding(horizontal = PrimerSpacing.sm),
-                        onEntryFocused = { entry, fraction ->
+                        onEntryFocused = { entry, fraction, entryFraction ->
                             viewModel.onAlphabetIndexFocused(entry, fraction)
                             previewEntry = entry
                             previewFraction = fraction
+                            val totalItems = listState.layoutInfo.totalItemsCount
+                            val targetIndex = when {
+                                totalItems > 0 -> {
+                                    val sanitizedFraction = if (fraction.isNaN()) {
+                                        0f
+                                    } else {
+                                        fraction.coerceIn(0f, 1f)
+                                    }
+                                    val sanitizedEntryFraction = if (entryFraction.isNaN()) {
+                                        0f
+                                    } else {
+                                        entryFraction.coerceIn(0f, 1f)
+                                    }
+                                    val startIndex = entry.rangeStartIndex ?: entry.targetIndex
+                                    val endIndexExclusive = entry.rangeEndIndexExclusive ?: startIndex?.plus(1)
+                                    if (startIndex != null && endIndexExclusive != null) {
+                                        val clampedStart = startIndex.coerceIn(0, totalItems - 1)
+                                        val clampedEndExclusive = endIndexExclusive.coerceIn(clampedStart + 1, totalItems)
+                                        val rangeSize = max(1, clampedEndExclusive - clampedStart)
+                                        val localTarget = clampedStart + (sanitizedEntryFraction * (rangeSize - 1)).toInt()
+                                        localTarget.coerceIn(0, totalItems - 1)
+                                    } else {
+                                        val lastIndex = totalItems - 1
+                                        (sanitizedFraction * lastIndex).toInt()
+                                    }
+                                }
+                                else -> entry.targetIndex
+                            }
+                            if (targetIndex != null) {
+                                coroutineScope.launch {
+                                    listState.scrollToItem(targetIndex)
+                                }
+                            }
                             if (entry.hasApps && entry.key != lastScrubbedKey) {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             }
@@ -586,13 +610,13 @@ private fun AlphabetIndex(
     activeKey: String?,
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
-    onEntryFocused: (AlphabetIndexEntry, Float) -> Unit,
+    onEntryFocused: (AlphabetIndexEntry, Float, Float) -> Unit,
     onScrubbingChanged: (Boolean) -> Unit
 ) {
     var componentSize by remember { mutableStateOf(IntSize.Zero) }
     val entryBounds = remember(entries) { mutableStateMapOf<String, ClosedFloatingPointRange<Float>>() }
 
-    fun resolveEntry(positionY: Float): Pair<AlphabetIndexEntry, Float>? {
+    fun resolveEntry(positionY: Float): Triple<AlphabetIndexEntry, Float, Float>? {
         if (entries.isEmpty() || componentSize.height == 0 || entryBounds.isEmpty()) {
             return null
         }
@@ -615,13 +639,15 @@ private fun AlphabetIndex(
             }
         } ?: return null
 
-        val (entry, _) = candidate
+        val (entry, bounds) = candidate
         val pointerFraction = if (totalHeight > 0f) {
             (clampedY / totalHeight).coerceIn(0f, 1f)
         } else {
             0f
         }
-        return entry to pointerFraction
+        val entryHeight = (bounds.endInclusive - bounds.start).coerceAtLeast(1f)
+        val entryFraction = ((clampedY - bounds.start) / entryHeight).coerceIn(0f, 1f)
+        return Triple(entry, pointerFraction, entryFraction)
     }
 
     Box(
@@ -634,13 +660,13 @@ private fun AlphabetIndex(
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     onScrubbingChanged(true)
-                    resolveEntry(down.position.y)?.let { (entry, fraction) ->
-                        onEntryFocused(entry, fraction)
+                    resolveEntry(down.position.y)?.let { (entry, fraction, entryFraction) ->
+                        onEntryFocused(entry, fraction, entryFraction)
                     }
                     try {
                         drag(down.id) { change ->
-                            resolveEntry(change.position.y)?.let { (entry, fraction) ->
-                                onEntryFocused(entry, fraction)
+                            resolveEntry(change.position.y)?.let { (entry, fraction, entryFraction) ->
+                                onEntryFocused(entry, fraction, entryFraction)
                             }
                             change.consume()
                         }

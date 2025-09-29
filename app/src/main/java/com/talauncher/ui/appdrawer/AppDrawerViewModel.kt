@@ -35,7 +35,6 @@ import com.talauncher.ui.theme.toUiSettingsOrDefault
 import java.text.Collator
 import java.util.Locale
 import kotlin.math.exp
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -53,11 +52,15 @@ data class AlphabetIndexEntry(
     val displayLabel: String,
     val targetIndex: Int?,
     val hasApps: Boolean,
-    val previewAppName: String?
+    val previewAppName: String?,
+    val rangeStartIndex: Int?,
+    val rangeEndIndexExclusive: Int?
 )
 
 private data class SectionPosition(
-    val index: Int,
+    val headerIndex: Int,
+    val firstAppIndex: Int?,
+    val endIndexExclusive: Int,
     val previewAppName: String?
 )
 
@@ -104,7 +107,6 @@ data class AppDrawerUiState(
     val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
     val alphabetIndexActiveKey: String? = null,
     val isAlphabetIndexEnabled: Boolean = true,
-    val scrollToIndex: Int? = null,
     val locale: Locale? = null,
     val collator: java.text.Collator? = null
 )
@@ -551,12 +553,9 @@ class AppDrawerViewModel(
         contactHelper.openContact(contact)
     }
 
-    fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
-        val smoothIndex = calculateScrollIndexForFraction(fraction)
-        val desiredIndex = smoothIndex ?: entry.targetIndex
+    fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, @Suppress("UNUSED_PARAMETER") fraction: Float) {
         _uiState.value = _uiState.value.copy(
-            alphabetIndexActiveKey = entry.key,
-            scrollToIndex = desiredIndex
+            alphabetIndexActiveKey = entry.key
         )
     }
 
@@ -566,10 +565,6 @@ class AppDrawerViewModel(
                 alphabetIndexActiveKey = null
             )
         }
-    }
-
-    fun onScrollHandled() {
-        _uiState.value = _uiState.value.copy(scrollToIndex = null)
     }
 
     fun onLocaleChanged(locale: Locale, collator: Collator) {
@@ -592,23 +587,6 @@ class AppDrawerViewModel(
         }
     }
 
-    private fun calculateScrollIndexForFraction(fraction: Float): Int? {
-        if (fraction.isNaN()) {
-            return null
-        }
-        val sections = _uiState.value.sections
-        if (sections.isEmpty()) {
-            return null
-        }
-        val totalItems = sections.sumOf { 1 + it.apps.size }
-        if (totalItems <= 0) {
-            return null
-        }
-        val clampedFraction = fraction.coerceIn(0f, 1f)
-        val lastIndex = totalItems - 1
-        val proportionalIndex = floor(clampedFraction * lastIndex).toInt()
-        return proportionalIndex.coerceIn(0, lastIndex)
-    }
 
     private suspend fun buildSectionsAndIndexAsync(apps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
         val filteredApps = if (searchQuery.isBlank()) {
@@ -709,8 +687,13 @@ class AppDrawerViewModel(
         var currentIndex = 0
         sections.forEach { section ->
             if (section.isIndexable && section.apps.isNotEmpty()) {
+                val headerIndex = currentIndex
+                val firstAppIndex = if (section.apps.isNotEmpty()) headerIndex + 1 else null
+                val endIndexExclusive = headerIndex + 1 + section.apps.size
                 sectionPositions[section.key] = SectionPosition(
-                    index = currentIndex,
+                    headerIndex = headerIndex,
+                    firstAppIndex = firstAppIndex,
+                    endIndexExclusive = endIndexExclusive,
                     previewAppName = section.apps.first().appName
                 )
             }
@@ -729,9 +712,11 @@ class AppDrawerViewModel(
                 AlphabetIndexEntry(
                     key = key,
                     displayLabel = key,
-                    targetIndex = position?.index,
+                    targetIndex = position?.firstAppIndex ?: position?.headerIndex,
                     hasApps = position != null,
-                    previewAppName = position?.previewAppName
+                    previewAppName = position?.previewAppName,
+                    rangeStartIndex = position?.headerIndex,
+                    rangeEndIndexExclusive = position?.endIndexExclusive
                 )
             }
         }
