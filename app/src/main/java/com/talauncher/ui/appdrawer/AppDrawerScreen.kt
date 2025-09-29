@@ -2,6 +2,8 @@
 
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -20,10 +22,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 // import androidx.compose.foundation.lazy.stickyHeader
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -352,53 +357,18 @@ fun AppDrawerScreen(
                             item {
                                 Spacer(modifier = Modifier.height(PrimerSpacing.lg))
 
-                                PrimerCard(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = PrimerSpacing.sm),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                    ),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                                ) {
-                                    TextButton(
-                                        onClick = {
-                                            showHiddenApps = !showHiddenApps
-                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                        },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(PrimerSpacing.sm)
-                                    ) {
-                                        Text(
-                                            text = if (showHiddenApps) {
-                                                "Hide hidden apps (${uiState.hiddenApps.size})"
-                                            } else {
-                                                "Show hidden apps (${uiState.hiddenApps.size})"
-                                            },
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (showHiddenApps) {
-                            item {
-                                SectionHeader(
-                                    label = "Hidden Apps",
-                                    modifier = Modifier.padding(bottom = PrimerSpacing.xs)
-                                )
-                            }
-                            items(uiState.hiddenApps, key = { "hidden_${it.packageName}" }) { app ->
-                                HiddenAppItem(
-                                    appInfo = app,
-                                    onClick = {
+                                HiddenAppsCollapsibleSection(
+                                    hiddenApps = uiState.hiddenApps,
+                                    isExpanded = showHiddenApps,
+                                    onToggle = {
+                                        showHiddenApps = !showHiddenApps
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    },
+                                    onAppClick = { app ->
                                         viewModel.launchApp(app.packageName)
                                         keyboardController?.hide()
                                     },
-                                    onLongClick = {
+                                    onAppLongPress = { app ->
                                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                         viewModel.unhideApp(app.packageName)
                                     }
@@ -493,6 +463,7 @@ fun AppDrawerScreen(
             onDismiss = viewModel::dismissAppActionDialog,
             onRename = viewModel::startRenamingApp,
             onHide = viewModel::hideApp,
+            onUnhide = viewModel::unhideApp,
             onAppInfo = { packageName ->
                 viewModel.openAppInfo(context, packageName)
             },
@@ -811,15 +782,95 @@ fun HiddenAppItem(
 }
 
 @Composable
+private fun HiddenAppsCollapsibleSection(
+    hiddenApps: List<AppInfo>,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onAppClick: (AppInfo) -> Unit,
+    onAppLongPress: (AppInfo) -> Unit
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "hiddenAppsChevron"
+    )
+
+    PrimerCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = PrimerSpacing.sm),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onToggle)
+                    .padding(horizontal = PrimerSpacing.md, vertical = PrimerSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Hidden apps (${hiddenApps.size})",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Icon(
+                    imageVector = Icons.Filled.ExpandMore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.rotate(rotation)
+                )
+            }
+
+            AnimatedVisibility(visible = isExpanded) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = PrimerSpacing.md,
+                            end = PrimerSpacing.md,
+                            bottom = PrimerSpacing.sm
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+                ) {
+                    Text(
+                        text = "Hidden Apps",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = PrimerSpacing.xs)
+                    )
+
+                    hiddenApps.forEach { app ->
+                        HiddenAppItem(
+                            appInfo = app,
+                            onClick = { onAppClick(app) },
+                            onLongClick = { onAppLongPress(app) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun AppActionDialog(
     app: AppInfo?,
     onDismiss: () -> Unit,
     onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
+    onUnhide: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
 ) {
     if (app != null) {
+        val isHidden = app.isHidden
         AlertDialog(
             onDismissRequest = onDismiss,
             title = {
@@ -855,15 +906,27 @@ fun AppActionDialog(
                             }
                         )
 
-                        ActionTextButton(
-                            label = "Hide app",
-                            description = "Move this app to the hidden list.",
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                onHide(app.packageName)
-                                onDismiss()
-                            }
-                        )
+                        if (isHidden) {
+                            ActionTextButton(
+                                label = "Unhide app",
+                                description = "Move this app back to the main list.",
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    onUnhide(app.packageName)
+                                    onDismiss()
+                                }
+                            )
+                        } else {
+                            ActionTextButton(
+                                label = "Hide app",
+                                description = "Move this app to the hidden list.",
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    onHide(app.packageName)
+                                    onDismiss()
+                                }
+                            )
+                        }
 
                         ActionTextButton(
                             label = "View app info",

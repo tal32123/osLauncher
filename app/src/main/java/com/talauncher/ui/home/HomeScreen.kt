@@ -429,6 +429,7 @@ fun HomeScreen(
                 onDismiss = { viewModel.dismissAppActionDialog() },
                 onRename = { app -> viewModel.renameApp(app) },
                 onHide = { packageName -> viewModel.hideApp(packageName) },
+                onUnhide = { packageName -> viewModel.unhideApp(packageName) },
                 onAppInfo = { packageName -> viewModel.openAppInfo(packageName) },
                 onUninstall = { packageName -> viewModel.uninstallApp(packageName) }
             )

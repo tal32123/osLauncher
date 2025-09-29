@@ -149,9 +149,11 @@ class AppDrawerViewModel(
                     contactHelper.isWhatsAppInstalled()
                 }
 
+                val combinedApps = visibleApps + hiddenApps
+
                 withContext(Dispatchers.Main.immediate) {
                     val newState = _uiState.value.copy(
-                        allApps = visibleApps,
+                        allApps = combinedApps,
                         hiddenApps = hiddenApps,
                         recentApps = recentApps,
                         mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
@@ -594,8 +596,7 @@ class AppDrawerViewModel(
                 emptyMap()
             }
 
-            apps.filter { !it.isHidden }
-                .mapNotNull { app ->
+            apps.mapNotNull { app ->
                     val baseScore = calculateRelevanceScore(searchQuery, app.appName)
                     if (baseScore > 0) {
                         val recencyScore = calculateRecencyScore(app.packageName, usageStats)
@@ -614,8 +615,7 @@ class AppDrawerViewModel(
             apps.filter { !it.isHidden }
         } else {
             // For non-search queries or when called synchronously, skip usage stats to avoid blocking
-            apps.filter { !it.isHidden }
-                .mapNotNull { app ->
+            apps.mapNotNull { app ->
                     val baseScore = calculateRelevanceScore(searchQuery, app.appName)
                     if (baseScore > 0) {
                         app to baseScore
