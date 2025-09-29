@@ -25,7 +25,6 @@ import org.junit.runners.Suite
     UsageStatsHelperTest::class,
 
     // Component tests
-    NiagaraFastScrollTest::class,
 
     // Helper tests
     AppSectioningHelperTest::class,
