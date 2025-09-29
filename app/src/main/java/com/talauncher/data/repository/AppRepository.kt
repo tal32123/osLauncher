@@ -372,15 +372,25 @@ class AppRepository(
             // Process in chunks to avoid large memory allocations
             val chunkSize = 50
             val appsToInsert = mutableListOf<AppInfo>()
+            val appsToUpdate = mutableListOf<AppInfo>()
             val appsToDelete = mutableListOf<AppInfo>()
 
-            // Collect new apps in chunks
+            // Collect new apps and apps to update in chunks
             installedApps.chunked(chunkSize).forEach { chunk ->
                 chunk.forEach { installedApp ->
-                    if (!existingAppMap.containsKey(installedApp.packageName)) {
+                    val existingApp = existingAppMap[installedApp.packageName]
+                    if (existingApp == null) {
+                        // New app - add to insert list
                         appsToInsert.add(
                             AppInfo(
                                 packageName = installedApp.packageName,
+                                appName = installedApp.appName
+                            )
+                        )
+                    } else if (existingApp.appName != installedApp.appName) {
+                        // Existing app with updated name - preserve user customizations
+                        appsToUpdate.add(
+                            existingApp.copy(
                                 appName = installedApp.appName
                             )
                         )
@@ -413,6 +423,13 @@ class AppRepository(
             if (appsToInsert.isNotEmpty()) {
                 appsToInsert.chunked(chunkSize).forEach { chunk ->
                     appDao.insertApps(chunk)
+                }
+            }
+            if (appsToUpdate.isNotEmpty()) {
+                appsToUpdate.chunked(chunkSize).forEach { chunk ->
+                    chunk.forEach { app ->
+                        appDao.updateApp(app)
+                    }
                 }
             }
             if (appsToDelete.isNotEmpty()) {
