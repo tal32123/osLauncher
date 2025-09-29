@@ -615,14 +615,13 @@ private fun AlphabetIndex(
             }
         } ?: return null
 
-        val (entry, bounds) = candidate
-        val center = (bounds.start + bounds.endInclusive) / 2f
-        val fraction = if (totalHeight > 0f) {
-            (center / totalHeight).coerceIn(0f, 1f)
+        val (entry, _) = candidate
+        val pointerFraction = if (totalHeight > 0f) {
+            (clampedY / totalHeight).coerceIn(0f, 1f)
         } else {
             0f
         }
-        return entry to fraction
+        return entry to pointerFraction
     }
 
     Box(

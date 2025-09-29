@@ -35,6 +35,7 @@ import com.talauncher.ui.theme.toUiSettingsOrDefault
 import java.text.Collator
 import java.util.Locale
 import kotlin.math.exp
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -165,7 +166,7 @@ class AppDrawerViewModel(
 
                     val updatedState = newState
                     val locale = updatedState.locale ?: Locale.getDefault()
-                    val collator = updatedState.collator ?: Collator.getInstance()
+                    val collator = updatedState.collator ?: createCollator(locale)
                     val searchQuery = updatedState.searchQuery
                     buildSectionsAndIndex(
                         visibleApps,
@@ -506,7 +507,7 @@ class AppDrawerViewModel(
             val apps = _uiState.value.allApps
             val recentApps = _uiState.value.recentApps
             val locale = _uiState.value.locale ?: Locale.getDefault()
-            val collator = _uiState.value.collator ?: Collator.getInstance()
+            val collator = _uiState.value.collator ?: createCollator(locale)
 
             buildSectionsAndIndexAsync(apps, recentApps, query, locale, collator)
         }
@@ -551,9 +552,11 @@ class AppDrawerViewModel(
     }
 
     fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
+        val smoothIndex = calculateScrollIndexForFraction(fraction)
+        val desiredIndex = smoothIndex ?: entry.targetIndex
         _uiState.value = _uiState.value.copy(
             alphabetIndexActiveKey = entry.key,
-            scrollToIndex = entry.targetIndex
+            scrollToIndex = desiredIndex
         )
     }
 
@@ -570,6 +573,8 @@ class AppDrawerViewModel(
     }
 
     fun onLocaleChanged(locale: Locale, collator: Collator) {
+        collator.strength = Collator.PRIMARY
+        collator.decomposition = Collator.CANONICAL_DECOMPOSITION
         _uiState.value = _uiState.value.copy(locale = locale, collator = collator)
         buildSectionsAndIndex(
             _uiState.value.allApps,
@@ -578,6 +583,31 @@ class AppDrawerViewModel(
             locale,
             collator
         )
+    }
+
+    private fun createCollator(locale: Locale): Collator {
+        return Collator.getInstance(locale).apply {
+            strength = Collator.PRIMARY
+            decomposition = Collator.CANONICAL_DECOMPOSITION
+        }
+    }
+
+    private fun calculateScrollIndexForFraction(fraction: Float): Int? {
+        if (fraction.isNaN()) {
+            return null
+        }
+        val sections = _uiState.value.sections
+        if (sections.isEmpty()) {
+            return null
+        }
+        val totalItems = sections.sumOf { 1 + it.apps.size }
+        if (totalItems <= 0) {
+            return null
+        }
+        val clampedFraction = fraction.coerceIn(0f, 1f)
+        val lastIndex = totalItems - 1
+        val proportionalIndex = floor(clampedFraction * lastIndex).toInt()
+        return proportionalIndex.coerceIn(0, lastIndex)
     }
 
     private suspend fun buildSectionsAndIndexAsync(apps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
