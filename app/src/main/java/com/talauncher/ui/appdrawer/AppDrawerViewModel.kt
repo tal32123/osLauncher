@@ -471,7 +471,7 @@ class AppDrawerViewModel(
     private fun setupDebouncedContactSearch() {
         viewModelScope.launch {
             searchQueryFlow
-                .debounce(300) // 300ms debounce
+                .debounce(200) // 200ms debounce
                 .collect { query ->
                     if (query.isNotBlank()) {
                         searchContacts(query)
