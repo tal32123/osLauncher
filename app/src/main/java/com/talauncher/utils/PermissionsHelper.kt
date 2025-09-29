@@ -190,7 +190,6 @@ open class PermissionsHelper(
     private fun openUsageAccessSettings() {
         val packageName = context.packageName
         val usageAccessIntent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
-            data = Uri.parse("package:$packageName")
             putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
