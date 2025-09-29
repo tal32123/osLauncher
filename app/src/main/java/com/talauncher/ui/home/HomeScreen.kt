@@ -937,10 +937,12 @@ fun AppActionDialog(
     onDismiss: () -> Unit,
     onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
+    onUnhide: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
 ) {
     if (app != null) {
+        val isHidden = app.isHidden
         AlertDialog(
             onDismissRequest = onDismiss,
             modifier = Modifier.testTag("app_action_dialog"),
@@ -977,15 +979,27 @@ fun AppActionDialog(
                             }
                         )
 
-                        ActionTextButton(
-                            label = "Hide app",
-                            description = "Move this app to the hidden list.",
-                            modifier = Modifier.fillMaxWidth().testTag("hide_app_button"),
-                            onClick = {
-                                onHide(app.packageName)
-                                onDismiss()
-                            }
-                        )
+                        if (isHidden) {
+                            ActionTextButton(
+                                label = "Unhide app",
+                                description = "Move this app back to the main list.",
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    onUnhide(app.packageName)
+                                    onDismiss()
+                                }
+                            )
+                        } else {
+                            ActionTextButton(
+                                label = "Hide app",
+                                description = "Move this app to the hidden list.",
+                                modifier = Modifier.fillMaxWidth().testTag("hide_app_button"),
+                                onClick = {
+                                    onHide(app.packageName)
+                                    onDismiss()
+                                }
+                            )
+                        }
 
                         ActionTextButton(
                             label = "View app info",
