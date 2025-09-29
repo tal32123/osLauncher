@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
+import com.talauncher.ui.theme.ColorPalettes
 
 /**
  * Beautiful theme mode toggle component following Material Design 3 principles
@@ -220,6 +221,8 @@ fun ColorPaletteSelector(
                                 palette = palette,
                                 isSelected = selectedPalette == palette,
                                 currentCustomColor = if (palette == ColorPaletteOption.CUSTOM) currentCustomColor else null,
+                                currentCustomPrimaryColor = if (palette == ColorPaletteOption.CUSTOM) currentCustomPrimaryColor else null,
+                                currentCustomSecondaryColor = if (palette == ColorPaletteOption.CUSTOM) currentCustomSecondaryColor else null,
                                 onSelected = {
                                     if (palette == ColorPaletteOption.CUSTOM) {
                                         showCustomColorPicker = true
@@ -259,9 +262,27 @@ private fun ColorPaletteCard(
     isSelected: Boolean,
     onSelected: () -> Unit,
     modifier: Modifier = Modifier,
-    currentCustomColor: String? = null
+    currentCustomColor: String? = null,
+    currentCustomPrimaryColor: String? = null,
+    currentCustomSecondaryColor: String? = null
 ) {
-    val colors = remember(palette) { getPalettePreviewColors(palette) }
+    val colors = remember(
+        palette,
+        currentCustomColor,
+        currentCustomPrimaryColor,
+        currentCustomSecondaryColor
+    ) {
+        getPalettePreviewColors(
+            palette = palette,
+            customColorOption = currentCustomColor,
+            customPrimaryColor = currentCustomPrimaryColor,
+            customSecondaryColor = currentCustomSecondaryColor
+        )
+    }
+    val hasActiveCustomColors = palette == ColorPaletteOption.CUSTOM &&
+        (!currentCustomColor.isNullOrBlank() ||
+            !currentCustomPrimaryColor.isNullOrBlank() ||
+            !currentCustomSecondaryColor.isNullOrBlank())
 
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) {
@@ -320,13 +341,33 @@ private fun ColorPaletteCard(
                     }
                 }
 
-                if (isSelected) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = "Selected",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (hasActiveCustomColors) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            contentColor = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.color_palette_custom_badge),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = "Selected",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
 
@@ -428,8 +469,40 @@ private val palettePreviewColorsMap = mapOf(
     )
 )
 
-private fun getPalettePreviewColors(palette: ColorPaletteOption): PalettePreviewColors {
-    return palettePreviewColorsMap[palette] ?: palettePreviewColorsMap[ColorPaletteOption.DEFAULT]!!
+private fun getPalettePreviewColors(
+    palette: ColorPaletteOption,
+    customColorOption: String? = null,
+    customPrimaryColor: String? = null,
+    customSecondaryColor: String? = null
+): PalettePreviewColors {
+    if (palette == ColorPaletteOption.CUSTOM) {
+        val fallback = palettePreviewColorsMap.getValue(ColorPaletteOption.CUSTOM)
+        val namedColors = customColorOption
+            ?.takeIf { it.isNotBlank() }
+            ?.let { option -> ColorPalettes.CustomColorOptions[option] }
+
+        val primary = when {
+            !customPrimaryColor.isNullOrBlank() -> parseHexColorSafe(customPrimaryColor)
+            namedColors?.get("primary") != null -> namedColors.getValue("primary")
+            else -> fallback.primary
+        }
+
+        val secondary = when {
+            !customSecondaryColor.isNullOrBlank() -> parseHexColorSafe(customSecondaryColor)
+            !customPrimaryColor.isNullOrBlank() || namedColors?.get("primary") != null -> primary.copy(alpha = 0.8f)
+            else -> fallback.secondary
+        }
+
+        val background = namedColors?.get("background") ?: fallback.background
+
+        return PalettePreviewColors(
+            primary = primary,
+            secondary = secondary,
+            background = background
+        )
+    }
+
+    return palettePreviewColorsMap[palette] ?: palettePreviewColorsMap.getValue(ColorPaletteOption.DEFAULT)
 }
 
 private data class PalettePreviewColors(
