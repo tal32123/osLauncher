@@ -296,8 +296,8 @@ fun HomeScreen(
                                 entry.targetIndex?.let { targetIndex ->
                                     // Adjust index to account for recent apps section
                                     val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                        // Add header + recent apps + spacer + "All Apps" header
-                                        targetIndex + uiState.recentApps.size + 3
+                                        // Add header + recent apps + spacer/title before "All Apps"
+                                        targetIndex + uiState.recentApps.size + 2
                                     } else {
                                         targetIndex
                                     }
