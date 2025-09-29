@@ -60,41 +60,77 @@ object ColorPalettes {
 
     // Available custom color options for user selection
     val CustomColorOptions = mapOf(
-        "Purple" to mapOf(
+        "Deep Purple" to mapOf(
             "primary" to Color(0xFF7c3aed),      // Purple
             "surface" to Color(0xFFfaf5ff),      // Purple white
             "background" to Color(0xFFf3e8ff),   // Pale purple
             "onSurface" to Color(0xFF581c87)     // Dark purple
         ),
-        "Pink" to mapOf(
+        "Pink Rose" to mapOf(
             "primary" to Color(0xFFec4899),      // Pink
             "surface" to Color(0xFFfdf2f8),      // Pink white
             "background" to Color(0xFFfce7f3),   // Pale pink
             "onSurface" to Color(0xFF9d174d)     // Dark pink
         ),
-        "Green" to mapOf(
+        "Forest Green" to mapOf(
             "primary" to Color(0xFF10b981),      // Emerald
             "surface" to Color(0xFFf0fdf4),      // Green white
             "background" to Color(0xFFdcfce7),   // Pale green
             "onSurface" to Color(0xFF065f46)     // Dark green
         ),
-        "Orange" to mapOf(
+        "Emerald" to mapOf(
+            "primary" to Color(0xFF10b981),      // Emerald
+            "surface" to Color(0xFFf0fdf4),      // Green white
+            "background" to Color(0xFFdcfce7),   // Pale green
+            "onSurface" to Color(0xFF065f46)     // Dark green
+        ),
+        "Sunset Orange" to mapOf(
             "primary" to Color(0xFFf97316),      // Orange
             "surface" to Color(0xFFfff7ed),      // Orange white
             "background" to Color(0xFFfed7aa),   // Pale orange
             "onSurface" to Color(0xFF9a3412)     // Dark orange
         ),
-        "Red" to mapOf(
+        "Cherry Red" to mapOf(
             "primary" to Color(0xFFef4444),      // Red
             "surface" to Color(0xFFfef2f2),      // Red white
             "background" to Color(0xFFfecaca),   // Pale red
             "onSurface" to Color(0xFF991b1b)     // Dark red
         ),
-        "Teal" to mapOf(
+        "Crimson" to mapOf(
+            "primary" to Color(0xFFef4444),      // Red
+            "surface" to Color(0xFFfef2f2),      // Red white
+            "background" to Color(0xFFfecaca),   // Pale red
+            "onSurface" to Color(0xFF991b1b)     // Dark red
+        ),
+        "Ocean Teal" to mapOf(
             "primary" to Color(0xFF14b8a6),      // Teal
             "surface" to Color(0xFFf0fdfa),      // Teal white
             "background" to Color(0xFFccfbf1),   // Pale teal
             "onSurface" to Color(0xFF0f766e)     // Dark teal
+        ),
+        "Sky Blue" to mapOf(
+            "primary" to Color(0xFF0ea5e9),      // Sky blue
+            "surface" to Color(0xFFf0f9ff),      // Blue white
+            "background" to Color(0xFFe0f2fe),   // Pale blue
+            "onSurface" to Color(0xFF0c4a6e)     // Dark blue
+        ),
+        "Royal Indigo" to mapOf(
+            "primary" to Color(0xFF6366f1),      // Indigo
+            "surface" to Color(0xFFfdf4ff),      // Indigo white
+            "background" to Color(0xFFede9fe),   // Pale indigo
+            "onSurface" to Color(0xFF3730a3)     // Dark indigo
+        ),
+        "Amber" to mapOf(
+            "primary" to Color(0xFFf59e0b),      // Amber
+            "surface" to Color(0xFFfffbeb),      // Amber white
+            "background" to Color(0xFFfef3c7),   // Pale amber
+            "onSurface" to Color(0xFF92400e)     // Dark amber
+        ),
+        "Cyan" to mapOf(
+            "primary" to Color(0xFF06b6d4),      // Cyan
+            "surface" to Color(0xFFecfeff),      // Cyan white
+            "background" to Color(0xFFcffafe),   // Pale cyan
+            "onSurface" to Color(0xFF155e75)     // Dark cyan
         )
     )
 }

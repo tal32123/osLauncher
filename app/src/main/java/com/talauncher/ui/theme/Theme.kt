@@ -413,7 +413,7 @@ private fun createCustomPaletteDefinition(
         customPrimaryColor != null -> parseHexColor(customPrimaryColor) ?: Color(0xFF6366F1)
         customColorOption != null -> {
             ColorPalettes.CustomColorOptions[customColorOption]?.get("primary")
-                ?: ColorPalettes.CustomColorOptions["Purple"]!!["primary"]!!
+                ?: ColorPalettes.CustomColorOptions["Deep Purple"]!!["primary"]!!
         }
         else -> Color(0xFF6366F1) // Default purple
     }
@@ -429,7 +429,7 @@ private fun createCustomPaletteDefinition(
 
     // Use colors from named option if available, otherwise generate from primary
     val baseColors = if (customColorOption != null) {
-        ColorPalettes.CustomColorOptions[customColorOption] ?: ColorPalettes.CustomColorOptions["Purple"]!!
+        ColorPalettes.CustomColorOptions[customColorOption] ?: ColorPalettes.CustomColorOptions["Deep Purple"]!!
     } else {
         mapOf(
             "surface" to Color(0xFFFFFFFF),

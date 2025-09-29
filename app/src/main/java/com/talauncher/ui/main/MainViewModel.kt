@@ -37,6 +37,8 @@ class MainViewModel(
                     isOnboardingCompleted = isOnboardingCompleted,
                     colorPalette = uiSettings.colorPalette,
                     customColorOption = settings?.customColorOption,
+                    customPrimaryColor = settings?.customPrimaryColor,
+                    customSecondaryColor = settings?.customSecondaryColor,
                     themeMode = uiSettings.themeMode,
                     uiSettings = uiSettings,
                     isLoading = false
@@ -68,6 +70,8 @@ data class MainUiState(
     val isLoading: Boolean = true,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val customColorOption: String? = null,
+    val customPrimaryColor: String? = null,
+    val customSecondaryColor: String? = null,
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val uiSettings: UiSettings = UiSettings()
 )

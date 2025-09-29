@@ -326,18 +326,18 @@ private fun ColorPaletteCard(
                     // Show visual preview of custom color instead of text
                     if (palette == ColorPaletteOption.CUSTOM && currentCustomColor != null) {
                         val customColorMap = mapOf(
-                            "Deep Purple" to Color(0xFF673AB7),
-                            "Pink Rose" to Color(0xFFE91E63),
-                            "Forest Green" to Color(0xFF4CAF50),
-                            "Sunset Orange" to Color(0xFFFF9800),
-                            "Cherry Red" to Color(0xFFF44336),
-                            "Ocean Teal" to Color(0xFF009688),
-                            "Sky Blue" to Color(0xFF2196F3),
-                            "Royal Indigo" to Color(0xFF3F51B5),
-                            "Emerald" to Color(0xFF00C853),
-                            "Crimson" to Color(0xFFD32F2F),
-                            "Amber" to Color(0xFFFFC107),
-                            "Cyan" to Color(0xFF00BCD4)
+                            "Deep Purple" to Color(0xFF7c3aed),
+                            "Pink Rose" to Color(0xFFec4899),
+                            "Forest Green" to Color(0xFF10b981),
+                            "Sunset Orange" to Color(0xFFf97316),
+                            "Cherry Red" to Color(0xFFef4444),
+                            "Ocean Teal" to Color(0xFF14b8a6),
+                            "Sky Blue" to Color(0xFF0ea5e9),
+                            "Royal Indigo" to Color(0xFF6366f1),
+                            "Emerald" to Color(0xFF10b981),
+                            "Crimson" to Color(0xFFef4444),
+                            "Amber" to Color(0xFFf59e0b),
+                            "Cyan" to Color(0xFF06b6d4)
                         )
 
                         Row(
@@ -381,18 +381,18 @@ private fun ColorPaletteCard(
             // Color preview - Show actual custom colors if selected
             val previewColors = if (palette == ColorPaletteOption.CUSTOM && currentCustomColor != null) {
                 val customColorMap = mapOf(
-                    "Deep Purple" to Color(0xFF673AB7),
-                    "Pink Rose" to Color(0xFFE91E63),
-                    "Forest Green" to Color(0xFF4CAF50),
-                    "Sunset Orange" to Color(0xFFFF9800),
-                    "Cherry Red" to Color(0xFFF44336),
-                    "Ocean Teal" to Color(0xFF009688),
-                    "Sky Blue" to Color(0xFF2196F3),
-                    "Royal Indigo" to Color(0xFF3F51B5),
-                    "Emerald" to Color(0xFF00C853),
-                    "Crimson" to Color(0xFFD32F2F),
-                    "Amber" to Color(0xFFFFC107),
-                    "Cyan" to Color(0xFF00BCD4)
+                    "Deep Purple" to Color(0xFF7c3aed),
+                    "Pink Rose" to Color(0xFFec4899),
+                    "Forest Green" to Color(0xFF10b981),
+                    "Sunset Orange" to Color(0xFFf97316),
+                    "Cherry Red" to Color(0xFFef4444),
+                    "Ocean Teal" to Color(0xFF14b8a6),
+                    "Sky Blue" to Color(0xFF0ea5e9),
+                    "Royal Indigo" to Color(0xFF6366f1),
+                    "Emerald" to Color(0xFF10b981),
+                    "Crimson" to Color(0xFFef4444),
+                    "Amber" to Color(0xFFf59e0b),
+                    "Cyan" to Color(0xFF06b6d4)
                 )
                 val selectedColor = if (currentCustomColor.startsWith("#")) {
                     parseHexColorSafe(currentCustomColor)
@@ -673,18 +673,18 @@ private fun CustomColorOption(
     modifier: Modifier = Modifier
 ) {
     val colorMap = mapOf(
-        "Deep Purple" to Color(0xFF673AB7),
-        "Pink Rose" to Color(0xFFE91E63),
-        "Forest Green" to Color(0xFF4CAF50),
-        "Sunset Orange" to Color(0xFFFF9800),
-        "Cherry Red" to Color(0xFFF44336),
-        "Ocean Teal" to Color(0xFF009688),
-        "Sky Blue" to Color(0xFF2196F3),
-        "Royal Indigo" to Color(0xFF3F51B5),
-        "Emerald" to Color(0xFF00C853),
-        "Crimson" to Color(0xFFD32F2F),
-        "Amber" to Color(0xFFFFC107),
-        "Cyan" to Color(0xFF00BCD4)
+        "Deep Purple" to Color(0xFF7c3aed),
+        "Pink Rose" to Color(0xFFec4899),
+        "Forest Green" to Color(0xFF10b981),
+        "Sunset Orange" to Color(0xFFf97316),
+        "Cherry Red" to Color(0xFFef4444),
+        "Ocean Teal" to Color(0xFF14b8a6),
+        "Sky Blue" to Color(0xFF0ea5e9),
+        "Royal Indigo" to Color(0xFF6366f1),
+        "Emerald" to Color(0xFF10b981),
+        "Crimson" to Color(0xFFef4444),
+        "Amber" to Color(0xFFf59e0b),
+        "Cyan" to Color(0xFF06b6d4)
     )
 
     val color = colorMap[colorName] ?: MaterialTheme.colorScheme.outline

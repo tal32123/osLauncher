@@ -145,8 +145,8 @@ class MainActivity : ComponentActivity() {
                     themeMode = mainUiState.themeMode,
                     colorPalette = mainUiState.colorPalette,
                     customColorOption = mainUiState.customColorOption,
-                    customPrimaryColor = mainUiState.uiSettings.customPrimaryColor,
-                    customSecondaryColor = mainUiState.uiSettings.customSecondaryColor
+                    customPrimaryColor = mainUiState.customPrimaryColor,
+                    customSecondaryColor = mainUiState.customSecondaryColor
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
