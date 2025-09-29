@@ -16,12 +16,10 @@ import androidx.compose.ui.unit.dp
 import com.talauncher.R
 import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.PrimerSpacing
-import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.theme.getUiDensity
 import com.talauncher.data.model.AppInfo
-import java.util.Locale
-import kotlin.math.max
-import kotlin.math.min
+import com.talauncher.ui.theme.UiSettings
+import com.talauncher.utils.SearchScoring
 
 @Composable
 fun UnifiedSearchResults(
@@ -192,7 +190,7 @@ fun AppDrawerUnifiedSearchResults(
     } else {
         allApps.filter { !it.isHidden }
             .mapNotNull { app ->
-                val score = calculateRelevanceScore(searchQuery, app.appName)
+                val score = SearchScoring.calculateRelevanceScore(searchQuery, app.appName)
                 if (score > 0) app to score else null
             }
             .sortedByDescending { it.second }
@@ -248,52 +246,4 @@ fun AppDrawerUnifiedSearchResults(
             }
         }
     }
-}
-
-private fun calculateRelevanceScore(query: String, name: String): Int {
-    val normalizedQuery = query.trim().lowercase()
-    val normalizedName = name.lowercase()
-
-    return when {
-        normalizedName == normalizedQuery -> 100 // Exact match
-        normalizedName.startsWith(normalizedQuery) -> 80 // Starts with
-        normalizedName.contains(" $normalizedQuery") -> 60 // Word boundary match
-        normalizedName.contains(normalizedQuery) -> 40 // Contains
-        else -> calculateFuzzyScore(normalizedQuery, normalizedName) // Fuzzy match
-    }
-}
-
-private fun calculateFuzzyScore(query: String, target: String): Int {
-    if (query.isEmpty() || target.isEmpty()) return 0
-
-    // Calculate Levenshtein distance ratio
-    val distance = calculateLevenshteinDistance(query, target)
-    val maxLength = max(query.length, target.length)
-    val similarity = 1.0 - (distance.toDouble() / maxLength)
-
-    // Only consider fuzzy matches above a threshold
-    return if (similarity >= 0.6) {
-        (similarity * 35).toInt() // Max fuzzy score of 35
-    } else {
-        0
-    }
-}
-
-private fun calculateLevenshteinDistance(s1: String, s2: String): Int {
-    val dp = Array(s1.length + 1) { IntArray(s2.length + 1) }
-
-    for (i in 0..s1.length) dp[i][0] = i
-    for (j in 0..s2.length) dp[0][j] = j
-
-    for (i in 1..s1.length) {
-        for (j in 1..s2.length) {
-            val cost = if (s1[i - 1] == s2[j - 1]) 0 else 1
-            dp[i][j] = min(
-                min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
-                dp[i - 1][j - 1] + cost
-            )
-        }
-    }
-
-    return dp[s1.length][s2.length]
 }
