@@ -1,6 +1,4 @@
 import java.util.Date
-import org.gradle.jvm.toolchain.JavaLanguageVersion
-import org.gradle.api.tasks.testing.Test
 
 plugins {
     id("com.android.application")
@@ -174,10 +172,4 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
-
-tasks.withType<Test>().configureEach {
-    javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    })
-}
 
