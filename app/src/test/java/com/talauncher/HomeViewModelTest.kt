@@ -4,10 +4,8 @@ import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import com.talauncher.data.model.AppInfo
-import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.repository.AppRepository
-import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.ui.home.HomeViewModel
 import com.talauncher.utils.ErrorHandler
@@ -16,9 +14,7 @@ import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -53,9 +49,6 @@ class HomeViewModelTest {
     private lateinit var settingsRepository: SettingsRepository
 
     @Mock
-    private lateinit var sessionRepository: SessionRepository
-
-    @Mock
     private lateinit var permissionsHelper: PermissionsHelper
 
     @Mock
@@ -76,8 +69,6 @@ class HomeViewModelTest {
         whenever(settingsRepository.getSettings()).thenReturn(flowOf(LauncherSettings()))
         whenever(appRepository.getAllVisibleApps()).thenReturn(flowOf(emptyList()))
         whenever(appRepository.getHiddenApps()).thenReturn(flowOf(emptyList()))
-        whenever(sessionRepository.observeSessionExpirations()).thenReturn(MutableSharedFlow<AppSession>().asSharedFlow())
-        runBlocking { whenever(sessionRepository.emitExpiredSessions()).thenReturn(Unit) }
         whenever(permissionsHelper.permissionState).thenReturn(MutableStateFlow(PermissionState()))
         runBlocking { whenever(usageStatsHelper.getPast48HoursUsageStats(any())).thenReturn(emptyList()) }
     }
@@ -100,7 +91,6 @@ class HomeViewModelTest {
         viewModel = HomeViewModel(
             appRepository = appRepository,
             settingsRepository = settingsRepository,
-            sessionRepository = sessionRepository,
             appContext = appContext,
             permissionsHelper = permissionsHelper,
             usageStatsHelper = usageStatsHelper,
