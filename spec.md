@@ -70,4 +70,4 @@ To maintain the minimalist philosophy, the following features will be deliberate
 - [ ] **Battery Life:** No background services that could drain the battery. Usage stats will be queried on-demand when the user visits the Insights screen.
 - [x] **Compatibility:** Target API Level 21 (Android 5.0 Lollipop) as the minimum to ensure broad device support, while compiling against the latest stable Android SDK.
 - [ ] **Modularity:** Code should be organized by feature (e.g., `home`, `app_drawer`, `focus_mode`, `settings`) to maintain clarity and scalability.
-- [x] **No Network Calls:** The app will be entirely offline. No data is to be collected or sent to any server.
+- [x] **Network Usage:** External calls are limited to user-facing features (e.g., weather) and must be transparent, minimal, and privacy-preserving.

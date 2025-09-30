@@ -4,6 +4,7 @@
 - Reorganize the project into clearly separated Android modules (app shell, feature modules, data sources, and shared core utilities) with Jetpack best practices such as single-activity navigation, Hilt dependency injection, and lifecycle-aware coroutines.
 - Introduce a Clean Architecture-inspired layering (presentation → domain → data) backed by explicit use cases, repositories, and DTO-to-entity mappers to make business rules SOLID and DRY.
 - Modernize platform integrations (Room, DataStore, Retrofit, WorkManager, Foreground Service APIs) and cross-cutting concerns (error handling, logging, permissions) with well-defined patterns (Repository, Use Case Command, Strategy, Facade, Adapter, Observer) so each component has a single responsibility.
+- Deliver session-expiry friction flows entirely within Compose-driven surfaces that follow Android dialog best practices.
 - Provide a phased delivery roadmap with guardrails for testing, migration, and developer onboarding tailored for a junior engineer to follow step by step.
 
 ## Current Architecture Assessment (What We Have Today)
@@ -11,14 +12,14 @@
    - No dependency injection framework; `MainActivity` constructs the Room database, repositories, helpers, and error handler directly.
    - The activity also controls navigation logic, pager state, permission checks, and error presentation, violating single responsibility.
 2. **Presentation layer tightly couples UI and business concerns.**
-   - `HomeViewModel` manages app search, session expiry, overlay dispatch, contacts, weather, and permissions in one class (~900+ lines) making it hard to test and extend.
+   - `HomeViewModel` manages app search, session expiry, contacts, weather, and permissions in one class (~900+ lines) making it hard to test and extend.
    - Compose screens directly reference repositories or helpers through the view model without clear use case boundaries.
 3. **Data layer is Room-centric and monolithic.**
    - Room entities (`AppInfo`, `LauncherSettings`, `AppSession`) double as domain models and UI models.
    - Settings that behave like preferences live in Room, making migrations verbose and increasing disk I/O on simple toggles.
    - Networking (`WeatherService`) is a synchronous HTTP client with manual JSON parsing and no caching.
 4. **Services and helpers lack lifecycle boundaries.**
-   - `OverlayService` uses raw `WindowManager` operations without an abstraction and contains Compose UI code inside the service.
+   - Previous countdown services relied on raw `WindowManager` operations with Compose UI inside the service; similar lifecycle gaps remain for surviving helpers.
    - Permission and contact helpers manage UI flow from non-UI layers.
 5. **Testing & tooling gaps.**
    - Few dedicated unit tests for repositories/use cases; instrumentation tests are not organized per feature.
@@ -65,12 +66,12 @@ domain
    - **O**pen/Closed & Strategy pattern: provide a `FrictionStrategy` interface with implementations for `DistractingAppFriction`, `SessionExtension`, enabling easy extension of friction logic.
    - **L**iskov / **I**nterface Segregation: domain repositories expose only required functions; e.g., `AppRepository` interface for read/write operations, `SessionRepository` interface for timers, `WeatherRepository` for weather data.
    - **D**ependency Inversion: presentation depends on interfaces in the domain layer; Hilt modules bind data implementations.
-   - Keep logic DRY by consolidating permission and overlay flows into reusable classes (Facade pattern) that each feature can call.
+   - Keep logic DRY by consolidating permission flows into reusable classes (Facade pattern) that each feature can call.
 3. **Design Patterns to employ**
    - **Repository** for data abstraction (already conceptually present; formalize through interfaces in domain).
    - **Use Case (Command)** pattern for domain actions (one public `suspend operator fun invoke` per action).
    - **Strategy** for friction/permission handling to swap behaviours based on settings.
-   - **Facade** for system services (e.g., `OverlayFacade`, `PermissionFacade`) to hide Android API complexity from ViewModels.
+   - **Facade** for system services (e.g., `PermissionFacade`, `UsageStatsFacade`) to hide Android API complexity from ViewModels.
    - **Adapter** for bridging platform data (`PackageManager`, `Contacts`, `Location`) into domain models.
    - **Observer** (Flows) for reactive UI updates.
 
@@ -110,13 +111,13 @@ domain
 3. **Refactor session timing logic**
    - Move timing responsibilities from `HomeViewModel` into `SessionManager` use cases leveraging `WorkManager` or coroutine timers scoped to repository.
    - Use `WorkManager` for background cleanup tasks (expired session cleanup, periodic sync) respecting Android lifecycle.
-4. **Extract overlays & permissions into facades**
-   - Introduce `OverlayFacade` (handles Foreground Service interactions, ensures compliance with Android 14 restrictions).
+4. **Streamline permissions and session expiry coordination**
+   - Drive friction and session-expiry surfaces through a `SessionExpiryCoordinator` that emits UI events/dialog states the main activity can render.
    - Create `PermissionCoordinator` use case to evaluate & request required permissions via events the UI can react to.
 
 ### Phase 3 – Presentation Layer Rebuild
 1. **Replace pager navigation with `NavHost`**
-   - Define `NavGraph` with destinations: `home`, `settings`, `insights`, `onboarding`, `frictionDialog` (as dialog destination), `sessionExpired` (dialog/overlay route).
+   - Define `NavGraph` with destinations: `home`, `settings`, `insights`, `onboarding`, `frictionDialog` (as dialog destination), `sessionExpired` (dialog route).
    - Use `rememberNavController()` with `NavHost` in `MainActivity` Compose content; remove manual pager navigation side effects.
 2. **Refactor `MainActivity`**
    - Inject dependencies using Hilt; `MainActivity` becomes a thin host retrieving `MainViewModel` via `hiltViewModel()`.
@@ -131,8 +132,9 @@ domain
    - Move UI-only components into `core-ui` (typography, color palettes, dialogs) to avoid duplication.
    - Provide preview parameter providers for `UiState` classes.
    - Use `collectAsStateWithLifecycle` from `androidx.lifecycle:lifecycle-runtime-compose` for Flow observation.
-5. **Overlay UI modernization**
-   - Replace Compose-in-service pattern with `Activity`/`Dialog` or `Glance` overlay triggered via `SYSTEM_ALERT_WINDOW` abiding Android 14 restrictions. Use `NotificationCompat` for Foreground Service compliance and keep UI in Compose but within dedicated overlay module.
+5. **Session expiry UI modernization**
+   - Present session-expiry and friction flows inside the main activity via Compose dialogs or sheets that respect activity lifecycle constraints.
+   - Ensure any background reminders rely on notifications rather than `SYSTEM_ALERT_WINDOW`, aligning with modern Android restrictions.
 
 ### Phase 4 – Feature Enhancements & Cross-Cutting Concerns
 1. **Contacts & communications**
@@ -154,7 +156,7 @@ domain
    - Provide in-memory Room/`TestDispatcher` setups in `core-testing`.
 2. **Integration tests**
    - Compose UI tests per feature module verifying state rendering and navigation transitions.
-   - Add instrumentation tests for permission workflows and overlay interactions using `Mockk`/`Robolectric` where appropriate.
+   - Add instrumentation tests for permission workflows and friction/session-expiry dialogs using `Mockk`/`Robolectric` where appropriate.
 3. **Automation**
    - Update GitHub Actions (or equivalent) to run unit + instrumentation tests, lint, detekt, and assemble tasks.
    - Add baseline profile generation task for performance-critical code if Play Store distribution is planned.
@@ -185,13 +187,13 @@ domain
 ## Risks & Mitigations
 1. **Large refactor scope** – Mitigate by delivering in phases with feature flags and regression tests at each milestone.
 2. **Data migration complexity** – Write migration tests using Room’s `MigrationTestHelper`; ensure backup/restore is validated.
-3. **Overlay behaviour on newer Android versions** – Follow current Android 14+ requirements for foreground services and request `SYSTEM_ALERT_WINDOW` with user education screens (handled via Permission Coordinator).
+3. **Session-expiry reminders on newer Android versions** – Follow current Android 14+ requirements for foreground services and prefer notifications/dialogs over `SYSTEM_ALERT_WINDOW`, keeping any user education screens within the main activity flow.
 4. **Weather API rate limits** – Add caching and throttle via WorkManager; expose failure states gracefully to avoid user-facing errors.
 
 ## Acceptance Criteria for Completion
 - App builds and runs using Hilt-injected dependencies with the new module structure.
 - Each feature has its own ViewModel bound to use cases and domain models; Compose screens remain stateless.
 - Room entities no longer leak to UI; domain models are used in ViewModels and Compose.
-- Overlay, session, and friction flows are orchestrated via domain use cases and strategies, not direct service calls from ViewModels.
+- Session and friction flows are orchestrated via domain use cases and strategies, not direct service calls from ViewModels.
 - Automated tests cover critical flows (app launch, onboarding, home interactions, session expiry).
 - Documentation updated to reflect new architecture and developer onboarding steps.

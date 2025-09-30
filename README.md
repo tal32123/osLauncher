@@ -103,7 +103,7 @@ Quality matters just as much as minimalism. Run the test suites before shipping 
 ./gradlew test                # Unit tests
 ./gradlew connectedAndroidTest # Instrumented tests (device/emulator required)
 ```
-Additional helper scripts live in the project root (see `run_unit_tests.bat`, `run_android_tests.bat`, and `run_overlay_tests.bat`).
+Additional helper scripts live in the project root (see `run_unit_tests.bat` and `run_android_tests.bat`).
 
 ## Project Structure
 ```
