@@ -233,8 +233,10 @@ class HomeViewModel(
                     val alphabetIndex = buildAlphabetIndex(allApps, recentApps)
 
                     withContext(Dispatchers.Main.immediate) {
+                        val wasExpanded = _uiState.value.isOtherAppsExpanded
                         _uiState.value = _uiState.value.copy(
                             allVisibleApps = allApps,
+                            hiddenApps = hiddenApps,
                             showTime = settings?.showTimeOnHomeScreen ?: true,
                             showDate = settings?.showDateOnHomeScreen ?: true,
                             showWallpaper = settings?.showWallpaper ?: true,
@@ -258,7 +260,14 @@ class HomeViewModel(
                             recentApps = recentApps,
                             alphabetIndexEntries = alphabetIndex,
                             isAlphabetIndexEnabled = allApps.isNotEmpty()
-                        )
+                        ).let { updated ->
+                            val keepExpanded = wasExpanded && hiddenApps.isNotEmpty()
+                            if (updated.isOtherAppsExpanded != keepExpanded) {
+                                updated.copy(isOtherAppsExpanded = keepExpanded)
+                            } else {
+                                updated
+                            }
+                        }
 
                         // Update weather data if needed
                         _uiState.value = when (weatherDisplay) {
@@ -577,6 +586,16 @@ class HomeViewModel(
 
     fun clearSearchOnNavigation() {
         clearSearch()
+    }
+
+    fun toggleOtherAppsExpansion() {
+        val currentState = _uiState.value
+        if (currentState.hiddenApps.isEmpty()) {
+            return
+        }
+        _uiState.value = currentState.copy(
+            isOtherAppsExpanded = !currentState.isOtherAppsExpanded
+        )
     }
 
     fun dismissFrictionDialog() {
@@ -1529,6 +1548,7 @@ private data class TimeLimitPromptState(
 
 data class HomeUiState(
     val allVisibleApps: List<AppInfo> = emptyList(),
+    val hiddenApps: List<AppInfo> = emptyList(),
     val currentTime: String = "",
     val currentDate: String = "",
     val showTime: Boolean = true,
@@ -1585,5 +1605,6 @@ data class HomeUiState(
     val alphabetIndexActiveKey: String? = null,
     val isAlphabetIndexEnabled: Boolean = true,
     val showAppActionDialog: Boolean = false,
-    val selectedAppForAction: AppInfo? = null
+    val selectedAppForAction: AppInfo? = null,
+    val isOtherAppsExpanded: Boolean = false
 )
