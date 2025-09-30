@@ -19,6 +19,7 @@ private const val MIN_CONTRAST_RATIO = 4.5
 private const val BACKGROUND_BLEND_RATIO = 0.75f
 private const val DEFAULT_CORNER_RADIUS_FRACTION = 0.22f
 
+private val iconCacheLock = Any()
 private val iconCache = object : LruCache<String, Bitmap>(32 * 1024) {
     override fun sizeOf(key: String, value: Bitmap): Int {
         return value.byteCount / 1024
@@ -36,7 +37,12 @@ suspend fun themeIcon(
     @Px sizePx: Int
 ): Bitmap = withContext(Dispatchers.Default) {
     val cacheKey = cacheKey(context, packageName, themeColor, sizePx)
-    iconCache.get(cacheKey)?.let { return@withContext it.copy(it.config, false) }
+    synchronized(iconCacheLock) {
+        iconCache.get(cacheKey)
+    }?.let { cached ->
+        val config = cached.config ?: Bitmap.Config.ARGB_8888
+        return@withContext cached.copy(config, false)
+    }
 
     val drawable = loadIconDrawable(context, packageName)
     val bitmap = when {
@@ -48,8 +54,11 @@ suspend fun themeIcon(
             drawLegacy(drawable, themeColor, sizePx)
     }
 
-    iconCache.put(cacheKey, bitmap)
-    bitmap.copy(bitmap.config, false)
+    synchronized(iconCacheLock) {
+        iconCache.put(cacheKey, bitmap)
+    }
+    val config = bitmap.config ?: Bitmap.Config.ARGB_8888
+    bitmap.copy(config, false)
 }
 
 /** Checks whether the target app exposes a monochrome layer for themed icons on Android 13+. */
