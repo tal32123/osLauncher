@@ -2,14 +2,16 @@ package com.talauncher
 
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.test.core.app.ApplicationProvider
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.LauncherSettings
+import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SessionRepository
 import com.talauncher.data.repository.SettingsRepository
+import com.talauncher.service.WeatherService
 import com.talauncher.ui.home.HomeViewModel
+import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ErrorHandler
 import com.talauncher.utils.PermissionState
 import com.talauncher.utils.PermissionsHelper
@@ -17,7 +19,6 @@ import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -31,16 +32,13 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
-import org.robolectric.RobolectricTestRunner
 import org.junit.Assert.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class HomeViewModelTest {
 
     @get:Rule
@@ -55,7 +53,6 @@ class HomeViewModelTest {
     @Mock
     private lateinit var sessionRepository: SessionRepository
 
-    @Mock
     private lateinit var permissionsHelper: PermissionsHelper
 
     @Mock
@@ -63,6 +60,15 @@ class HomeViewModelTest {
 
     @Mock
     private lateinit var errorHandler: ErrorHandler
+
+    @Mock
+    private lateinit var appContext: Context
+
+    @Mock
+    private lateinit var contactHelper: ContactHelper
+
+    @Mock
+    private lateinit var weatherService: WeatherService
 
     private lateinit var viewModel: HomeViewModel
 
@@ -73,13 +79,24 @@ class HomeViewModelTest {
         MockitoAnnotations.openMocks(this)
         Dispatchers.setMain(testDispatcher)
 
-        whenever(settingsRepository.getSettings()).thenReturn(flowOf(LauncherSettings()))
+        whenever(settingsRepository.getSettings()).thenReturn(
+            flowOf(LauncherSettings(weatherDisplay = WeatherDisplayOption.OFF))
+        )
         whenever(appRepository.getAllVisibleApps()).thenReturn(flowOf(emptyList()))
         whenever(appRepository.getHiddenApps()).thenReturn(flowOf(emptyList()))
         whenever(sessionRepository.observeSessionExpirations()).thenReturn(MutableSharedFlow<AppSession>().asSharedFlow())
         runBlocking { whenever(sessionRepository.emitExpiredSessions()).thenReturn(Unit) }
-        whenever(permissionsHelper.permissionState).thenReturn(MutableStateFlow(PermissionState()))
         runBlocking { whenever(usageStatsHelper.getPast48HoursUsageStats(any())).thenReturn(emptyList()) }
+        whenever(appContext.applicationContext).thenReturn(appContext)
+        runBlocking { whenever(contactHelper.isWhatsAppInstalled()).thenReturn(false) }
+
+        permissionsHelper = object : PermissionsHelper(appContext) {
+            override fun checkAllPermissions() {
+                // No-op for tests to avoid accessing Android services.
+            }
+        }.apply {
+            overridePermissionState(PermissionState())
+        }
     }
 
     @After
@@ -89,22 +106,22 @@ class HomeViewModelTest {
 
     @Test
     fun `all visible apps load correctly`() = runTest {
-        println("Running all visible apps load correctly test")
         val visibleApps = listOf(
             AppInfo("com.test.app1", "App 1"),
             AppInfo("com.test.app2", "App 2")
         )
         whenever(appRepository.getAllVisibleApps()).thenReturn(flowOf(visibleApps))
 
-        val appContext = ApplicationProvider.getApplicationContext<Context>()
         viewModel = HomeViewModel(
             appRepository = appRepository,
             settingsRepository = settingsRepository,
             sessionRepository = sessionRepository,
             appContext = appContext,
+            initialContactHelper = contactHelper,
             permissionsHelper = permissionsHelper,
             usageStatsHelper = usageStatsHelper,
-            errorHandler = errorHandler
+            errorHandler = errorHandler,
+            weatherService = weatherService
         )
         advanceUntilIdle()
 

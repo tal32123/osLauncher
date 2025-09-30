@@ -94,7 +94,8 @@ class HomeViewModel(
     initialContactHelper: ContactHelper? = null,
     private val permissionsHelper: PermissionsHelper? = null,
     private val usageStatsHelper: UsageStatsHelper? = null,
-    private val errorHandler: ErrorHandler? = null
+    private val errorHandler: ErrorHandler? = null,
+    private val weatherService: WeatherService = WeatherService(appContext)
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -106,7 +107,6 @@ class HomeViewModel(
     private val contactHelper: ContactHelper? = initialContactHelper ?: permissionsHelper?.let {
         ContactHelper(appContext, it)
     }
-    private val weatherService = WeatherService(appContext)
     private val fallbackPermissionsHelper: PermissionsHelper by lazy { PermissionsHelper(appContext) }
     private val resolvedPermissionsHelper: PermissionsHelper?
         get() = permissionsHelper ?: fallbackPermissionsHelper
