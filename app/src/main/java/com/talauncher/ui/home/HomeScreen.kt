@@ -390,6 +390,33 @@ fun HomeScreen(
                                 uiDensity = uiState.uiDensity.toUiDensity()
                             )
                         }
+
+                        if (uiState.hiddenApps.isNotEmpty()) {
+                            item {
+                                OtherAppsToggle(
+                                    hiddenCount = uiState.hiddenApps.size,
+                                    isExpanded = uiState.isOtherAppsExpanded,
+                                    enableGlassmorphism = uiState.enableGlassmorphism,
+                                    onToggle = { viewModel.toggleOtherAppsExpansion() }
+                                )
+                            }
+
+                            if (uiState.isOtherAppsExpanded) {
+                                items(uiState.hiddenApps, key = { "hidden_${it.packageName}" }) { app ->
+                                    ModernAppItem(
+                                        appName = app.appName,
+                                        onClick = { viewModel.launchApp(app.packageName) },
+                                        onLongClick = {
+                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewModel.showAppActionDialog(app)
+                                        },
+                                        enableGlassmorphism = uiState.enableGlassmorphism,
+                                        uiDensity = uiState.uiDensity.toUiDensity(),
+                                        isHidden = true
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     // Alphabet Index on the right side
@@ -710,6 +737,72 @@ fun FrictionDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         shape = PrimerShapes.medium
     )
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun OtherAppsToggle(
+    hiddenCount: Int,
+    isExpanded: Boolean,
+    enableGlassmorphism: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val summaryText = if (hiddenCount == 1) {
+        "1 app hidden from the main list."
+    } else {
+        "$hiddenCount apps hidden from the main list."
+    }
+
+    ModernGlassCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("other_apps_toggle")
+            .combinedClickable(onClick = onToggle),
+        enableGlassmorphism = enableGlassmorphism
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(PrimerSpacing.md)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Other Apps",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = if (isExpanded) "Hide" else "Show",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(PrimerSpacing.xs))
+
+            Text(
+                text = summaryText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            if (!isExpanded) {
+                Spacer(modifier = Modifier.height(PrimerSpacing.xs))
+                Text(
+                    text = "Tap to reveal these hidden apps.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }
 
 
