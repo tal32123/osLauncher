@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
             )
             this.searchInteractionRepository = SearchInteractionRepository(database.searchInteractionDao())
 
-            // Initialize session repository and observe expirations in a single coroutine
+            // Run asynchronous initialization tasks
             // Add delay to allow UI to fully initialize first for Espresso tests
             lifecycleScope.launch {
                 try {
@@ -91,16 +91,6 @@ class MainActivity : ComponentActivity() {
 
                     // Brief delay to allow activity to fully start for testing
                     kotlinx.coroutines.delay(100)
-
-                    sessionRepository.initialize()
-                    sessionRepository.emitExpiredSessions()
-
-                    // Start observing session expirations
-                    launch {
-                        sessionRepository.observeSessionExpirations().collect {
-                            shouldNavigateToHome = true
-                        }
-                    }
 
                     // Read and store commit info (defer further for tests)
                     launch {
@@ -182,14 +172,13 @@ class MainActivity : ComponentActivity() {
                                 appRepository = appRepository,
                                 searchInteractionRepository = searchInteractionRepository,
                                 settingsRepository = settingsRepository,
-                            permissionsHelper = permissionsHelper,
-                            usageStatsHelper = usageStatsHelper,
-                            sessionRepository = sessionRepository,
-                            contactHelper = contactHelper,
-                            errorHandler = errorHandler,
-                            shouldNavigateToHome = shouldNavigateToHome,
-                            onNavigatedToHome = { shouldNavigateToHome = false }
-                        )
+                                permissionsHelper = permissionsHelper,
+                                usageStatsHelper = usageStatsHelper,
+                                contactHelper = contactHelper,
+                                errorHandler = errorHandler,
+                                shouldNavigateToHome = shouldNavigateToHome,
+                                onNavigatedToHome = { shouldNavigateToHome = false }
+                            )
                         }
                     }
                 }
@@ -214,8 +203,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Check for expired sessions when returning to launcher
-        checkExpiredSessions()
         // Always navigate back to the home page when the launcher becomes visible
         shouldNavigateToHome = true
         if(::permissionsHelper.isInitialized) {
@@ -235,24 +222,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkExpiredSessions() {
-        if (!::sessionRepository.isInitialized) {
-            return
-        }
-
-        lifecycleScope.launch {
-            sessionRepository.emitExpiredSessions()
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::sessionRepository.isInitialized) {
-            lifecycleScope.launch {
-                sessionRepository.cleanup()
-            }
-        }
-    }
 }
 
 @Composable
@@ -262,7 +231,6 @@ fun TALauncherApp(
     settingsRepository: SettingsRepository,
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
-    sessionRepository: SessionRepository,
     contactHelper: ContactHelper,
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
@@ -274,7 +242,6 @@ fun TALauncherApp(
         settingsRepository = settingsRepository,
         permissionsHelper = permissionsHelper,
         usageStatsHelper = usageStatsHelper,
-        sessionRepository = sessionRepository,
         contactHelper = contactHelper,
         errorHandler = errorHandler,
         shouldNavigateToHome = shouldNavigateToHome,
@@ -289,7 +256,6 @@ fun LauncherNavigationPager(
     settingsRepository: SettingsRepository,
     permissionsHelper: PermissionsHelper,
     usageStatsHelper: UsageStatsHelper,
-    sessionRepository: SessionRepository,
     contactHelper: ContactHelper,
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
@@ -382,7 +348,6 @@ fun LauncherNavigationPager(
                             searchInteractionRepository = searchInteractionRepository,
                             settingsRepository = settingsRepository,
                             onLaunchApp = onLaunchApp,
-                            sessionRepository = sessionRepository,
                             appContext = applicationContext,
                             initialContactHelper = contactHelper,
                             permissionsHelper = permissionsHelper,

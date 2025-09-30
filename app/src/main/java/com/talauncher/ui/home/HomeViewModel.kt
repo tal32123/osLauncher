@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
-import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.UiDensityOption
@@ -21,7 +20,6 @@ import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SearchInteractionRepository
 import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
 import com.talauncher.data.repository.SettingsRepository
-import com.talauncher.data.repository.SessionRepository
 import com.talauncher.service.WeatherService
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
@@ -93,7 +91,6 @@ class HomeViewModel(
     private val settingsRepository: SettingsRepository,
     private val searchInteractionRepository: SearchInteractionRepository? = null,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
-    private val sessionRepository: SessionRepository? = null,
     private val appContext: Context,
     initialContactHelper: ContactHelper? = null,
     private val permissionsHelper: PermissionsHelper? = null,
@@ -128,8 +125,6 @@ class HomeViewModel(
     init {
         observeData()
         updateTime()
-        observeSessionExpirations()
-        checkExpiredSessions()
         setupDebouncedContactSearch()
     }
 
@@ -613,49 +608,6 @@ class HomeViewModel(
         } catch (e: Exception) {
             Log.e("HomeViewModel", "Failed to open Google search", e)
         }
-    }
-
-    private fun observeSessionExpirations() {
-        val repository = sessionRepository ?: return
-        viewModelScope.launch {
-            repository.observeSessionExpirations().collect { session ->
-                handleExpiredSession(session)
-            }
-        }
-    }
-
-    private fun handleExpiredSession(session: AppSession) {
-        viewModelScope.launch {
-            val permissionsHelper = resolvedPermissionsHelper
-            if (usageStatsHelper != null && permissionsHelper != null) {
-                val hasUsageStatsPermission = permissionsHelper.permissionState.value.hasUsageStats
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(hasUsageStatsPermission)
-                if (currentApp != session.packageName) {
-                    if (BuildConfig.DEBUG) {
-                        Log.d(
-                            "HomeViewModel",
-                            "Expired session for ${session.packageName} while current app is $currentApp. Skipping close."
-                        )
-                    }
-                    return@launch
-                }
-            }
-            if (BuildConfig.DEBUG) {
-                Log.d("HomeViewModel", "Time limit reached for ${session.packageName}, closing app.")
-            }
-            appRepository.closeCurrentApp()
-        }
-    }
-
-    private fun checkExpiredSessions() {
-        val repository = sessionRepository ?: return
-        viewModelScope.launch {
-            repository.emitExpiredSessions()
-        }
-    }
-
-    fun checkExpiredSessionsManually() {
-        checkExpiredSessions()
     }
 
 

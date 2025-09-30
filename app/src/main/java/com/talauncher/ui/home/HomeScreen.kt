@@ -145,12 +145,6 @@ fun HomeScreen(
         }
     }
 
-    // Check for expired sessions when home screen is displayed
-    LaunchedEffect(Unit) {
-        viewModel.checkExpiredSessionsManually()
-    }
-
-
     // Use modern backdrop with new design system
     ModernBackdrop(
         showWallpaper = uiState.showWallpaper,

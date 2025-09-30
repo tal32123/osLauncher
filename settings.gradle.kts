@@ -1,3 +1,14 @@
+import java.io.File
+
+val androidHome = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+if (androidHome != null) {
+    val localPropertiesFile = File(rootDir, "local.properties")
+    if (!localPropertiesFile.exists()) {
+        val escapedPath = androidHome.replace("\\", "\\\\")
+        localPropertiesFile.writeText("sdk.dir=$escapedPath")
+    }
+}
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
