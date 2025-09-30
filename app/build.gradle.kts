@@ -139,6 +139,7 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     // Material icons extended (for icons like ExpandMore)
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
