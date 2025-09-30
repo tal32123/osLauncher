@@ -11,8 +11,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -73,9 +71,14 @@ import com.talauncher.ui.theme.*
 import com.talauncher.utils.PermissionType
 import com.talauncher.utils.PermissionsHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
     UiDensityOption.COMPACT -> UiDensity.Compact
@@ -305,30 +308,8 @@ fun HomeScreen(
                 var previewFraction by remember { mutableStateOf(0f) }
                 var lastScrubbedKey by remember { mutableStateOf<String?>(null) }
                 val layoutDirection = LocalLayoutDirection.current
-
-                // Handle alphabet index scrolling
-                LaunchedEffect(uiState.alphabetIndexActiveKey) {
-                    val activeKey = uiState.alphabetIndexActiveKey
-                    if (activeKey != null) {
-                        val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
-                        if (entry != null) {
-                            if (entry.key == RECENT_APPS_INDEX_KEY) {
-                                listState.animateScrollToItem(0)
-                            } else {
-                                entry.targetIndex?.let { targetIndex ->
-                                    // Adjust index to account for recent apps section
-                                    val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                        // Add header + recent apps + spacer/title before "All Apps"
-                                        targetIndex + uiState.recentApps.size + 2
-                                    } else {
-                                        targetIndex
-                                    }
-                                    listState.animateScrollToItem(adjustedIndex)
-                                }
-                            }
-                        }
-                    }
-                }
+                val coroutineScope = rememberCoroutineScope()
+                var scrollJob by remember { mutableStateOf<Job?>(null) }
 
                 BoxWithConstraints(
                     modifier = Modifier
@@ -433,7 +414,7 @@ fun HomeScreen(
                                 .align(alignment)
                                 .padding(horizontal = PrimerSpacing.sm)
                                 .testTag("alphabet_index"),
-                            onEntryFocused = { entry, fraction ->
+                            onEntryFocused = { entry, fraction, isScrubGesture ->
                                 viewModel.onAlphabetIndexFocused(entry, fraction)
                                 previewEntry = entry
                                 previewFraction = fraction
@@ -441,6 +422,34 @@ fun HomeScreen(
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 }
                                 lastScrubbedKey = entry.key
+
+                                val hasRecents = uiState.recentApps.isNotEmpty()
+                                val recentCount = uiState.recentApps.size
+                                val totalAppCount = uiState.allVisibleApps.size
+                                val targetIndex = resolveAlphabetScrollTarget(
+                                    entry = entry,
+                                    entries = uiState.alphabetIndexEntries,
+                                    fraction = fraction,
+                                    isScrubbingGesture = isScrubGesture,
+                                    hasRecents = hasRecents,
+                                    recentCount = recentCount,
+                                    totalAppCount = totalAppCount
+                                )
+
+                                if (targetIndex != null) {
+                                    val totalItems = calculateAlphabetLazyListItems(
+                                        hasRecents = hasRecents,
+                                        recentCount = recentCount,
+                                        totalAppCount = totalAppCount
+                                    )
+                                    if (totalItems > 0) {
+                                        val clampedIndex = targetIndex.coerceIn(0, totalItems - 1)
+                                        scrollJob?.cancel()
+                                        scrollJob = coroutineScope.launch {
+                                            listState.animateScrollToItem(clampedIndex)
+                                        }
+                                    }
+                                }
                             },
                             onScrubbingChanged = { active ->
                                 viewModel.onAlphabetScrubbingChanged(active)
@@ -882,13 +891,83 @@ private fun ScrubPreviewBubble(
     }
 }
 
-@Composable
+private fun calculateAlphabetLazyListItems(
+    hasRecents: Boolean,
+    recentCount: Int,
+    totalAppCount: Int
+): Int {
+    val recentsItems = if (hasRecents) {
+        // Header, list of recents, and the spacer/title before "All Apps"
+        recentCount + 2
+    } else {
+        0
+    }
+    return totalAppCount + recentsItems
+}
+
+private fun resolveAlphabetScrollTarget(
+    entry: AlphabetIndexEntry,
+    entries: List<AlphabetIndexEntry>,
+    fraction: Float,
+    isScrubbingGesture: Boolean,
+    hasRecents: Boolean,
+    recentCount: Int,
+    totalAppCount: Int
+): Int? {
+    val totalItems = calculateAlphabetLazyListItems(hasRecents, recentCount, totalAppCount)
+    if (totalItems == 0) {
+        return null
+    }
+
+    fun adjustForRecents(index: Int): Int {
+        return if (hasRecents) {
+            index + recentCount + 2
+        } else {
+            index
+        }
+    }
+
+    if (!isScrubbingGesture) {
+        return when {
+            entry.key == RECENT_APPS_INDEX_KEY && hasRecents -> 0
+            entry.targetIndex != null -> adjustForRecents(entry.targetIndex)
+            else -> null
+        }
+    }
+
+    if (hasRecents && entry.key == RECENT_APPS_INDEX_KEY) {
+        return 0
+    }
+
+    val anchors = entries.filter { it.hasApps && it.targetIndex != null }
+    if (anchors.isEmpty()) {
+        return null
+    }
+
+    val clampedFraction = fraction.coerceIn(0f, 1f)
+    val scaled = clampedFraction * (anchors.size - 1)
+    val lowerIdx = floor(scaled).toInt()
+    val upperIdx = ceil(scaled).toInt()
+    val lowerTarget = anchors[lowerIdx].targetIndex!!
+    val upperTarget = anchors[upperIdx].targetIndex!!
+    val progress = scaled - lowerIdx
+    val interpolated = if (lowerIdx == upperIdx) {
+        lowerTarget.toFloat()
+    } else {
+        lowerTarget + (upperTarget - lowerTarget) * progress
+    }
+
+    val baseIndex = interpolated.roundToInt().coerceIn(0, max(totalAppCount - 1, 0))
+    val adjustedIndex = adjustForRecents(baseIndex)
+    return adjustedIndex.coerceIn(0, totalItems - 1)
+}
+
 private fun AlphabetIndex(
     entries: List<AlphabetIndexEntry>,
     activeKey: String?,
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
-    onEntryFocused: (AlphabetIndexEntry, Float) -> Unit,
+    onEntryFocused: (AlphabetIndexEntry, Float, Boolean) -> Unit,
     onScrubbingChanged: (Boolean) -> Unit
 ) {
     var componentSize by remember { mutableStateOf(IntSize.Zero) }
@@ -917,10 +996,9 @@ private fun AlphabetIndex(
             }
         } ?: return null
 
-        val (entry, bounds) = candidate
-        val center = (bounds.start + bounds.endInclusive) / 2f
+        val (entry, _) = candidate
         val fraction = if (totalHeight > 0f) {
-            (center / totalHeight).coerceIn(0f, 1f)
+            (clampedY / totalHeight).coerceIn(0f, 1f)
         } else {
             0f
         }
@@ -938,12 +1016,12 @@ private fun AlphabetIndex(
                     val down = awaitFirstDown(requireUnconsumed = false)
                     onScrubbingChanged(true)
                     resolveEntry(down.position.y)?.let { (entry, fraction) ->
-                        onEntryFocused(entry, fraction)
+                        onEntryFocused(entry, fraction, false)
                     }
                     try {
                         drag(down.id) { change ->
                             resolveEntry(change.position.y)?.let { (entry, fraction) ->
-                                onEntryFocused(entry, fraction)
+                                onEntryFocused(entry, fraction, true)
                             }
                             change.consume()
                         }
