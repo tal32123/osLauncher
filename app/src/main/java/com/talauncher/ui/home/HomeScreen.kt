@@ -456,6 +456,7 @@ fun HomeScreen(
         if (uiState.showAppActionDialog) {
             AppActionDialog(
                 app = uiState.selectedAppForAction,
+                canUninstall = uiState.selectedAppSupportsUninstall,
                 onDismiss = { viewModel.dismissAppActionDialog() },
                 onRename = { app -> viewModel.renameApp(app) },
                 onHide = { packageName -> viewModel.hideApp(packageName) },
@@ -958,6 +959,7 @@ fun RecentAppItem(
 @Composable
 fun AppActionDialog(
     app: AppInfo?,
+    canUninstall: Boolean,
     onDismiss: () -> Unit,
     onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
@@ -1035,15 +1037,17 @@ fun AppActionDialog(
                             }
                         )
 
-                        ActionTextButton(
-                            label = "Uninstall app",
-                            description = "Remove this app from your device.",
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                onUninstall(app.packageName)
-                                onDismiss()
-                            }
-                        )
+                        if (canUninstall) {
+                            ActionTextButton(
+                                label = "Uninstall app",
+                                description = "Remove this app from your device.",
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    onUninstall(app.packageName)
+                                    onDismiss()
+                                }
+                            )
+                        }
                     }
                 }
             },

@@ -3,6 +3,8 @@ package com.talauncher.ui.home
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -923,14 +925,16 @@ class HomeViewModel(
     fun showAppActionDialog(app: AppInfo) {
         _uiState.value = _uiState.value.copy(
             showAppActionDialog = true,
-            selectedAppForAction = app
+            selectedAppForAction = app,
+            selectedAppSupportsUninstall = canUninstallApp(app.packageName)
         )
     }
 
     fun dismissAppActionDialog() {
         _uiState.value = _uiState.value.copy(
             showAppActionDialog = false,
-            selectedAppForAction = null
+            selectedAppForAction = null,
+            selectedAppSupportsUninstall = false
         )
     }
 
@@ -976,6 +980,9 @@ class HomeViewModel(
 
     fun uninstallApp(packageName: String) {
         try {
+            if (!_uiState.value.selectedAppSupportsUninstall) {
+                return
+            }
             val intent = Intent(Intent.ACTION_DELETE).apply {
                 data = Uri.parse("package:$packageName")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -984,6 +991,24 @@ class HomeViewModel(
             dismissAppActionDialog()
         } catch (e: Exception) {
             errorHandler?.showError("Failed to uninstall app", e.message ?: "Unknown error", e)
+        }
+    }
+
+    private fun canUninstallApp(packageName: String): Boolean {
+        if (packageName == appContext.packageName || packageName == "android.settings") {
+            return false
+        }
+
+        return try {
+            val appInfo = appContext.packageManager.getApplicationInfo(packageName, 0)
+            val isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+            !isSystemApp
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to determine if $packageName is uninstallable", e)
+            false
         }
     }
 }
@@ -1043,5 +1068,6 @@ data class HomeUiState(
     val isAlphabetIndexEnabled: Boolean = true,
     val showAppActionDialog: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
+    val selectedAppSupportsUninstall: Boolean = false,
     val isOtherAppsExpanded: Boolean = false
 )
