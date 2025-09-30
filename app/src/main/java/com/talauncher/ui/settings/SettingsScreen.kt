@@ -662,8 +662,8 @@ fun GeneralSettings(
 
 
                     SettingItem(
-                        title = "Time Limit Prompts",
-                        subtitle = "Ask how long you'll use distracting apps",
+                        title = "Time Limit Dialog",
+                        subtitle = "Show a reminder before opening distracting apps",
                         checked = enableTimeLimitPrompt,
                         onCheckedChange = { onToggleTimeLimitPrompt() }
                     )
