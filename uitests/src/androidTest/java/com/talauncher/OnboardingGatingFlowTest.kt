@@ -57,14 +57,23 @@ class OnboardingGatingFlowTest {
         // Initial state
         composeTestRule.onNodeWithTag("onboarding_success_card").assertDoesNotExist()
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertExists()
+<<<<<<< HEAD
+=======
+        Log.d("OnboardingGatingFlowTest", "Initial state verified correctly")
+>>>>>>> master
 
         // Usage stats
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").assertIsEnabled()
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
         composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").assertIsNotEnabled()
+<<<<<<< HEAD
+=======
+        Log.d("OnboardingGatingFlowTest", "Usage stats button disabled after click")
+>>>>>>> master
 
         // Notifications (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+<<<<<<< HEAD
             (permissionsHelper as FakePermissionsHelper).setNotificationsGranted(true)
             composeTestRule.waitUntil(timeoutMillis = 5_000) {
                 permissionsHelper.permissionState.value.hasNotifications
@@ -90,6 +99,40 @@ class OnboardingGatingFlowTest {
         }
 
         // Not complete until default launcher is set
+=======
+            Log.d("OnboardingGatingFlowTest", "Granting notifications permission")
+            Log.d("OnboardingGatingFlowTest", "Notifications state before click: ${permissionsHelper.permissionState.value.hasNotifications}")
+
+            composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
+            composeTestRule.waitForIdle()
+
+            // Verify the permission state was updated in the fake helper
+            Log.d("OnboardingGatingFlowTest", "Notifications state after click: ${permissionsHelper.permissionState.value.hasNotifications}")
+
+            // Wait for notification permission state to update and button to become disabled
+            composeTestRule.waitUntil(timeoutMillis = 10_000) {
+                val currentState = permissionsHelper.permissionState.value.hasNotifications
+                Log.d("OnboardingGatingFlowTest", "Waiting for button to be disabled... notifications state: $currentState")
+                !currentState || composeTestRule.onAllNodesWithTag("onboarding_step_notifications_button").fetchSemanticsNodes().firstOrNull()?.config?.getOrNull(SemanticsProperties.Disabled) != null
+            }
+            composeTestRule.waitForIdle()
+            Log.d("OnboardingGatingFlowTest", "Notifications button disabled after click")
+        }
+
+        // Grant overlay permission
+        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
+        composeTestRule.waitForIdle()
+
+        // Grant contacts permission
+        composeTestRule.onNodeWithTag("onboarding_step_contacts_button").performClick()
+        composeTestRule.waitForIdle()
+
+        // Grant location permission
+        composeTestRule.onNodeWithTag("onboarding_step_location_button").performClick()
+        composeTestRule.waitForIdle()
+
+        // Success card should not be visible until default launcher is set
+>>>>>>> master
         composeTestRule.onNodeWithTag("onboarding_success_card").assertDoesNotExist()
         composeTestRule.onNodeWithTag("onboarding_incomplete_message").assertExists()
 
@@ -112,10 +155,8 @@ private class FakePermissionsHelper(
 
     var onDefaultLauncherRequest: (() -> Unit)? = null
 
-    private lateinit var backingState: PermissionState
-
     init {
-        backingState = PermissionState(
+        val initialState = PermissionState(
             hasUsageStats = false,
             hasSystemAlertWindow = false,
             hasNotifications = notificationsInitiallyGranted,
@@ -123,13 +164,11 @@ private class FakePermissionsHelper(
             hasCallPhone = false,
             hasLocation = false
         )
-        overridePermissionState(backingState)
+        overridePermissionState(initialState)
     }
 
     override fun checkAllPermissions() {
-        if (::backingState.isInitialized) {
-            overridePermissionState(backingState)
-        }
+        // Do nothing, state is controlled manually in the test
     }
 
     override fun requestPermission(activity: Activity, type: PermissionType) {
@@ -165,9 +204,7 @@ private class FakePermissionsHelper(
     }
 
     private fun updateState(transform: (PermissionState) -> PermissionState) {
-        check(::backingState.isInitialized) { "backingState should be initialized before updating" }
-        backingState = transform(backingState)
-        overridePermissionState(backingState)
+        overridePermissionState(transform(permissionState.value))
     }
 }
 

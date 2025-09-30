@@ -13,6 +13,8 @@ import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.repository.AppRepository
+import com.talauncher.data.repository.SearchInteractionRepository
+import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
@@ -34,7 +36,6 @@ import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.theme.toUiSettingsOrDefault
 import java.text.Collator
 import java.util.Locale
-import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
 
@@ -111,6 +112,7 @@ data class AppDrawerUiState(
 class AppDrawerViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
+    private val searchInteractionRepository: SearchInteractionRepository? = null,
     private val usageStatsHelper: UsageStatsHelper,
     private val permissionsHelper: PermissionsHelper,
     private val contactHelper: ContactHelper,
@@ -263,6 +265,7 @@ class AppDrawerViewModel(
             // Try to launch the app through repository (handles friction checks)
             val launched = appRepository.launchApp(packageName)
             if (launched) {
+                searchInteractionRepository?.recordAppLaunch(packageName)
                 // App was launched successfully, use callback if available
                 onLaunchApp?.invoke(packageName, null)
             }
@@ -288,6 +291,7 @@ class AppDrawerViewModel(
             // Log the reason for analytics/insights if needed
             val launched = appRepository.launchApp(packageName, bypassFriction = true)
             if (launched) {
+                searchInteractionRepository?.recordAppLaunch(packageName)
                 onLaunchApp?.invoke(packageName, null)
                 dismissFrictionDialog()
             }
@@ -336,6 +340,7 @@ class AppDrawerViewModel(
                 plannedDuration = durationMinutes
             )
             if (launched) {
+                searchInteractionRepository?.recordAppLaunch(packageName)
                 onLaunchApp?.invoke(packageName, durationMinutes)
             }
             dismissTimeLimitDialog()
@@ -538,18 +543,30 @@ class AppDrawerViewModel(
 
     fun callContact(contact: ContactInfo) {
         contactHelper.callContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.CALL)
+        }
     }
 
     fun messageContact(contact: ContactInfo) {
         contactHelper.messageContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.MESSAGE)
+        }
     }
 
     fun whatsAppContact(contact: ContactInfo) {
         contactHelper.whatsAppContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.WHATSAPP)
+        }
     }
 
     fun openContact(contact: ContactInfo) {
         contactHelper.openContact(contact)
+        viewModelScope.launch {
+            searchInteractionRepository?.recordContactAction(contact.id, ContactAction.OPEN)
+        }
     }
 
     fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
@@ -583,9 +600,16 @@ class AppDrawerViewModel(
     }
 
     private suspend fun buildSectionsAndIndexAsync(apps: List<AppInfo>, recentApps: List<AppInfo>, searchQuery: String, locale: Locale, collator: Collator) {
+        val interactionSnapshot = searchInteractionRepository?.getLastUsedSnapshot(
+            appPackages = apps.map { it.packageName },
+            contactIds = emptyList()
+        ) ?: SearchInteractionRepository.SearchInteractionSnapshot.EMPTY
+        val appLastUsed = interactionSnapshot.appLastUsed
+
         val filteredApps = if (searchQuery.isBlank()) {
             apps.filter { !it.isHidden }
         } else {
+<<<<<<< HEAD
             // Use fuzzy search with recency scoring for better results
             val hasUsageStatsPermission = permissionsHelper.permissionState.value.hasUsageStats
             val usageStats = if (hasUsageStatsPermission) {
@@ -597,13 +621,20 @@ class AppDrawerViewModel(
             }
 
             apps.mapNotNull { app ->
+=======
+            apps.filter { !it.isHidden }
+                .mapNotNull { app ->
+>>>>>>> master
                     val baseScore = calculateRelevanceScore(searchQuery, app.appName)
                     if (baseScore > 0) {
-                        val recencyScore = calculateRecencyScore(app.packageName, usageStats)
-                        app to (baseScore + recencyScore)
+                        Triple(app, baseScore, appLastUsed[app.packageName])
                     } else null
                 }
-                .sortedByDescending { it.second }
+                .sortedWith(
+                    compareByDescending<Triple<AppInfo, Int, Long?>> { it.second }
+                        .thenByDescending { it.third ?: Long.MIN_VALUE }
+                        .thenBy { it.first.appName.lowercase(locale) }
+                )
                 .map { it.first }
         }
 
@@ -614,8 +645,14 @@ class AppDrawerViewModel(
         val filteredApps = if (searchQuery.isBlank()) {
             apps.filter { !it.isHidden }
         } else {
+<<<<<<< HEAD
             // For non-search queries or when called synchronously, skip usage stats to avoid blocking
             apps.mapNotNull { app ->
+=======
+            // For non-search queries or when called synchronously, skip last-used lookups to avoid blocking
+            apps.filter { !it.isHidden }
+                .mapNotNull { app ->
+>>>>>>> master
                     val baseScore = calculateRelevanceScore(searchQuery, app.appName)
                     if (baseScore > 0) {
                         app to baseScore
@@ -761,22 +798,6 @@ class AppDrawerViewModel(
         return dp[s1.length][s2.length]
     }
 
-    private fun calculateRecencyScore(packageName: String, usageStats: Map<String, com.talauncher.data.model.AppUsage>): Int {
-        val usageApp = usageStats[packageName] ?: return 0
-
-        // Calculate recency boost based on usage time and frequency
-        val usageTimeHours = TimeUnit.MILLISECONDS.toHours(usageApp.timeInForeground)
-        val now = System.currentTimeMillis()
-        val lastUsedHours = TimeUnit.MILLISECONDS.toHours(now - usageApp.lastTimeUsed)
-
-        // Exponential decay for recency (higher boost for more recent usage)
-        val recencyFactor = exp(-lastUsedHours / 24.0) // Decay over 24 hours
-
-        // Usage time factor (more used apps get higher boost)
-        val usageFactor = min(usageTimeHours / 2.0, 5.0) // Cap at 5 points
-
-        return (recencyFactor * usageFactor * 20).toInt() // Max recency boost of ~20 points
-    }
 }
 
 private data class TimeLimitPromptState(

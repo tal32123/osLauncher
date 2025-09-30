@@ -2,27 +2,37 @@
 setlocal enableextensions enabledelayedexpansion
 
 echo ========================================
-echo Running targeted Espresso UI flows
+echo TALauncher Test Runner
 echo ========================================
 
-rem Check for quiet mode parameter (UI mode is now default)
+rem Parse flags
 set "UI_MODE=--info"
-if /i "%~1"=="--quiet" set "UI_MODE="
-if /i "%~1"=="-quiet" set "UI_MODE="
-if /i "%~1"=="quiet" set "UI_MODE="
-if /i "%~1"=="-q" set "UI_MODE="
+set "CI_MODE="
+for %%A in (%*) do (
+  if /i "%%~A"=="--quiet" set "UI_MODE="
+  if /i "%%~A"=="-quiet" set "UI_MODE="
+  if /i "%%~A"=="quiet" set "UI_MODE="
+  if /i "%%~A"=="-q" set "UI_MODE="
+  if /i "%%~A"=="--ci" set "CI_MODE=1"
+)
 
-if defined UI_MODE (
-    echo [UI MODE] Running with detailed output enabled ^(default^)
+if defined CI_MODE (
+  echo [MODE] CI mode: will run unit tests and build only
 ) else (
-    echo [QUIET MODE] Running in quiet mode ^(use --quiet to disable detailed output^)
+  if defined UI_MODE (
+      echo [UI MODE] Running with detailed output enabled ^(default^)
+  ) else (
+      echo [QUIET MODE] Running in quiet mode ^(use --quiet to disable detailed output^)
+  )
 )
 
 echo.
-echo Checking for connected Android devices or emulators...
-
 set "FAILURES=0"
 set "EXIT_CODE=0"
+
+if defined CI_MODE goto RUN_CI_TASKS
+
+echo Checking for connected Android devices or emulators...
 
 rem Check if adb is available
 where adb >nul 2>&1
@@ -108,6 +118,45 @@ if !FAILURES! neq 0 (
     set "EXIT_CODE=0"
 )
 
+goto WAIT_FOR_INPUT
+
+:RUN_CI_TASKS
+echo.
+echo ========================================
+echo CI-parity tasks (unit tests + assembleDebug)
+echo ========================================
+if defined UI_MODE (
+    call .\gradlew.bat test --no-daemon --stacktrace --info
+) else (
+    call .\gradlew.bat test --no-daemon --stacktrace --quiet
+)
+if errorlevel 1 (
+    echo !!! Unit tests failed
+    set /a FAILURES+=1
+)
+
+if defined UI_MODE (
+    call .\gradlew.bat assembleDebug --no-daemon --stacktrace --info
+) else (
+    call .\gradlew.bat assembleDebug --no-daemon --stacktrace --quiet
+)
+if errorlevel 1 (
+    echo !!! assembleDebug failed
+    set /a FAILURES+=1
+)
+
+echo.
+if %FAILURES% neq 0 (
+    echo ========================================
+    echo CI-mode completed with %FAILURES% failure^(s^)
+    echo ========================================
+    set "EXIT_CODE=1"
+) else (
+    echo ========================================
+    echo CI-mode tasks passed
+    echo ========================================
+    set "EXIT_CODE=0"
+)
 goto WAIT_FOR_INPUT
 
 :run_test_class

@@ -1,6 +1,4 @@
 import java.util.Date
-import org.gradle.jvm.toolchain.JavaLanguageVersion
-import org.gradle.api.tasks.testing.Test
 
 plugins {
     id("com.android.application")
@@ -10,10 +8,6 @@ plugins {
 }
 
 tasks.register("checkGitStatus") {
-    onlyIf {
-        val skipEnv = System.getenv("SKIP_GIT_STATUS_CHECK")
-        skipEnv?.equals("true", ignoreCase = true)?.not() ?: true
-    }
     doLast {
         val gitStatus = providers.exec {
             commandLine("git", "status", "--porcelain")
@@ -174,12 +168,15 @@ dependencies {
     // UI debugging tools (still needed for development)
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Android instrumentation testing (Compose UI + Espresso)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
 }
 
-
-tasks.withType<Test>().configureEach {
-    javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    })
-}
 

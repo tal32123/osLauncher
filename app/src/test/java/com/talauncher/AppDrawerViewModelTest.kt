@@ -98,6 +98,7 @@ class AppDrawerViewModelTest {
         viewModel = AppDrawerViewModel(
             appRepository,
             settingsRepository,
+            /* searchInteractionRepository = */ null,
             usageStatsHelper,
             permissionsHelper,
             contactHelper,
@@ -119,6 +120,7 @@ class AppDrawerViewModelTest {
         viewModel = AppDrawerViewModel(
             appRepository,
             settingsRepository,
+            /* searchInteractionRepository = */ null,
             usageStatsHelper,
             permissionsHelper,
             contactHelper,
