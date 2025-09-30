@@ -97,7 +97,7 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## Testing
-Quality matters just as much as minimalism. Run the test suites before shipping a change:
+Quality matters just as much as minimalism. Gradle already discovers every unit test automatically, so rely on the standard tasks below instead of maintaining custom JUnit suites (which can cause the same tests to run twice):
 
 ```bash
 ./gradlew test                # Unit tests
