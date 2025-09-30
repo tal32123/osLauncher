@@ -350,22 +350,23 @@ fun UIThemeSettings(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    ChipGrid(
-                        items = AppIconStyleOption.entries,
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        itemsPerRow = 3
-                    ) { option ->
-                        FilterChip(
-                            selected = appIconStyle == option,
-                            onClick = { onUpdateAppIconStyle(option) },
-                            label = {
-                                Text(
-                                    text = option.label,
-                                    maxLines = 1,
-                                    softWrap = false
-                                )
-                            }
-                        )
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AppIconStyleOption.entries.forEach { option ->
+                            FilterChip(
+                                selected = appIconStyle == option,
+                                onClick = { onUpdateAppIconStyle(option) },
+                                label = {
+                                    Text(
+                                        text = option.label,
+                                        maxLines = 1
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             }

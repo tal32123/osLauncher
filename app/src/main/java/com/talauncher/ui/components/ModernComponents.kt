@@ -3,6 +3,7 @@ package com.talauncher.ui.components
 import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.util.LruCache
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -53,6 +54,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -398,12 +400,16 @@ fun AppIcon(
     }
 
     val context = LocalContext.current
-    val iconBitmap by produceState<ImageBitmap?>(initialValue = null, packageName) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                val drawable = context.packageManager.getApplicationIcon(packageName)
-                drawable.toBitmap().asImageBitmap()
-            }.getOrNull()
+    val iconBitmap by produceState<ImageBitmap?>(
+        initialValue = AppIconBitmapCache.get(packageName),
+        packageName
+    ) {
+        val cached = AppIconBitmapCache.get(packageName)
+        if (cached != null) {
+            value = cached
+        } else {
+            value = loadAppIconBitmap(context, packageName)
+            value?.let { AppIconBitmapCache.put(packageName, it) }
         }
     }
 
@@ -420,7 +426,10 @@ fun AppIcon(
             contentDescription = null,
             modifier = baseModifier,
             colorFilter = when (iconStyle) {
-                AppIconStyleOption.THEMED -> ColorFilter.tint(tintedColor)
+                AppIconStyleOption.THEMED -> ColorFilter.tint(
+                    tintedColor,
+                    BlendMode.SrcAtop
+                )
                 AppIconStyleOption.ORIGINAL -> null
                 AppIconStyleOption.HIDDEN -> null
             }
@@ -448,6 +457,33 @@ fun AppIcon(
                 style = MaterialTheme.typography.labelLarge,
                 color = letterColor
             )
+        }
+    }
+}
+
+private suspend fun loadAppIconBitmap(
+    context: Context,
+    packageName: String
+): ImageBitmap? = withContext(Dispatchers.IO) {
+    runCatching {
+        val drawable = context.packageManager.getApplicationIcon(packageName).mutate()
+        val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 128
+        val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 128
+        drawable.toBitmap(width, height).asImageBitmap()
+    }.getOrNull()
+}
+
+private object AppIconBitmapCache {
+    private const val CacheSize = 64
+    private val cache = object : LruCache<String, ImageBitmap>(CacheSize) {}
+
+    fun get(key: String): ImageBitmap? = synchronized(cache) {
+        cache.get(key)
+    }
+
+    fun put(key: String, bitmap: ImageBitmap) {
+        synchronized(cache) {
+            cache.put(key, bitmap)
         }
     }
 }
