@@ -15,9 +15,9 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-class WeatherService(private val context: Context) {
+open class WeatherService(private val context: Context) {
 
-    suspend fun getCurrentWeather(lat: Double, lon: Double): Result<WeatherData> {
+    open suspend fun getCurrentWeather(lat: Double, lon: Double): Result<WeatherData> {
         return withContext(Dispatchers.IO) {
             try {
                 val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code,is_day&timezone=auto"
@@ -41,7 +41,7 @@ class WeatherService(private val context: Context) {
         }
     }
 
-    suspend fun getHourlyWeather(lat: Double, lon: Double): Result<List<WeatherHourly>> {
+    open suspend fun getHourlyWeather(lat: Double, lon: Double): Result<List<WeatherHourly>> {
         return withContext(Dispatchers.IO) {
             try {
                 val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&hourly=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1"
@@ -72,7 +72,7 @@ class WeatherService(private val context: Context) {
         }
     }
 
-    suspend fun getDailyWeather(lat: Double, lon: Double): Result<List<WeatherDaily>> {
+    open suspend fun getDailyWeather(lat: Double, lon: Double): Result<List<WeatherDaily>> {
         return withContext(Dispatchers.IO) {
             try {
                 val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&forecast_days=7"
@@ -103,7 +103,7 @@ class WeatherService(private val context: Context) {
         }
     }
 
-    suspend fun getCurrentLocation(): Pair<Double, Double>? = withContext(Dispatchers.IO) {
+    open suspend fun getCurrentLocation(): Pair<Double, Double>? = withContext(Dispatchers.IO) {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         try {
