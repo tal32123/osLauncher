@@ -882,6 +882,7 @@ private fun ScrubPreviewBubble(
     }
 }
 
+@Composable
 private fun AlphabetIndex(
     entries: List<AlphabetIndexEntry>,
     activeKey: String?,
