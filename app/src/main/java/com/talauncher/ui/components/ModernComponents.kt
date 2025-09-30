@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -75,6 +75,8 @@ import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Modern 2025 minimalist card component with glassmorphism effects
@@ -417,7 +419,13 @@ fun AppIcon(
         appName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
     }
 
-    val tintedColor = MaterialTheme.colorScheme.primary
+    val colorScheme = MaterialTheme.colorScheme
+    val surfaceColor = colorScheme.surface
+    val themedPrimary = colorScheme.primary
+    val highContrastTint = remember(themedPrimary, surfaceColor) {
+        themedPrimary.ensureContrastOn(surfaceColor)
+    }
+    val tintedColor = highContrastTint
     val baseModifier = modifier.size(iconSize)
 
     if (iconBitmap != null) {
@@ -436,7 +444,7 @@ fun AppIcon(
         )
     } else {
         val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            AppIconStyleOption.THEMED -> tintedColor.copy(alpha = 0.18f)
             AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
             AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
         }
@@ -460,6 +468,40 @@ fun AppIcon(
         }
     }
 }
+
+private fun Color.ensureContrastOn(background: Color, minimumContrast: Float = 3f): Color {
+    val currentContrast = contrastRatioAgainst(background)
+    if (currentContrast >= minimumContrast) {
+        return this
+    }
+
+    val target = if (luminance() > background.luminance()) Color.Black else Color.White
+    var blended = this
+    var step = 0
+    while (step < 10 && blended.contrastRatioAgainst(background) < minimumContrast) {
+        blended = blended.blendTowards(target, 0.15f)
+        step++
+    }
+    return blended
+}
+
+private fun Color.contrastRatioAgainst(other: Color): Float {
+    val l1 = luminance() + 0.05f
+    val l2 = other.luminance() + 0.05f
+    return max(l1, l2) / min(l1, l2)
+}
+
+private fun Color.blendTowards(target: Color, amount: Float): Color {
+    val clamped = amount.coerceIn(0f, 1f)
+    return Color(
+        red = lerp(red, target.red, clamped),
+        green = lerp(green, target.green, clamped),
+        blue = lerp(blue, target.blue, clamped),
+        alpha = lerp(alpha, target.alpha, clamped)
+    )
+}
+
+private fun lerp(start: Float, stop: Float, amount: Float): Float = start + (stop - start) * amount
 
 private suspend fun loadAppIconBitmap(
     context: Context,
