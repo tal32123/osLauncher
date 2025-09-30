@@ -54,7 +54,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -63,6 +62,7 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -70,6 +70,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.ui.theme.*
@@ -417,7 +418,11 @@ fun AppIcon(
         appName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
     }
 
-    val tintedColor = MaterialTheme.colorScheme.primary
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val tintedColor = remember(primaryColor, surfaceColor) {
+        adjustTintForVisibility(primaryColor, surfaceColor)
+    }
     val baseModifier = modifier.size(iconSize)
 
     if (iconBitmap != null) {
@@ -427,8 +432,7 @@ fun AppIcon(
             modifier = baseModifier,
             colorFilter = when (iconStyle) {
                 AppIconStyleOption.THEMED -> ColorFilter.tint(
-                    tintedColor,
-                    BlendMode.SrcAtop
+                    tintedColor
                 )
                 AppIconStyleOption.ORIGINAL -> null
                 AppIconStyleOption.HIDDEN -> null
@@ -436,7 +440,7 @@ fun AppIcon(
         )
     } else {
         val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            AppIconStyleOption.THEMED -> tintedColor.copy(alpha = 0.12f)
             AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
             AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
         }
@@ -459,6 +463,31 @@ fun AppIcon(
             )
         }
     }
+}
+
+private fun adjustTintForVisibility(
+    color: Color,
+    surfaceColor: Color,
+    minContrast: Double = 2.5
+): Color {
+    val foregroundArgb = color.toArgb()
+    val surfaceArgb = surfaceColor.toArgb()
+    val currentContrast = ColorUtils.calculateContrast(foregroundArgb, surfaceArgb)
+    if (currentContrast >= minContrast) {
+        return color
+    }
+
+    val surfaceIsDark = ColorUtils.calculateLuminance(surfaceArgb) < 0.5
+    val blendTarget = if (surfaceIsDark) Color.White else Color.Black
+    var blendAmount = 0.2f
+    var adjustedColorInt = foregroundArgb
+
+    while (ColorUtils.calculateContrast(adjustedColorInt, surfaceArgb) < minContrast && blendAmount <= 0.9f) {
+        adjustedColorInt = ColorUtils.blendARGB(foregroundArgb, blendTarget.toArgb(), blendAmount)
+        blendAmount += 0.1f
+    }
+
+    return Color(adjustedColorInt)
 }
 
 private suspend fun loadAppIconBitmap(
