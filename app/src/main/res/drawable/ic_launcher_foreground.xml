@@ -7,10 +7,10 @@
     <group
         android:pivotX="54"
         android:pivotY="54"
-        android:scaleX="0.88"
-        android:scaleY="0.88"
-        android:translateX="6.48"
-        android:translateY="6.48">
+        android:scaleX="0.82"
+        android:scaleY="0.82"
+        android:translateX="9.72"
+        android:translateY="9.72">
         <path
             android:fillColor="#FFFFFFFF"
             android:pathData="M12,26h32v10H30v48H20V36H12z" />
