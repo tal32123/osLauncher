@@ -14,9 +14,6 @@ data class LauncherSettings(
     val enableHapticFeedback: Boolean = true,
     val showWallpaper: Boolean = true, // Whether to show device wallpaper or solid background
     val enableTimeLimitPrompt: Boolean = false, // Whether to prompt for time limits on app launch
-    val enableMathChallenge: Boolean = false, // Whether to require math challenges to close apps
-    val mathDifficulty: MathDifficulty = MathDifficulty.EASY,
-    val sessionExpiryCountdownSeconds: Int = 5, // Number of seconds to block the app before prompting for action
     val recentAppsLimit: Int = 10, // Number of recent apps to show in insights
     val defaultTimeLimitMinutes: Int = 30, // Default time limit applied to distracting apps
     val showPhoneAction: Boolean = true,

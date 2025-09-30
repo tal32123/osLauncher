@@ -388,11 +388,13 @@ fun HomeScreen(
                                 items(uiState.hiddenApps, key = { "hidden_${it.packageName}" }) { app ->
                                     ModernAppItem(
                                         appName = app.appName,
+                                        packageName = app.packageName,
                                         onClick = { viewModel.launchApp(app.packageName) },
                                         onLongClick = {
                                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                             viewModel.showAppActionDialog(app)
                                         },
+                                        appIconStyle = uiState.appIconStyle,
                                         enableGlassmorphism = uiState.enableGlassmorphism,
                                         uiDensity = uiState.uiDensity.toUiDensity(),
                                         isHidden = true

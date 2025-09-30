@@ -312,12 +312,6 @@ class AppRepository(
         }
     }
 
-    suspend fun shouldShowMathChallenge(packageName: String): Boolean = withContext(Dispatchers.IO) {
-        val settings = settingsRepository.getSettingsSync()
-        val app = getApp(packageName)
-        return@withContext settings.enableMathChallenge && app?.isDistracting == true
-    }
-
     suspend fun getActiveSessionForApp(packageName: String) = sessionRepository?.getActiveSessionForApp(packageName)
 
     fun closeCurrentApp() {
@@ -351,8 +345,6 @@ class AppRepository(
             )
         }
     }
-
-    suspend fun endSessionForApp(packageName: String) = sessionRepository?.endSessionForApp(packageName)
 
     suspend fun getAllAppsSync(): List<AppInfo> = appDao.getAllAppsSync()
 
