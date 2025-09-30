@@ -57,7 +57,9 @@ object IconThemer {
         sizePx: Int
     ): Bitmap = withContext(Dispatchers.Default) {
         val key = listOf(packageName, themeColor, sizePx, Build.VERSION.SDK_INT).joinToString(":")
-        cache.get(key)?.let { return@withContext it }
+        synchronized(cache) {
+            cache.get(key)?.let { return@withContext it }
+        }
 
         val pm = context.packageManager
         val drawable = try {
@@ -78,7 +80,9 @@ object IconThemer {
                 composeBitmap(drawable, themeColor, sizePx)
         }
 
-        cache.put(key, bitmap)
+        synchronized(cache) {
+            cache.put(key, bitmap)
+        }
         bitmap
     }
 
@@ -133,7 +137,9 @@ object IconThemer {
 
     @VisibleForTesting
     fun clearCache() {
-        cache.evictAll()
+        synchronized(cache) {
+            cache.evictAll()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
