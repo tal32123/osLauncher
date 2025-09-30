@@ -129,8 +129,6 @@ fun SettingsScreen(
                 onUpdateMathDifficulty = viewModel::updateMathDifficulty,
                 recentAppsLimit = uiState.recentAppsLimit,
                 onUpdateRecentAppsLimit = viewModel::updateRecentAppsLimit,
-                sessionExpiryCountdownSeconds = uiState.sessionExpiryCountdownSeconds,
-                onUpdateSessionExpiryCountdown = viewModel::updateSessionExpiryCountdown,
                 showPhoneAction = uiState.showPhoneAction,
                 onToggleShowPhoneAction = viewModel::toggleShowPhoneAction,
                 showMessageAction = uiState.showMessageAction,
@@ -637,8 +635,6 @@ fun GeneralSettings(
     onUpdateMathDifficulty: (MathDifficulty) -> Unit,
     recentAppsLimit: Int,
     onUpdateRecentAppsLimit: (Int) -> Unit,
-    sessionExpiryCountdownSeconds: Int,
-    onUpdateSessionExpiryCountdown: (Int) -> Unit,
     showPhoneAction: Boolean,
     onToggleShowPhoneAction: () -> Unit,
     showMessageAction: Boolean,
@@ -681,36 +677,8 @@ fun GeneralSettings(
                         onCheckedChange = { onToggleTimeLimitPrompt() }
                     )
 
-                    var sliderValue by remember(sessionExpiryCountdownSeconds) {
-                        mutableStateOf(sessionExpiryCountdownSeconds.toFloat())
-                    }
                     var recentAppsValue by remember(recentAppsLimit) {
                         mutableStateOf(recentAppsLimit.toFloat())
-                    }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Countdown after timer",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Slider(
-                            value = sliderValue,
-                            onValueChange = { sliderValue = it },
-                            valueRange = 0f..15f,
-                            steps = 14,
-                            onValueChangeFinished = {
-                                onUpdateSessionExpiryCountdown(sliderValue.roundToInt())
-                            },
-                            enabled = enableTimeLimitPrompt
-                        )
-                        Text(
-                            text = "${sliderValue.roundToInt()} second${if (sliderValue.roundToInt() == 1) "" else "s"}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
 
                     Column(

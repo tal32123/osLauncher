@@ -53,9 +53,6 @@ import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
-import com.talauncher.ui.components.MathChallengeDialog
-import com.talauncher.ui.components.SessionExpiryActionDialog
-import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.ModernGlassCard
 import com.talauncher.ui.components.ModernSearchField
@@ -96,10 +93,7 @@ fun HomeScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
     val hasActiveDialog = uiState.showFrictionDialog ||
-        uiState.showTimeLimitDialog ||
-        uiState.showMathChallengeDialog ||
-        uiState.showSessionExpiryCountdown ||
-        uiState.showSessionExpiryDecisionDialog
+        uiState.showTimeLimitDialog
 
     LaunchedEffect(viewModel, permissionsHelper, context) {
         viewModel.events.collect { event ->
@@ -121,15 +115,6 @@ fun HomeScreen(
         enabled = hasActiveDialog
     ) {
         when {
-            uiState.showSessionExpiryCountdown -> {
-                // Countdown cannot be dismissed
-            }
-            uiState.showSessionExpiryDecisionDialog -> {
-                // Force the user to make a decision
-            }
-            uiState.showMathChallengeDialog -> {
-                // Math challenge cannot be dismissed with back button - force completion
-            }
             uiState.showTimeLimitDialog -> {
                 // Time limit dialog cannot be dismissed with back button - force choice
             }
@@ -512,28 +497,6 @@ fun HomeScreen(
             }
         }
 
-        if (uiState.showSessionExpiryCountdown) {
-            val appName = uiState.sessionExpiryAppName ?: "this app"
-            SessionExpiryCountdownDialog(
-                appName = appName,
-                remainingSeconds = uiState.sessionExpiryCountdownRemaining,
-                totalSeconds = uiState.sessionExpiryCountdownTotal
-            )
-        }
-
-        if (uiState.showSessionExpiryDecisionDialog) {
-            val appName = uiState.sessionExpiryAppName ?: "this app"
-            SessionExpiryActionDialog(
-                appName = appName,
-                showMathChallengeOption = uiState.sessionExpiryShowMathOption,
-                onExtend = { viewModel.onSessionExpiryDecisionExtend() },
-                onClose = { viewModel.onSessionExpiryDecisionClose() },
-                onMathChallenge = if (uiState.sessionExpiryShowMathOption) {
-                    { viewModel.onSessionExpiryDecisionMathChallenge() }
-                } else null
-            )
-        }
-
         if (uiState.showContactsPermissionDialog) {
             AlertDialog(
                 onDismissRequest = { viewModel.dismissContactsPermissionDialog() },
@@ -567,20 +530,6 @@ fun HomeScreen(
             )
         }
 
-        // Math challenge dialog for closing apps
-        if (uiState.showMathChallengeDialog) {
-            run {
-                val selectedPackage = uiState.selectedAppForMathChallenge ?: return@run
-                MathChallengeDialog(
-                    difficulty = uiState.mathChallengeDifficulty,
-                    onCorrect = {
-                        viewModel.onMathChallengeCompleted(selectedPackage)
-                    },
-                    onDismiss = { viewModel.dismissMathChallengeDialog() },
-                    isTimeExpired = uiState.isMathChallengeForExpiredSession
-                )
-            }
-        }
         } // End Box
     }
 }

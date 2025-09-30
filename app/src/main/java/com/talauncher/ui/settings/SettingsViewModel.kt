@@ -58,7 +58,6 @@ class SettingsViewModel(
                     enableTimeLimitPrompt = settings?.enableTimeLimitPrompt ?: false,
                     enableMathChallenge = settings?.enableMathChallenge ?: false,
                     mathDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
-                    sessionExpiryCountdownSeconds = settings?.sessionExpiryCountdownSeconds ?: 5,
                     recentAppsLimit = settings?.recentAppsLimit ?: 5,
                     defaultTimeLimitMinutes = settings?.defaultTimeLimitMinutes ?: 30,
                     showPhoneAction = settings?.showPhoneAction ?: true,
@@ -135,12 +134,6 @@ class SettingsViewModel(
     fun updateMathDifficulty(difficulty: MathDifficulty) {
         viewModelScope.launch {
             settingsRepository.updateMathDifficulty(difficulty)
-        }
-    }
-
-    fun updateSessionExpiryCountdown(seconds: Int) {
-        viewModelScope.launch {
-            settingsRepository.updateSessionExpiryCountdown(seconds)
         }
     }
 
@@ -340,7 +333,6 @@ data class SettingsUiState(
     val enableTimeLimitPrompt: Boolean = false,
     val enableMathChallenge: Boolean = false,
     val mathDifficulty: MathDifficulty = MathDifficulty.EASY,
-    val sessionExpiryCountdownSeconds: Int = 5,
     val recentAppsLimit: Int = 5,
     val defaultTimeLimitMinutes: Int = 30,
     val isLoading: Boolean = false,

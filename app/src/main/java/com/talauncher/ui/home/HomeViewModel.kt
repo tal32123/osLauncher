@@ -12,7 +12,6 @@ import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.AppIconStyleOption
-import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
@@ -29,9 +28,8 @@ import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import com.talauncher.utils.IdlingResourceHelper
 import com.talauncher.utils.SearchScoring
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -43,12 +41,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
-import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -103,8 +97,6 @@ class HomeViewModel(
     private val errorHandler: ErrorHandler? = null
 ) : ViewModel() {
 
-    private enum class TimeLimitRequestSource { STANDARD, SESSION_EXTENSION }
-
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -121,13 +113,8 @@ class HomeViewModel(
 
     private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     private val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
-    private val pendingExpiredSessions = ArrayDeque<AppSession>()
     private var allVisibleApps: List<AppInfo> = emptyList()
     private var allHiddenApps: List<AppInfo> = emptyList()
-    private var currentExpiredSession: AppSession? = null
-    private var countdownJob: Job? = null
-    private var timeLimitRequestSource = TimeLimitRequestSource.STANDARD
-    private val sessionExpirationMutex = Mutex()
     private var pendingContactQuery: String? = null
     private var hasShownContactsPermissionPrompt = false
     private var weatherUpdateJob: Job? = null
@@ -180,7 +167,6 @@ class HomeViewModel(
                             showWallpaper = settings?.showWallpaper ?: true,
                             backgroundColor = settings?.backgroundColor ?: "system",
                             backgroundOpacity = settings?.backgroundOpacity ?: 1f,
-                            mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
                             searchResults = filtered,
                             showPhoneAction = settings?.showPhoneAction ?: true,
                             showMessageAction = settings?.showMessageAction ?: true,
@@ -331,7 +317,6 @@ class HomeViewModel(
                     timeLimitDialogTimeLimitMinutes = promptInfo.limitMinutes,
                     timeLimitDialogUsesDefaultLimit = promptInfo.usesDefaultLimit
                 )
-                timeLimitRequestSource = TimeLimitRequestSource.STANDARD
                 return@launch
             }
 
@@ -557,8 +542,6 @@ class HomeViewModel(
     }
 
     fun dismissTimeLimitDialog() {
-        val wasExtension = timeLimitRequestSource == TimeLimitRequestSource.SESSION_EXTENSION
-        timeLimitRequestSource = TimeLimitRequestSource.STANDARD
         _uiState.value = _uiState.value.copy(
             showTimeLimitDialog = false,
             selectedAppForTimeLimit = null,
@@ -567,14 +550,10 @@ class HomeViewModel(
             timeLimitDialogTimeLimitMinutes = 0,
             timeLimitDialogUsesDefaultLimit = true
         )
-        if (wasExtension && currentExpiredSession != null) {
-            _uiState.value = _uiState.value.copy(showSessionExpiryDecisionDialog = true)
-        }
     }
 
     fun launchAppWithTimeLimit(packageName: String, durationMinutes: Int) {
         viewModelScope.launch {
-            val isExtension = timeLimitRequestSource == TimeLimitRequestSource.SESSION_EXTENSION
             val launched = appRepository.launchApp(
                 packageName,
                 bypassFriction = true,
@@ -585,31 +564,7 @@ class HomeViewModel(
                 searchInteractionRepository?.recordAppLaunch(packageName)
                 clearSearch()
                 onLaunchApp?.invoke(packageName, durationMinutes)
-                if (isExtension) {
-                    _uiState.value = _uiState.value.copy(
-                        showTimeLimitDialog = false,
-                        selectedAppForTimeLimit = null,
-                        timeLimitDialogAppName = null,
-                        timeLimitDialogUsageMinutes = null,
-                        timeLimitDialogTimeLimitMinutes = 0,
-                        timeLimitDialogUsesDefaultLimit = true
-                    )
-                    timeLimitRequestSource = TimeLimitRequestSource.STANDARD
-                    finalizeExpiredSession()
-                } else {
-                    dismissTimeLimitDialog()
-                }
-            } else if (isExtension) {
-                _uiState.value = _uiState.value.copy(
-                    showTimeLimitDialog = false,
-                    selectedAppForTimeLimit = null,
-                    timeLimitDialogAppName = null,
-                    timeLimitDialogUsageMinutes = null,
-                    timeLimitDialogTimeLimitMinutes = 0,
-                    timeLimitDialogUsesDefaultLimit = true,
-                    showSessionExpiryDecisionDialog = true
-                )
-                timeLimitRequestSource = TimeLimitRequestSource.STANDARD
+                dismissTimeLimitDialog()
             }
         }
     }
@@ -638,74 +593,6 @@ class HomeViewModel(
         return TimeUnit.MILLISECONDS.toMinutes(usageMillis).toInt()
     }
 
-    fun dismissMathChallengeDialog() {
-        viewModelScope.launch {
-            val wasExpiredSession = _uiState.value.isMathChallengeForExpiredSession
-            val wasExtensionChallenge = _uiState.value.isMathChallengeForSessionExtension
-            val packageName = _uiState.value.selectedAppForMathChallenge
-
-            if (wasExpiredSession && packageName != null) {
-                appRepository.closeCurrentApp()
-                appRepository.endSessionForApp(packageName)
-                finalizeExpiredSession()
-            }
-
-            _uiState.value = _uiState.value.copy(
-                showMathChallengeDialog = false,
-                selectedAppForMathChallenge = null,
-                isMathChallengeForExpiredSession = false,
-                isMathChallengeForSessionExtension = false
-            )
-
-            if (wasExtensionChallenge && currentExpiredSession != null) {
-                _uiState.value = _uiState.value.copy(showSessionExpiryDecisionDialog = true)
-            }
-        }
-    }
-
-    fun showMathChallengeForApp(packageName: String) {
-        viewModelScope.launch {
-            if (appRepository.shouldShowMathChallenge(packageName)) {
-                _uiState.value = _uiState.value.copy(
-                    showMathChallengeDialog = true,
-                    selectedAppForMathChallenge = packageName,
-                    isMathChallengeForExpiredSession = false,
-                    isMathChallengeForSessionExtension = false
-                )
-            }
-        }
-    }
-
-    fun onMathChallengeCompleted(packageName: String) {
-        viewModelScope.launch {
-            if (_uiState.value.isMathChallengeForSessionExtension) {
-                val promptInfo = buildTimeLimitPromptState(packageName)
-                _uiState.value = _uiState.value.copy(
-                    showMathChallengeDialog = false,
-                    selectedAppForMathChallenge = null,
-                    isMathChallengeForSessionExtension = false,
-                    isMathChallengeForExpiredSession = false,
-                    showSessionExpiryDecisionDialog = false,
-                    showTimeLimitDialog = true,
-                    selectedAppForTimeLimit = packageName,
-                    timeLimitDialogAppName = promptInfo.appName,
-                    timeLimitDialogUsageMinutes = promptInfo.usageMinutes,
-                    timeLimitDialogTimeLimitMinutes = promptInfo.limitMinutes,
-                    timeLimitDialogUsesDefaultLimit = promptInfo.usesDefaultLimit
-                )
-                timeLimitRequestSource = TimeLimitRequestSource.SESSION_EXTENSION
-            } else {
-                appRepository.endSessionForApp(packageName)
-                _uiState.value = _uiState.value.copy(
-                    showMathChallengeDialog = false,
-                    selectedAppForMathChallenge = null,
-                    isMathChallengeForExpiredSession = false,
-                    isMathChallengeForSessionExtension = false
-                )
-            }
-        }
-    }
-
     fun refreshTime() {
         updateTime()
     }
@@ -724,212 +611,35 @@ class HomeViewModel(
         }
     }
 
-    fun onSessionExpiryDecisionExtend() {
-        val packageName = currentExpiredSession?.packageName ?: return
-        viewModelScope.launch {
-            timeLimitRequestSource = TimeLimitRequestSource.SESSION_EXTENSION
-            val promptInfo = buildTimeLimitPromptState(packageName)
-            _uiState.value = _uiState.value.copy(
-                showSessionExpiryDecisionDialog = false,
-                showTimeLimitDialog = true,
-                selectedAppForTimeLimit = packageName,
-                timeLimitDialogAppName = promptInfo.appName,
-                timeLimitDialogUsageMinutes = promptInfo.usageMinutes,
-                timeLimitDialogTimeLimitMinutes = promptInfo.limitMinutes,
-                timeLimitDialogUsesDefaultLimit = promptInfo.usesDefaultLimit
-            )
-        }
-    }
-
-    fun onSessionExpiryDecisionClose() {
-        viewModelScope.launch {
-            currentExpiredSession?.let { session ->
-                appRepository.closeCurrentApp()
-                appRepository.endSessionForApp(session.packageName)
-            }
-            finalizeExpiredSession()
-        }
-    }
-
-    fun onSessionExpiryDecisionMathChallenge() {
-        viewModelScope.launch {
-            val packageName = currentExpiredSession?.packageName ?: return@launch
-
-            // Check if user is still in the target app before showing math challenge
-            val permissionsHelper = resolvedPermissionsHelper
-            if (usageStatsHelper != null && permissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
-                if (currentApp != packageName) {
-                    if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($packageName) before math challenge, current app: $currentApp. Cancelling.")
-                    // User has left the target app, cancel and clean up
-                    finalizeExpiredSession()
-                    return@launch
-                }
-            }
-
-            val settings = withContext(Dispatchers.IO) {
-                settingsRepository.getSettingsSync()
-            }
-
-            // Only show math challenge if it's enabled in settings
-            if (settings.enableMathChallenge) {
-                _uiState.value = _uiState.value.copy(
-                    showSessionExpiryDecisionDialog = false,
-                    showMathChallengeDialog = true,
-                    selectedAppForMathChallenge = packageName,
-                    isMathChallengeForSessionExtension = true,
-                    isMathChallengeForExpiredSession = true
-                )
-            } else {
-                // If math challenge is disabled, fallback to close the app
-                currentExpiredSession?.let { session ->
-                    appRepository.closeCurrentApp()
-                    appRepository.endSessionForApp(session.packageName)
-                }
-                finalizeExpiredSession()
-            }
-        }
-    }
-
     private fun observeSessionExpirations() {
         val repository = sessionRepository ?: return
         viewModelScope.launch {
             repository.observeSessionExpirations().collect { session ->
-                enqueueExpiredSession(session)
+                handleExpiredSession(session)
             }
         }
     }
 
-    private fun enqueueExpiredSession(session: AppSession) {
+    private fun handleExpiredSession(session: AppSession) {
         viewModelScope.launch {
-            sessionExpirationMutex.withLock {
-                if (currentExpiredSession != null) {
-                    pendingExpiredSessions.addLast(session)
-                    return@withLock
-                }
-                processExpiredSession(session)
-            }
-        }
-    }
-
-    private fun processExpiredSession(session: AppSession) {
-        if (sessionRepository == null) return
-        currentExpiredSession = session
-        countdownJob?.cancel()
-
-        viewModelScope.launch {
-            // Check if user is still in the target app before showing any popup
             val permissionsHelper = resolvedPermissionsHelper
             if (usageStatsHelper != null && permissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
+                val hasUsageStatsPermission = permissionsHelper.permissionState.value.hasUsageStats
+                val currentApp = usageStatsHelper.getCurrentForegroundApp(hasUsageStatsPermission)
                 if (currentApp != session.packageName) {
-                    if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User not in target app (${session.packageName}) when session expired, current app: $currentApp. Skipping popup.")
-                    // User is not in the target app, don't show popup and clean up
-                    finalizeExpiredSession()
-                    return@launch
-                }
-            }
-
-            val settings = withContext(Dispatchers.IO) {
-                settingsRepository.getSettingsSync()
-            }
-            val countdownSeconds = settings.sessionExpiryCountdownSeconds.coerceAtLeast(0)
-            val appName = appRepository.getAppDisplayName(session.packageName)
-
-            _uiState.value = _uiState.value.copy(
-                sessionExpiryAppName = appName,
-                sessionExpiryPackageName = session.packageName,
-                sessionExpiryCountdownTotal = countdownSeconds,
-                sessionExpiryCountdownRemaining = countdownSeconds,
-                sessionExpiryShowMathOption = settings.enableMathChallenge,
-                showSessionExpiryCountdown = countdownSeconds > 0,
-                showSessionExpiryDecisionDialog = countdownSeconds <= 0
-            )
-
-            if (countdownSeconds > 0) {
-                startCountdown(countdownSeconds)
-            } else {
-                // Decision dialog will be shown immediately in-app
-                _uiState.value = _uiState.value.copy(showSessionExpiryDecisionDialog = true)
-            }
-        }
-    }
-
-    private fun startCountdown(totalSeconds: Int) {
-        countdownJob?.cancel()
-        countdownJob = viewModelScope.launch {
-            var remaining = totalSeconds
-            val targetPackageName = _uiState.value.sessionExpiryPackageName
-
-            while (remaining > 0) {
-                // Check if user is still in the target app
-                val permissionsHelper = resolvedPermissionsHelper
-                if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
-                    val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
-                    if (currentApp != targetPackageName) {
-                        if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($targetPackageName), current app: $currentApp. Cancelling countdown.")
-                        // User has left the target app, cancel countdown
-                        finalizeExpiredSession()
-                        return@launch
+                    if (BuildConfig.DEBUG) {
+                        Log.d(
+                            "HomeViewModel",
+                            "Expired session for ${session.packageName} while current app is $currentApp. Skipping close."
+                        )
                     }
-                }
-
-                _uiState.value = _uiState.value.copy(
-                    sessionExpiryCountdownRemaining = remaining
-                )
-                delay(1000)
-                remaining--
-            }
-            _uiState.value = _uiState.value.copy(sessionExpiryCountdownRemaining = 0)
-            onCountdownFinished()
-        }
-    }
-
-    private fun onCountdownFinished() {
-        viewModelScope.launch {
-            val targetPackageName = _uiState.value.sessionExpiryPackageName
-
-            // Check if user is still in the target app before showing decision dialog
-            val permissionsHelper = resolvedPermissionsHelper
-            if (targetPackageName != null && usageStatsHelper != null && permissionsHelper != null) {
-                val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
-                if (currentApp != targetPackageName) {
-                    if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($targetPackageName) before decision dialog, current app: $currentApp. Cancelling.")
-                    // User has left the target app, cancel and clean up
-                    finalizeExpiredSession()
                     return@launch
                 }
             }
-
-            _uiState.value = _uiState.value.copy(
-                showSessionExpiryCountdown = false,
-                showSessionExpiryDecisionDialog = true
-            )
-        }
-    }
-
-    private fun finalizeExpiredSession() {
-        viewModelScope.launch {
-            sessionExpirationMutex.withLock {
-                countdownJob?.cancel()
-                countdownJob = null
-                _uiState.value = _uiState.value.copy(
-                    sessionExpiryAppName = null,
-                    sessionExpiryPackageName = null,
-                    sessionExpiryCountdownTotal = 0,
-                    sessionExpiryCountdownRemaining = 0,
-                    showSessionExpiryCountdown = false,
-                    showSessionExpiryDecisionDialog = false,
-                    sessionExpiryShowMathOption = false
-                )
-                currentExpiredSession = null
-                timeLimitRequestSource = TimeLimitRequestSource.STANDARD
-
-                if (pendingExpiredSessions.isNotEmpty()) {
-                    val nextSession = pendingExpiredSessions.removeFirst()
-                    processExpiredSession(nextSession)
-                }
+            if (BuildConfig.DEBUG) {
+                Log.d("HomeViewModel", "Time limit reached for ${session.packageName}, closing app.")
             }
+            appRepository.closeCurrentApp()
         }
     }
 
@@ -1077,7 +787,6 @@ class HomeViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        countdownJob?.cancel()
         weatherUpdateJob?.cancel()
         contactSearchJob?.cancel()
     }
@@ -1311,18 +1020,6 @@ data class HomeUiState(
     val timeLimitDialogUsageMinutes: Int? = null,
     val timeLimitDialogTimeLimitMinutes: Int = 0,
     val timeLimitDialogUsesDefaultLimit: Boolean = true,
-    val showMathChallengeDialog: Boolean = false,
-    val selectedAppForMathChallenge: String? = null,
-    val isMathChallengeForExpiredSession: Boolean = false,
-    val isMathChallengeForSessionExtension: Boolean = false,
-    val mathChallengeDifficulty: MathDifficulty = MathDifficulty.EASY,
-    val showSessionExpiryCountdown: Boolean = false,
-    val showSessionExpiryDecisionDialog: Boolean = false,
-    val sessionExpiryAppName: String? = null,
-    val sessionExpiryPackageName: String? = null,
-    val sessionExpiryCountdownTotal: Int = 0,
-    val sessionExpiryCountdownRemaining: Int = 0,
-    val sessionExpiryShowMathOption: Boolean = false,
     val isLoading: Boolean = false,
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
