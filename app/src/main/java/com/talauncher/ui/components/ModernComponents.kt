@@ -417,31 +417,48 @@ fun AppIcon(
         appName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
     }
 
-    val tintedColor = MaterialTheme.colorScheme.primary
+    val themedContainerColor = MaterialTheme.colorScheme.primaryContainer
+    val themedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
     val baseModifier = modifier.size(iconSize)
 
     if (iconBitmap != null) {
-        Image(
-            painter = BitmapPainter(iconBitmap!!),
-            contentDescription = null,
-            modifier = baseModifier,
-            colorFilter = when (iconStyle) {
-                AppIconStyleOption.THEMED -> ColorFilter.tint(
-                    tintedColor,
-                    BlendMode.SrcAtop
-                )
-                AppIconStyleOption.ORIGINAL -> null
-                AppIconStyleOption.HIDDEN -> null
+        when (iconStyle) {
+            AppIconStyleOption.THEMED -> {
+                Box(
+                    modifier = baseModifier
+                        .clip(CircleShape)
+                        .background(themedContainerColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = BitmapPainter(iconBitmap!!),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        colorFilter = ColorFilter.tint(
+                            themedContentColor,
+                            BlendMode.SrcIn
+                        )
+                    )
+                }
             }
-        )
+            AppIconStyleOption.ORIGINAL -> {
+                Image(
+                    painter = BitmapPainter(iconBitmap!!),
+                    contentDescription = null,
+                    modifier = baseModifier,
+                    colorFilter = null
+                )
+            }
+            AppIconStyleOption.HIDDEN -> Unit
+        }
     } else {
         val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            AppIconStyleOption.THEMED -> themedContainerColor
             AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
             AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
         }
         val letterColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> tintedColor
+            AppIconStyleOption.THEMED -> themedContentColor
             AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
             AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
         }
