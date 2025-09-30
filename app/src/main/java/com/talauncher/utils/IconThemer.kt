@@ -38,6 +38,7 @@ object IconThemer {
     private const val MAX_FOREGROUND_SCALE = 1.35f
     private const val MIN_FOREGROUND_SCALE = 0.65f
 
+    private val cacheLock = Any()
     private val cache: LruCache<String, Bitmap> = object : LruCache<String, Bitmap>(cacheSizeKb()) {
         override fun sizeOf(key: String, value: Bitmap): Int {
             return value.allocationByteCount / 1024
@@ -57,7 +58,9 @@ object IconThemer {
         sizePx: Int
     ): Bitmap = withContext(Dispatchers.Default) {
         val key = listOf(packageName, themeColor, sizePx, Build.VERSION.SDK_INT).joinToString(":")
-        cache.get(key)?.let { return@withContext it }
+        synchronized(cacheLock) {
+            cache.get(key)
+        }?.let { return@withContext it }
 
         val pm = context.packageManager
         val drawable = try {
@@ -78,7 +81,9 @@ object IconThemer {
                 composeBitmap(drawable, themeColor, sizePx)
         }
 
-        cache.put(key, bitmap)
+        synchronized(cacheLock) {
+            cache.put(key, bitmap)
+        }
         bitmap
     }
 
@@ -133,7 +138,9 @@ object IconThemer {
 
     @VisibleForTesting
     fun clearCache() {
-        cache.evictAll()
+        synchronized(cacheLock) {
+            cache.evictAll()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
