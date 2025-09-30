@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.IdlingRegistry
 import com.talauncher.utils.EspressoIdlingResource
+import com.talauncher.utils.skipOnboardingIfNeeded
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -25,6 +26,7 @@ class SettingsFlowTest {
     @Before
     fun setUp() {
         IdlingRegistry.getInstance().register(EspressoIdlingResource.getIdlingResource())
+        composeTestRule.skipOnboardingIfNeeded()
     }
 
     @After
@@ -32,57 +34,9 @@ class SettingsFlowTest {
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.getIdlingResource())
     }
 
-    private fun ensureOnHomeScreen() {
-        // Wait for either onboarding screen or main app to appear
-        composeTestRule.waitUntil(timeoutMillis = 15_000) {
-            try {
-                // Check if we're already on the main app
-                composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
-                return@waitUntil true
-            } catch (e: AssertionError) {
-                // Check if we're on onboarding screen
-                try {
-                    composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").assertExists()
-                    // Complete onboarding flow
-                    try {
-                        composeTestRule.onNodeWithTag("onboarding_step_usage_stats_button").performClick()
-                        composeTestRule.waitForIdle()
-                    } catch (ex: Exception) { /* Already completed */ }
-
-                    try {
-                        composeTestRule.onNodeWithTag("onboarding_step_notifications_button").performClick()
-                        composeTestRule.waitForIdle()
-                    } catch (ex: Exception) { /* Not required or already completed */ }
-
-                    try {
-                        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
-                        composeTestRule.waitForIdle()
-                    } catch (ex: Exception) { /* Already completed */ }
-
-                    try {
-                        composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
-                        composeTestRule.waitForIdle()
-                    } catch (ex: Exception) { /* Already completed */ }
-
-                    // Check if we reached main app after onboarding
-                    try {
-                        composeTestRule.onNodeWithTag("launcher_navigation_pager").assertExists()
-                        return@waitUntil true
-                    } catch (ex: AssertionError) {
-                        return@waitUntil false
-                    }
-                } catch (e2: AssertionError) {
-                    // Neither onboarding nor main app found yet
-                    return@waitUntil false
-                }
-            }
-        }
-    }
-
     @Test
     fun changeColorPalette() {
         Log.d("SettingsFlowTest", "Running changeColorPalette test")
-        ensureOnHomeScreen()
 
         // 1. From the HomeScreen, swipe right to navigate to the SettingsScreen.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
@@ -100,7 +54,6 @@ class SettingsFlowTest {
     @Test
     fun changeThemeMode() {
         Log.d("SettingsFlowTest", "Running changeThemeMode test")
-        ensureOnHomeScreen()
 
         // 1. From the HomeScreen, swipe right to navigate to the SettingsScreen.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
@@ -123,7 +76,6 @@ class SettingsFlowTest {
     @Test
     fun toggleWallpaperAndChangeBlur() {
         Log.d("SettingsFlowTest", "Running toggleWallpaperAndChangeBlur test")
-        ensureOnHomeScreen()
 
         // 1. Navigate to the "UI & Theme" tab in Settings.
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
@@ -153,7 +105,6 @@ class SettingsFlowTest {
     @Test
     fun addAndConfigureDistractingApp() {
         Log.d("SettingsFlowTest", "Running addAndConfigureDistractingApp test")
-        ensureOnHomeScreen()
 
         // 1. Navigate to the "Distracting Apps" tab in Settings
         composeTestRule.onNodeWithTag("launcher_navigation_pager").performTouchInput { swipeRight() }
