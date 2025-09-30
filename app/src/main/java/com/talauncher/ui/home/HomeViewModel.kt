@@ -1,14 +1,10 @@
 package com.talauncher.ui.home
 
 import android.Manifest
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
 import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.R
@@ -25,9 +21,7 @@ import com.talauncher.data.repository.SearchInteractionRepository
 import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.data.repository.SessionRepository
-import com.talauncher.service.OverlayService
 import com.talauncher.service.WeatherService
-import com.talauncher.utils.BackgroundOverlayManager
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
 import com.talauncher.utils.ErrorHandler
@@ -94,7 +88,6 @@ data class AlphabetIndexEntry(
 
 sealed interface HomeEvent {
     data object RequestContactsPermission : HomeEvent
-    data object RequestOverlayPermission : HomeEvent
 }
 
 class HomeViewModel(
@@ -104,7 +97,6 @@ class HomeViewModel(
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
     private val sessionRepository: SessionRepository? = null,
     private val appContext: Context,
-    private val backgroundOverlayManager: BackgroundOverlayManager = BackgroundOverlayManager.getInstance(appContext),
     initialContactHelper: ContactHelper? = null,
     private val permissionsHelper: PermissionsHelper? = null,
     private val usageStatsHelper: UsageStatsHelper? = null,
@@ -135,8 +127,6 @@ class HomeViewModel(
     private var currentExpiredSession: AppSession? = null
     private var countdownJob: Job? = null
     private var timeLimitRequestSource = TimeLimitRequestSource.STANDARD
-    private var overlayPermissionPrompted = false
-    private var isReceiverRegistered = false
     private val sessionExpirationMutex = Mutex()
     private var pendingContactQuery: String? = null
     private var hasShownContactsPermissionPrompt = false
@@ -144,65 +134,12 @@ class HomeViewModel(
     private var contactSearchJob: Job? = null
     private val searchQueryFlow = MutableStateFlow("")
 
-
-    private val sessionExpiryReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                "com.talauncher.SESSION_EXPIRY_EXTEND" -> {
-                    onSessionExpiryDecisionExtend()
-                }
-                "com.talauncher.SESSION_EXPIRY_CLOSE" -> {
-                    onSessionExpiryDecisionClose()
-                }
-                "com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE" -> {
-                    onSessionExpiryDecisionMathChallenge()
-                }
-                "com.talauncher.MATH_CHALLENGE_CORRECT" -> {
-                    val packageName = intent.getStringExtra("package_name")
-                    if (packageName != null) {
-                        onMathChallengeCompleted(packageName)
-                    }
-                }
-                "com.talauncher.MATH_CHALLENGE_DISMISS" -> {
-                    val packageName = intent.getStringExtra("package_name")
-                    if (packageName != null) {
-                        dismissMathChallengeDialog()
-                    }
-                }
-            }
-        }
-    }
-
     init {
         observeData()
         updateTime()
         observeSessionExpirations()
         checkExpiredSessions()
-        setupBroadcastReceiver()
         setupDebouncedContactSearch()
-    }
-
-    private fun setupBroadcastReceiver() {
-        if (!isReceiverRegistered) {
-            val filter = IntentFilter().apply {
-                addAction("com.talauncher.SESSION_EXPIRY_EXTEND")
-                addAction("com.talauncher.SESSION_EXPIRY_CLOSE")
-                addAction("com.talauncher.SESSION_EXPIRY_MATH_CHALLENGE")
-                addAction("com.talauncher.MATH_CHALLENGE_CORRECT")
-                addAction("com.talauncher.MATH_CHALLENGE_DISMISS")
-            }
-            try {
-                ContextCompat.registerReceiver(
-                    appContext,
-                    sessionExpiryReceiver,
-                    filter,
-                    ContextCompat.RECEIVER_NOT_EXPORTED
-                )
-                isReceiverRegistered = true
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Failed to register broadcast receiver", e)
-            }
-        }
     }
 
     private fun observeData() {
@@ -825,32 +762,24 @@ class HomeViewModel(
                 if (currentApp != packageName) {
                     if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($packageName) before math challenge, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
-                    hideOverlay()
                     finalizeExpiredSession()
                     return@launch
                 }
             }
 
-            val appName = appRepository.getAppDisplayName(packageName)
             val settings = withContext(Dispatchers.IO) {
                 settingsRepository.getSettingsSync()
             }
 
             // Only show math challenge if it's enabled in settings
             if (settings.enableMathChallenge) {
-                // Try to show overlay math challenge first
-                if (ensureOverlayPermissionImmediate()) {
-                    showOverlayMathChallenge(appName, packageName, settings.mathDifficulty)
-                } else {
-                    // Fallback to in-app math challenge
-                    _uiState.value = _uiState.value.copy(
-                        showSessionExpiryDecisionDialog = false,
-                        showMathChallengeDialog = true,
-                        selectedAppForMathChallenge = packageName,
-                        isMathChallengeForSessionExtension = true,
-                        isMathChallengeForExpiredSession = true
-                    )
-                }
+                _uiState.value = _uiState.value.copy(
+                    showSessionExpiryDecisionDialog = false,
+                    showMathChallengeDialog = true,
+                    selectedAppForMathChallenge = packageName,
+                    isMathChallengeForSessionExtension = true,
+                    isMathChallengeForExpiredSession = true
+                )
             } else {
                 // If math challenge is disabled, fallback to close the app
                 currentExpiredSession?.let { session ->
@@ -919,11 +848,9 @@ class HomeViewModel(
 
             if (countdownSeconds > 0) {
                 startCountdown(countdownSeconds)
-                // Show system overlay countdown
-                showOverlayCountdown(appName, countdownSeconds, countdownSeconds)
             } else {
-                // Show decision dialog immediately
-                showOverlayDecision(appName, session.packageName, settings.enableMathChallenge)
+                // Decision dialog will be shown immediately in-app
+                _uiState.value = _uiState.value.copy(showSessionExpiryDecisionDialog = true)
             }
         }
     }
@@ -941,8 +868,7 @@ class HomeViewModel(
                     val currentApp = usageStatsHelper.getCurrentForegroundApp(permissionsHelper.permissionState.value.hasUsageStats)
                     if (currentApp != targetPackageName) {
                         if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($targetPackageName), current app: $currentApp. Cancelling countdown.")
-                        // User has left the target app, cancel countdown and hide overlay
-                        hideOverlay()
+                        // User has left the target app, cancel countdown
                         finalizeExpiredSession()
                         return@launch
                     }
@@ -951,9 +877,6 @@ class HomeViewModel(
                 _uiState.value = _uiState.value.copy(
                     sessionExpiryCountdownRemaining = remaining
                 )
-                // Update overlay countdown
-                val appName = _uiState.value.sessionExpiryAppName ?: "this app"
-                showOverlayCountdown(appName, remaining, totalSeconds)
                 delay(1000)
                 remaining--
             }
@@ -973,7 +896,6 @@ class HomeViewModel(
                 if (currentApp != targetPackageName) {
                     if (BuildConfig.DEBUG) Log.d("HomeViewModel", "User left target app ($targetPackageName) before decision dialog, current app: $currentApp. Cancelling.")
                     // User has left the target app, cancel and clean up
-                    hideOverlay()
                     finalizeExpiredSession()
                     return@launch
                 }
@@ -983,11 +905,6 @@ class HomeViewModel(
                 showSessionExpiryCountdown = false,
                 showSessionExpiryDecisionDialog = true
             )
-            // Show overlay decision dialog
-            val appName = _uiState.value.sessionExpiryAppName ?: "this app"
-            val packageName = _uiState.value.sessionExpiryPackageName ?: ""
-            val showMathOption = _uiState.value.sessionExpiryShowMathOption
-            showOverlayDecision(appName, packageName, showMathOption)
         }
     }
 
@@ -996,8 +913,6 @@ class HomeViewModel(
             sessionExpirationMutex.withLock {
                 countdownJob?.cancel()
                 countdownJob = null
-                // Hide overlay
-                hideOverlay()
                 _uiState.value = _uiState.value.copy(
                     sessionExpiryAppName = null,
                     sessionExpiryPackageName = null,
@@ -1009,7 +924,6 @@ class HomeViewModel(
                 )
                 currentExpiredSession = null
                 timeLimitRequestSource = TimeLimitRequestSource.STANDARD
-                overlayPermissionPrompted = false
 
                 if (pendingExpiredSessions.isNotEmpty()) {
                     val nextSession = pendingExpiredSessions.removeFirst()
@@ -1030,169 +944,6 @@ class HomeViewModel(
         checkExpiredSessions()
     }
 
-
-    private fun showOverlayCountdown(appName: String, remainingSeconds: Int, totalSeconds: Int) {
-        if (!ensureOverlayPermission(appName)) {
-            return
-        }
-
-        val overlayManager = backgroundOverlayManager
-        val success = overlayManager.showCountdownOverlay(appName, remainingSeconds, totalSeconds)
-
-        if (!success) {
-            Log.w("HomeViewModel", "Failed to show countdown overlay, using fallback")
-            // Keep existing service fallback for compatibility
-            val intent = Intent(appContext, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_SHOW_COUNTDOWN
-                putExtra(OverlayService.EXTRA_APP_NAME, appName)
-                putExtra(OverlayService.EXTRA_REMAINING_SECONDS, remainingSeconds)
-                putExtra(OverlayService.EXTRA_TOTAL_SECONDS, totalSeconds)
-            }
-            startOverlayServiceSafely(intent, requireForeground = true)
-        }
-    }
-
-    private fun showOverlayDecision(appName: String, packageName: String, showMathOption: Boolean) {
-        if (!ensureOverlayPermission(appName)) {
-            return
-        }
-
-        val overlayManager = backgroundOverlayManager
-        val success = overlayManager.showDecisionOverlay(
-            appName = appName,
-            packageName = packageName,
-            showMathOption = showMathOption,
-            onExtend = { onSessionExpiryDecisionExtend() },
-            onClose = { onSessionExpiryDecisionClose() },
-            onMathChallenge = if (showMathOption) {{ onSessionExpiryDecisionMathChallenge() }} else null
-        )
-
-        if (!success) {
-            Log.w("HomeViewModel", "Failed to show decision overlay, using fallback")
-            // Keep existing service fallback for compatibility
-            val intent = Intent(appContext, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_SHOW_DECISION
-                putExtra(OverlayService.EXTRA_APP_NAME, appName)
-                putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
-                putExtra(OverlayService.EXTRA_SHOW_MATH_OPTION, showMathOption)
-            }
-            startOverlayServiceSafely(intent, requireForeground = true)
-        }
-    }
-
-    private fun hideOverlay() {
-        // Hide background overlay first
-        backgroundOverlayManager.hideCurrentOverlay()
-
-        // Also hide service overlay for compatibility
-        val intent = Intent(appContext, OverlayService::class.java).apply {
-            action = OverlayService.ACTION_HIDE_OVERLAY
-        }
-        startOverlayServiceSafely(intent, requireForeground = false)
-    }
-
-    private fun ensureOverlayPermission(appName: String?): Boolean {
-        val helper = resolvedPermissionsHelper
-        val hasPermission = helper?.permissionState?.value?.hasSystemAlertWindow
-
-        if (hasPermission == true) {
-            overlayPermissionPrompted = false
-            if (_uiState.value.showOverlayPermissionDialog) {
-                _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = false)
-            }
-            return true
-        }
-
-        if (!overlayPermissionPrompted) {
-            overlayPermissionPrompted = true
-            _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = true)
-            viewModelScope.launch {
-                _events.emit(HomeEvent.RequestOverlayPermission)
-            }
-            viewModelScope.launch {
-                appRepository.closeCurrentApp()
-            }
-        }
-
-        return false
-    }
-
-    private fun ensureOverlayPermissionImmediate(): Boolean {
-        val helper = resolvedPermissionsHelper
-        return helper?.permissionState?.value?.hasSystemAlertWindow == true
-    }
-
-    private fun showOverlayMathChallenge(
-        appName: String,
-        packageName: String,
-        difficulty: MathDifficulty
-    ) {
-        val success = backgroundOverlayManager.showMathChallengeOverlay(
-            appName = appName,
-            packageName = packageName,
-            difficulty = difficulty,
-            onCorrect = {
-                onMathChallengeCompleted(packageName)
-            },
-            onDismiss = {
-                dismissMathChallengeDialog()
-            }
-        )
-
-        if (success) {
-            return // Successfully shown background overlay
-        }
-
-        // Fallback to service approach
-        Log.w("HomeViewModel", "Failed to show math challenge overlay, using service fallback")
-        val intent = Intent(appContext, OverlayService::class.java).apply {
-            action = OverlayService.ACTION_SHOW_MATH_CHALLENGE
-            putExtra(OverlayService.EXTRA_APP_NAME, appName)
-            putExtra(OverlayService.EXTRA_PACKAGE_NAME, packageName)
-            putExtra(OverlayService.EXTRA_DIFFICULTY, difficulty.storageValue)
-        }
-        startOverlayServiceSafely(intent, requireForeground = true)
-    }
-
-    private fun startOverlayServiceSafely(intent: Intent, requireForeground: Boolean) {
-        try {
-            if (requireForeground && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(appContext, intent)
-            } else {
-                appContext.startService(intent)
-            }
-            if (BuildConfig.DEBUG) Log.d("HomeViewModel", "Overlay service started successfully")
-        } catch (illegalState: IllegalStateException) {
-            Log.w("HomeViewModel", "Failed to start service, trying fallback approach", illegalState)
-            // Fallback: Show dialog in launcher app instead of overlay
-            showInAppMathChallenge()
-        } catch (e: Exception) {
-            Log.e("HomeViewModel", "Unexpected error starting overlay service", e)
-            showInAppMathChallenge()
-        }
-    }
-
-    private fun showInAppMathChallenge() {
-        // Fallback: Show math challenge within the launcher app
-        val packageName = currentExpiredSession?.packageName ?: return
-        _uiState.value = _uiState.value.copy(
-            showSessionExpiryDecisionDialog = false,
-            showMathChallengeDialog = true,
-            selectedAppForMathChallenge = packageName,
-            isMathChallengeForExpiredSession = true,
-            isMathChallengeForSessionExtension = true
-        )
-    }
-
-    fun dismissOverlayPermissionDialog() {
-        _uiState.value = _uiState.value.copy(showOverlayPermissionDialog = false)
-    }
-
-    fun openOverlayPermissionSettings() {
-        viewModelScope.launch {
-            _events.emit(HomeEvent.RequestOverlayPermission)
-        }
-    }
 
     fun callContact(contact: ContactInfo) {
         contactHelper?.callContact(contact)
@@ -1326,19 +1077,6 @@ class HomeViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        if (isReceiverRegistered) {
-            try {
-                appContext.unregisterReceiver(sessionExpiryReceiver)
-                isReceiverRegistered = false
-            } catch (e: IllegalArgumentException) {
-                // Receiver was not registered, which is fine
-                if (BuildConfig.DEBUG) Log.d("HomeViewModel", "Broadcast receiver was not registered")
-            } catch (e: Exception) {
-                // Log other unexpected errors but don't crash
-                Log.e("HomeViewModel", "Unexpected error unregistering broadcast receiver", e)
-            }
-        }
-        hideOverlay()
         countdownJob?.cancel()
         weatherUpdateJob?.cancel()
         contactSearchJob?.cancel()
@@ -1586,7 +1324,6 @@ data class HomeUiState(
     val sessionExpiryCountdownRemaining: Int = 0,
     val sessionExpiryShowMathOption: Boolean = false,
     val isLoading: Boolean = false,
-    val showOverlayPermissionDialog: Boolean = false,
     val showPhoneAction: Boolean = true,
     val showMessageAction: Boolean = true,
     val showWhatsAppAction: Boolean = true,

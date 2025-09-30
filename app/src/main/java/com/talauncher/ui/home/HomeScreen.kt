@@ -112,8 +112,6 @@ fun HomeScreen(
             when (event) {
                 HomeEvent.RequestContactsPermission ->
                     permissionsHelper.requestPermission(activity, PermissionType.CONTACTS)
-                HomeEvent.RequestOverlayPermission ->
-                    permissionsHelper.requestPermission(activity, PermissionType.SYSTEM_ALERT_WINDOW)
             }
         }
     }
@@ -564,41 +562,6 @@ fun HomeScreen(
                 dismissButton = {
                     TextButton(onClick = { viewModel.dismissContactsPermissionDialog() }) {
                         Text(stringResource(R.string.contact_permission_required_dismiss))
-                    }
-                }
-            )
-        }
-
-        if (uiState.showOverlayPermissionDialog) {
-            val appName = uiState.sessionExpiryAppName
-                ?: stringResource(id = R.string.overlay_permission_generic_app)
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissOverlayPermissionDialog() },
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.overlay_permission_required_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                text = {
-                    Text(
-                        text = stringResource(
-                            id = R.string.overlay_permission_required_message,
-                            appName
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = { viewModel.openOverlayPermissionSettings() }) {
-                        Text(stringResource(id = R.string.overlay_permission_required_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { viewModel.dismissOverlayPermissionDialog() }) {
-                        Text(stringResource(id = R.string.overlay_permission_required_dismiss))
                     }
                 }
             )

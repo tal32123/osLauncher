@@ -42,7 +42,6 @@ import com.talauncher.ui.settings.SettingsScreen
 import com.talauncher.ui.settings.SettingsViewModel
 import com.talauncher.ui.theme.TALauncherTheme
 import com.talauncher.utils.ContactHelper
-import com.talauncher.utils.BackgroundOverlayManager
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
 import com.talauncher.utils.ErrorHandler
@@ -62,7 +61,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var permissionsHelper: PermissionsHelper
     private lateinit var usageStatsHelper: UsageStatsHelper
     private lateinit var contactHelper: ContactHelper
-    private lateinit var backgroundOverlayManager: BackgroundOverlayManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,7 +73,6 @@ class MainActivity : ComponentActivity() {
             this.permissionsHelper = PermissionsHelper(applicationContext)
             this.usageStatsHelper = UsageStatsHelper(applicationContext)
             this.contactHelper = ContactHelper(applicationContext, this.permissionsHelper)
-            this.backgroundOverlayManager = BackgroundOverlayManager.getInstance(applicationContext)
             this.appRepository = AppRepository(
                 database.appDao(),
                 applicationContext,
@@ -185,15 +182,14 @@ class MainActivity : ComponentActivity() {
                                 appRepository = appRepository,
                                 searchInteractionRepository = searchInteractionRepository,
                                 settingsRepository = settingsRepository,
-                                permissionsHelper = permissionsHelper,
-                                usageStatsHelper = usageStatsHelper,
-                                sessionRepository = sessionRepository,
-                                contactHelper = contactHelper,
-                                backgroundOverlayManager = backgroundOverlayManager,
-                                errorHandler = errorHandler,
-                                shouldNavigateToHome = shouldNavigateToHome,
-                                onNavigatedToHome = { shouldNavigateToHome = false }
-                            )
+                            permissionsHelper = permissionsHelper,
+                            usageStatsHelper = usageStatsHelper,
+                            sessionRepository = sessionRepository,
+                            contactHelper = contactHelper,
+                            errorHandler = errorHandler,
+                            shouldNavigateToHome = shouldNavigateToHome,
+                            onNavigatedToHome = { shouldNavigateToHome = false }
+                        )
                         }
                     }
                 }
@@ -268,7 +264,6 @@ fun TALauncherApp(
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
     contactHelper: ContactHelper,
-    backgroundOverlayManager: BackgroundOverlayManager,
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {}
@@ -281,7 +276,6 @@ fun TALauncherApp(
         usageStatsHelper = usageStatsHelper,
         sessionRepository = sessionRepository,
         contactHelper = contactHelper,
-        backgroundOverlayManager = backgroundOverlayManager,
         errorHandler = errorHandler,
         shouldNavigateToHome = shouldNavigateToHome,
         onNavigatedToHome = onNavigatedToHome
@@ -297,7 +291,6 @@ fun LauncherNavigationPager(
     usageStatsHelper: UsageStatsHelper,
     sessionRepository: SessionRepository,
     contactHelper: ContactHelper,
-    backgroundOverlayManager: BackgroundOverlayManager,
     errorHandler: ErrorHandler? = null,
     shouldNavigateToHome: Boolean = false,
     onNavigatedToHome: () -> Unit = {},
@@ -384,14 +377,13 @@ fun LauncherNavigationPager(
                     val context = LocalContext.current
                     val applicationContext = context.applicationContext
                     val homeViewModel: HomeViewModel = viewModel {
-        HomeViewModel(
-            appRepository = appRepository,
-            searchInteractionRepository = searchInteractionRepository,
-            settingsRepository = settingsRepository,
+                        HomeViewModel(
+                            appRepository = appRepository,
+                            searchInteractionRepository = searchInteractionRepository,
+                            settingsRepository = settingsRepository,
                             onLaunchApp = onLaunchApp,
                             sessionRepository = sessionRepository,
                             appContext = applicationContext,
-                            backgroundOverlayManager = backgroundOverlayManager,
                             initialContactHelper = contactHelper,
                             permissionsHelper = permissionsHelper,
                             usageStatsHelper = usageStatsHelper,
