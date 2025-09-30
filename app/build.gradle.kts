@@ -137,6 +137,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.foundation:foundation")
+    // Material icons extended (for icons like ExpandMore)
+    implementation("androidx.compose.material:material-icons-extended")
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
@@ -166,6 +168,15 @@ dependencies {
     // UI debugging tools (still needed for development)
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Android instrumentation testing (Compose UI + Espresso)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
 }
 
 

@@ -71,6 +71,7 @@ fun UnifiedSearchResults(
                     is SearchItem.App -> {
                         ModernAppItem(
                             appName = searchItem.appInfo.appName,
+                            isHidden = searchItem.appInfo.isHidden,
                             onClick = {
                                 keyboardController?.hide()
                                 onAppClick(searchItem.appInfo.packageName)
@@ -188,8 +189,7 @@ fun AppDrawerUnifiedSearchResults(
     val filteredApps = if (searchQuery.isBlank()) {
         emptyList()
     } else {
-        allApps.filter { !it.isHidden }
-            .mapNotNull { app ->
+        allApps.mapNotNull { app ->
                 val score = SearchScoring.calculateRelevanceScore(searchQuery, app.appName)
                 if (score > 0) app to score else null
             }
@@ -220,6 +220,7 @@ fun AppDrawerUnifiedSearchResults(
             items(filteredApps, key = { it.packageName }) { app ->
                 ModernAppItem(
                     appName = app.appName,
+                    isHidden = app.isHidden,
                     onClick = {
                         keyboardController?.hide()
                         onAppClick(app.packageName)

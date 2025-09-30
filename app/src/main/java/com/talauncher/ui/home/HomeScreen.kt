@@ -82,7 +82,6 @@ private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
 fun HomeScreen(
     viewModel: HomeViewModel,
     permissionsHelper: PermissionsHelper,
-    onNavigateToAppDrawer: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -229,14 +228,17 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))
 
+            val searchPlaceholder = runCatching { stringResource(R.string.home_search_placeholder) }.getOrElse { "Search..." }
+            val clearDescription = runCatching { stringResource(R.string.home_search_clear) }.getOrElse { "Clear" }
+
             ModernSearchField(
                 value = searchQuery,
                 onValueChange = viewModel::updateSearchQuery,
-                placeholder = stringResource(R.string.home_search_placeholder),
+                placeholder = searchPlaceholder,
                 enableGlassmorphism = uiState.enableGlassmorphism,
                 testTag = "search_field",
                 onClear = viewModel::clearSearch,
-                clearContentDescription = stringResource(R.string.home_search_clear),
+                clearContentDescription = clearDescription,
                 onSearch = { query ->
                     if (query.isNotBlank()) {
                         viewModel.performGoogleSearch(query)
@@ -439,6 +441,7 @@ fun HomeScreen(
                 onDismiss = { viewModel.dismissAppActionDialog() },
                 onRename = { app -> viewModel.renameApp(app) },
                 onHide = { packageName -> viewModel.hideApp(packageName) },
+                onUnhide = { packageName -> viewModel.unhideApp(packageName) },
                 onAppInfo = { packageName -> viewModel.openAppInfo(packageName) },
                 onUninstall = { packageName -> viewModel.uninstallApp(packageName) }
             )
@@ -936,10 +939,12 @@ fun AppActionDialog(
     onDismiss: () -> Unit,
     onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
+    onUnhide: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
 ) {
     if (app != null) {
+        val isHidden = app.isHidden
         AlertDialog(
             onDismissRequest = onDismiss,
             modifier = Modifier.testTag("app_action_dialog"),
@@ -976,15 +981,27 @@ fun AppActionDialog(
                             }
                         )
 
-                        ActionTextButton(
-                            label = "Hide app",
-                            description = "Move this app to the hidden list.",
-                            modifier = Modifier.fillMaxWidth().testTag("hide_app_button"),
-                            onClick = {
-                                onHide(app.packageName)
-                                onDismiss()
-                            }
-                        )
+                        if (isHidden) {
+                            ActionTextButton(
+                                label = "Unhide app",
+                                description = "Move this app back to the main list.",
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    onUnhide(app.packageName)
+                                    onDismiss()
+                                }
+                            )
+                        } else {
+                            ActionTextButton(
+                                label = "Hide app",
+                                description = "Move this app to the hidden list.",
+                                modifier = Modifier.fillMaxWidth().testTag("hide_app_button"),
+                                onClick = {
+                                    onHide(app.packageName)
+                                    onDismiss()
+                                }
+                            )
+                        }
 
                         ActionTextButton(
                             label = "View app info",

@@ -151,9 +151,11 @@ class AppDrawerViewModel(
                     contactHelper.isWhatsAppInstalled()
                 }
 
+                val combinedApps = visibleApps + hiddenApps
+
                 withContext(Dispatchers.Main.immediate) {
                     val newState = _uiState.value.copy(
-                        allApps = visibleApps,
+                        allApps = combinedApps,
                         hiddenApps = hiddenApps,
                         recentApps = recentApps,
                         mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,

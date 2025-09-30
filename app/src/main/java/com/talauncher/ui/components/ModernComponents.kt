@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -301,7 +304,8 @@ fun ModernAppItem(
     modifier: Modifier = Modifier,
     enableGlassmorphism: Boolean = false,
     cornerRadius: Int = 12,
-    uiDensity: UiDensity = UiDensity.Comfortable
+    uiDensity: UiDensity = UiDensity.Comfortable,
+    isHidden: Boolean = false
 ) {
     val padding = when (uiDensity) {
         UiDensity.Compact -> 12.dp
@@ -341,6 +345,25 @@ fun ModernAppItem(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
+
+            if (isHidden) {
+                Spacer(modifier = Modifier.width(PrimerSpacing.sm))
+                Surface(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(6.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Text(
+                        text = "Hidden",
+                        modifier = Modifier.padding(
+                            horizontal = PrimerSpacing.xs,
+                            vertical = 2.dp
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
     }
 }

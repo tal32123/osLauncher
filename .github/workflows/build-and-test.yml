@@ -3,6 +3,7 @@ name: Build and Test TALauncher
 on:
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 permissions:
   contents: read

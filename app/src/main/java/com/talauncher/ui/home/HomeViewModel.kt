@@ -130,6 +130,7 @@ class HomeViewModel(
     private val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
     private val pendingExpiredSessions = ArrayDeque<AppSession>()
     private var allVisibleApps: List<AppInfo> = emptyList()
+    private var allHiddenApps: List<AppInfo> = emptyList()
     private var currentExpiredSession: AppSession? = null
     private var countdownJob: Job? = null
     private var timeLimitRequestSource = TimeLimitRequestSource.STANDARD
@@ -212,7 +213,6 @@ class HomeViewModel(
                 withContext(Dispatchers.Default) {
                     allVisibleApps = allApps
                     val currentQuery = _uiState.value.searchQuery
-                    val filtered = if (currentQuery.isNotBlank()) filterApps(currentQuery, allApps) else emptyList()
 
                     // Cache expensive operations
                     val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
@@ -225,6 +225,9 @@ class HomeViewModel(
                     } catch (e: Exception) {
                         emptyList<AppInfo>()
                     }
+                    allHiddenApps = hiddenApps
+                    val searchableApps = allApps + hiddenApps
+                    val filtered = if (currentQuery.isNotBlank()) filterApps(currentQuery, searchableApps) else emptyList()
                     val recentAppsLimit = settings?.recentAppsLimit ?: 10
                     val recentApps = getRecentApps(allApps, hiddenApps, recentAppsLimit, hasUsageStatsPermission)
                     val alphabetIndex = buildAlphabetIndex(allApps, recentApps)
@@ -406,7 +409,7 @@ class HomeViewModel(
         val appResults = if (sanitized.isBlank()) {
             emptyList<AppInfo>()
         } else {
-            filterApps(sanitized, allVisibleApps)
+            filterApps(sanitized, allVisibleApps + allHiddenApps)
         }
 
         // Update individual results for backward compatibility
@@ -1475,6 +1478,17 @@ class HomeViewModel(
                 dismissAppActionDialog()
             } catch (e: Exception) {
                 errorHandler?.showError("Failed to hide app", e.message ?: "Unknown error", e)
+            }
+        }
+    }
+
+    fun unhideApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.unhideApp(packageName)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError("Failed to unhide app", e.message ?: "Unknown error", e)
             }
         }
     }
