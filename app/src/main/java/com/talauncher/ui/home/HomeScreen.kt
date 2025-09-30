@@ -49,6 +49,7 @@ import kotlinx.coroutines.isActive
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.UiDensityOption
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
@@ -59,6 +60,7 @@ import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.ModernGlassCard
 import com.talauncher.ui.components.ModernSearchField
 import com.talauncher.ui.components.ModernAppItem
+import com.talauncher.ui.components.AppIcon
 import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.components.UnifiedSearchResults
@@ -283,6 +285,7 @@ fun HomeScreen(
                     },
                     uiSettings = UiSettings(
                         colorPalette = uiState.colorPalette,
+                        appIconStyle = uiState.appIconStyle,
                         enableGlassmorphism = uiState.enableGlassmorphism,
                         enableAnimations = uiState.enableAnimations,
                         uiDensity = uiState.uiDensity,
@@ -347,14 +350,15 @@ fun HomeScreen(
                             }
 
                             items(uiState.recentApps, key = { "recent_${it.packageName}" }) { app ->
-                                RecentAppItem(
-                                    appInfo = app,
-                                    onClick = { viewModel.launchApp(app.packageName) },
-                                    onLongClick = {
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.showAppActionDialog(app)
-                                    }
-                                )
+                            RecentAppItem(
+                                appInfo = app,
+                                onClick = { viewModel.launchApp(app.packageName) },
+                                onLongClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.showAppActionDialog(app)
+                                },
+                                iconStyle = uiState.appIconStyle
+                            )
                             }
 
                             item {
@@ -375,11 +379,13 @@ fun HomeScreen(
                         items(uiState.allVisibleApps, key = { it.packageName }) { app ->
                             ModernAppItem(
                                 appName = app.appName,
+                                packageName = app.packageName,
                                 onClick = { viewModel.launchApp(app.packageName) },
                                 onLongClick = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.showAppActionDialog(app)
                                 },
+                                appIconStyle = uiState.appIconStyle,
                                 enableGlassmorphism = uiState.enableGlassmorphism,
                                 uiDensity = uiState.uiDensity.toUiDensity()
                             )
@@ -885,7 +891,8 @@ private fun AlphabetIndex(
 fun RecentAppItem(
     appInfo: AppInfo,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    iconStyle: AppIconStyleOption
 ) {
     PrimerCard(
         modifier = Modifier
@@ -906,6 +913,14 @@ fun RecentAppItem(
                 .heightIn(min = PrimerListItemDefaults.minHeight),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (iconStyle != AppIconStyleOption.HIDDEN) {
+                AppIcon(
+                    packageName = appInfo.packageName,
+                    appName = appInfo.appName,
+                    iconStyle = iconStyle
+                )
+                Spacer(modifier = Modifier.width(PrimerSpacing.md))
+            }
             Text(
                 text = appInfo.appName,
                 modifier = Modifier.weight(1f),

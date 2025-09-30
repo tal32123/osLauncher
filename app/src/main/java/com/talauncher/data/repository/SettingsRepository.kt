@@ -2,6 +2,7 @@ package com.talauncher.data.repository
 
 import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.ThemeModeOption
@@ -129,6 +130,11 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun updateColorPalette(palette: ColorPaletteOption) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(colorPalette = palette))
+    }
+
+    suspend fun updateAppIconStyle(style: AppIconStyleOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(appIconStyle = style))
     }
 
     suspend fun setCustomPalette(

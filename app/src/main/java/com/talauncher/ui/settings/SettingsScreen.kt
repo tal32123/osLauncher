@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
@@ -152,6 +153,8 @@ fun SettingsScreen(
                 onToggleShowWallpaper = viewModel::updateShowWallpaper,
                 colorPalette = uiState.colorPalette,
                 onUpdateColorPalette = viewModel::updateColorPalette,
+                appIconStyle = uiState.appIconStyle,
+                onUpdateAppIconStyle = viewModel::updateAppIconStyle,
                 customColorOption = uiState.customColorOption,
                 onUpdateCustomColorOption = viewModel::updateCustomColorOption,
                 customPrimaryColor = uiState.customPrimaryColor,
@@ -280,6 +283,8 @@ fun UIThemeSettings(
     onToggleShowWallpaper: (Boolean) -> Unit,
     colorPalette: ColorPaletteOption,
     onUpdateColorPalette: (ColorPaletteOption) -> Unit,
+    appIconStyle: AppIconStyleOption,
+    onUpdateAppIconStyle: (AppIconStyleOption) -> Unit,
     customColorOption: String?,
     onUpdateCustomColorOption: (String) -> Unit,
     customPrimaryColor: String?,
@@ -320,6 +325,50 @@ fun UIThemeSettings(
                 onCustomPrimaryColorSelected = onUpdateCustomPrimaryColor,
                 onCustomSecondaryColorSelected = onUpdateCustomSecondaryColor
             )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "App Icons",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Choose how icons appear beside app names",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    ChipGrid(
+                        items = AppIconStyleOption.entries,
+                        modifier = Modifier.fillMaxWidth(),
+                        itemsPerRow = 3
+                    ) { option ->
+                        FilterChip(
+                            selected = appIconStyle == option,
+                            onClick = { onUpdateAppIconStyle(option) },
+                            label = {
+                                Text(
+                                    text = option.label,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
+                        )
+                    }
+                }
+            }
         }
 
         item {

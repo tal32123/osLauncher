@@ -72,6 +72,22 @@ enum class ColorPaletteOption(val label: String) {
     }
 }
 
+enum class AppIconStyleOption(val label: String) {
+    THEMED("Theme color"),
+    ORIGINAL("Original colors"),
+    HIDDEN("No icons");
+
+    val storageValue: String
+        get() = name
+
+    companion object {
+        fun fromStorageValue(value: String?): AppIconStyleOption {
+            val normalized = value?.lowercase(Locale.US)
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: THEMED
+        }
+    }
+}
+
 enum class ThemeModeOption(val label: String) {
     SYSTEM("System"),
     LIGHT("Light"),

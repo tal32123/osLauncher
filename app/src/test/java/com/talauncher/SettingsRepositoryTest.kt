@@ -2,6 +2,7 @@ package com.talauncher
 
 import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.repository.SettingsRepository
@@ -107,6 +108,16 @@ class SettingsRepositoryTest {
         repository.updateColorPalette(ColorPaletteOption.WARM)
 
         verify(settingsDao).updateSettings(check { assertEquals(ColorPaletteOption.WARM, it.colorPalette) })
+    }
+
+    @Test
+    fun `updateAppIconStyle updates icon style`() = runTest {
+        println("Running updateAppIconStyle updates icon style test")
+        whenever(settingsDao.getSettingsSync()).thenReturn(defaultSettings)
+
+        repository.updateAppIconStyle(AppIconStyleOption.ORIGINAL)
+
+        verify(settingsDao).updateSettings(check { assertEquals(AppIconStyleOption.ORIGINAL, it.appIconStyle) })
     }
 
     @Test

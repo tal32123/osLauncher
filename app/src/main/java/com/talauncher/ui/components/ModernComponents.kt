@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -40,17 +41,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
@@ -61,8 +66,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.ui.theme.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -299,13 +306,15 @@ enum class ButtonVariant {
 @Composable
 fun ModernAppItem(
     appName: String,
+    packageName: String,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     enableGlassmorphism: Boolean = false,
     cornerRadius: Int = 12,
     uiDensity: UiDensity = UiDensity.Comfortable,
-    isHidden: Boolean = false
+    isHidden: Boolean = false,
+    appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED
 ) {
     val padding = when (uiDensity) {
         UiDensity.Compact -> 12.dp
@@ -335,6 +344,14 @@ fun ModernAppItem(
                 .heightIn(min = minHeight),
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
+            if (appIconStyle != AppIconStyleOption.HIDDEN) {
+                AppIcon(
+                    packageName = packageName,
+                    appName = appName,
+                    iconStyle = appIconStyle
+                )
+                Spacer(modifier = Modifier.width(PrimerSpacing.md))
+            }
             Text(
                 text = appName,
                 style = when (uiDensity) {
@@ -364,6 +381,73 @@ fun ModernAppItem(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AppIcon(
+    packageName: String,
+    appName: String,
+    iconStyle: AppIconStyleOption,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 40.dp
+) {
+    if (iconStyle == AppIconStyleOption.HIDDEN) {
+        return
+    }
+
+    val context = LocalContext.current
+    val iconBitmap by produceState<ImageBitmap?>(initialValue = null, packageName) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val drawable = context.packageManager.getApplicationIcon(packageName)
+                drawable.toBitmap().asImageBitmap()
+            }.getOrNull()
+        }
+    }
+
+    val letterFallback = remember(appName) {
+        appName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+    }
+
+    val tintedColor = MaterialTheme.colorScheme.primary
+    val baseModifier = modifier.size(iconSize)
+
+    if (iconBitmap != null) {
+        Image(
+            painter = BitmapPainter(iconBitmap!!),
+            contentDescription = null,
+            modifier = baseModifier,
+            colorFilter = when (iconStyle) {
+                AppIconStyleOption.THEMED -> ColorFilter.tint(tintedColor)
+                AppIconStyleOption.ORIGINAL -> null
+                AppIconStyleOption.HIDDEN -> null
+            }
+        )
+    } else {
+        val backgroundColor = when (iconStyle) {
+            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
+            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
+        }
+        val letterColor = when (iconStyle) {
+            AppIconStyleOption.THEMED -> tintedColor
+            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
+            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
+        }
+
+        Box(
+            modifier = baseModifier
+                .clip(CircleShape)
+                .background(backgroundColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = letterFallback,
+                style = MaterialTheme.typography.labelLarge,
+                color = letterColor
+            )
         }
     }
 }
