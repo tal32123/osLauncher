@@ -1,6 +1,7 @@
 package com.talauncher.ui.theme
 
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
@@ -13,6 +14,7 @@ import com.talauncher.ui.components.UiDensity
  */
 data class UiSettings(
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED,
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val enableGlassmorphism: Boolean = true,
     val enableAnimations: Boolean = true,
@@ -32,6 +34,7 @@ data class UiSettings(
  */
 fun LauncherSettings.toUiSettings(): UiSettings = UiSettings(
     colorPalette = this.colorPalette,
+    appIconStyle = this.appIconStyle,
     themeMode = this.themeMode,
     enableGlassmorphism = this.enableGlassmorphism,
     enableAnimations = this.enableAnimations,

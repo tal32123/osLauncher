@@ -15,6 +15,7 @@ import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppSession
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
@@ -249,6 +250,7 @@ class HomeViewModel(
                             weatherTemperatureUnit = settings?.weatherTemperatureUnit
                                 ?: WeatherTemperatureUnit.CELSIUS,
                             colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
+                            appIconStyle = settings?.appIconStyle ?: AppIconStyleOption.THEMED,
                             wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                             customWallpaperPath = settings?.customWallpaperPath,
                             enableGlassmorphism = settings?.enableGlassmorphism ?: true,
@@ -1575,6 +1577,7 @@ data class HomeUiState(
     val weatherDailyHigh: Double? = null,
     val weatherDailyLow: Double? = null,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED,
     val wallpaperBlurAmount: Float = 0f,
     val enableGlassmorphism: Boolean = true,
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,

@@ -71,6 +71,7 @@ fun UnifiedSearchResults(
                     is SearchItem.App -> {
                         ModernAppItem(
                             appName = searchItem.appInfo.appName,
+                            packageName = searchItem.appInfo.packageName,
                             isHidden = searchItem.appInfo.isHidden,
                             onClick = {
                                 keyboardController?.hide()
@@ -81,7 +82,8 @@ fun UnifiedSearchResults(
                                 onAppLongClick(searchItem)
                             },
                             enableGlassmorphism = uiSettings.enableGlassmorphism,
-                            uiDensity = uiSettings.getUiDensity()
+                            uiDensity = uiSettings.getUiDensity(),
+                            appIconStyle = uiSettings.appIconStyle
                         )
                     }
                     is SearchItem.Contact -> {
@@ -220,6 +222,7 @@ fun AppDrawerUnifiedSearchResults(
             items(filteredApps, key = { it.packageName }) { app ->
                 ModernAppItem(
                     appName = app.appName,
+                    packageName = app.packageName,
                     isHidden = app.isHidden,
                     onClick = {
                         keyboardController?.hide()
@@ -230,7 +233,8 @@ fun AppDrawerUnifiedSearchResults(
                         onAppLongClick(app)
                     },
                     enableGlassmorphism = uiSettings.enableGlassmorphism,
-                    uiDensity = uiSettings.getUiDensity()
+                    uiDensity = uiSettings.getUiDensity(),
+                    appIconStyle = uiSettings.appIconStyle
                 )
             }
         }

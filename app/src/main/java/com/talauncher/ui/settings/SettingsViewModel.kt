@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.InstalledApp
 import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.ThemeModeOption
@@ -73,6 +74,7 @@ class SettingsViewModel(
                     buildBranch = settings?.buildBranch,
                     buildTime = settings?.buildTime,
                     colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
+                    appIconStyle = settings?.appIconStyle ?: AppIconStyleOption.THEMED,
                     customColorOption = settings?.customColorOption,
                     customPrimaryColor = settings?.customPrimaryColor,
                     customSecondaryColor = settings?.customSecondaryColor,
@@ -196,6 +198,12 @@ class SettingsViewModel(
             } else {
                 settingsRepository.updateColorPalette(palette)
             }
+        }
+    }
+
+    fun updateAppIconStyle(style: AppIconStyleOption) {
+        viewModelScope.launch {
+            settingsRepository.updateAppIconStyle(style)
         }
     }
 
@@ -349,6 +357,7 @@ data class SettingsUiState(
     val buildBranch: String? = null,
     val buildTime: String? = null,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED,
     val customColorOption: String? = null,
     val customPrimaryColor: String? = null,
     val customSecondaryColor: String? = null,
