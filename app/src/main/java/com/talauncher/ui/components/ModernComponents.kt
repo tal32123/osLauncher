@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -470,19 +471,36 @@ fun AppIcon(
 }
 
 private fun Color.ensureContrastOn(background: Color, minimumContrast: Float = 3f): Color {
-    val currentContrast = contrastRatioAgainst(background)
-    if (currentContrast >= minimumContrast) {
+    if (contrastRatioAgainst(background) >= minimumContrast) {
         return this
     }
 
-    val target = if (luminance() > background.luminance()) Color.Black else Color.White
-    var blended = this
-    var step = 0
-    while (step < 10 && blended.contrastRatioAgainst(background) < minimumContrast) {
-        blended = blended.blendTowards(target, 0.15f)
-        step++
+    fun adjustTowards(target: Color): Color {
+        var candidate = this
+        repeat(10) {
+            if (candidate.contrastRatioAgainst(background) >= minimumContrast) {
+                return candidate
+            }
+            candidate = candidate.blendTowards(target, 0.15f)
+        }
+        return candidate
     }
-    return blended
+
+    val towardBlack = adjustTowards(Color.Black)
+    val towardWhite = adjustTowards(Color.White)
+
+    val towardBlackContrast = towardBlack.contrastRatioAgainst(background)
+    val towardWhiteContrast = towardWhite.contrastRatioAgainst(background)
+
+    val meetsBlack = towardBlackContrast >= minimumContrast
+    val meetsWhite = towardWhiteContrast >= minimumContrast
+
+    return when {
+        meetsBlack && meetsWhite -> if (towardBlackContrast >= towardWhiteContrast) towardBlack else towardWhite
+        meetsBlack -> towardBlack
+        meetsWhite -> towardWhite
+        else -> if (towardBlackContrast >= towardWhiteContrast) towardBlack else towardWhite
+    }
 }
 
 private fun Color.contrastRatioAgainst(other: Color): Float {
