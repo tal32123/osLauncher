@@ -1,8 +1,7 @@
 Summary
 
 - The most likely cause of the app “getting stuck” is main‑thread work during search: a heavy fuzzy‑matching algorithm runs on every keystroke on the UI thread. With a moderate app list this can visibly freeze typing and the UI.
-- Second, the session expiry countdown recreates an overlay window and ComposeView every second, doing heavy view operations repeatedly on the main thread while also polling UsageStats; this can stall the UI during countdowns/overlays.
-- Third, weather/network and settings/app flow changes can cascade into repeated weather fetches on startup or settings changes; cancellations still cost work and can feel unresponsive on slow networks/devices.
+- Weather/network and settings/app flow changes can cascade into repeated weather fetches on startup or settings changes; cancellations still cost work and can feel unresponsive on slow networks/devices.
 - Additional contributors include repeated UsageStats queries on the main thread during countdowns and potentially expensive contact searches (IO‑offloaded, but can still add pressure during unified results).
 
 Ranked Findings (highest impact first)
@@ -21,19 +20,7 @@ Ranked Findings (highest impact first)
   - Offload search scoring to `Dispatchers.Default` with debouncing (similar to contacts flow).
   - Consider simplifying/limiting fuzzy logic (e.g., only token prefix/contains) or cap window sizes.
 
-2) Recreating overlay ComposeViews every second during countdowns
-- What: For session expiry countdown, each tick removes and re‑adds a new ComposeView to the WindowManager, and also posts overlay service fallbacks.
-- Why it can freeze: Add/remove view operations and composition creation every second on the main thread are heavy and may cause jank or perceived “stuck” UI while overlays are active.
-- Where:
-  - `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:919` (`startCountdown`) updates UI each second and calls `showOverlayCountdown(...)` on every tick.
-  - `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:1129` (`showOverlayCountdown`) calls `BackgroundOverlayManager.showCountdownOverlay`, which does `hideCurrentOverlay()` then constructs a new `ComposeView` and `addView(...)` every time.
-  - `app/src/main/java/com/talauncher/utils/BackgroundOverlayManager.kt:31, 45, 57` and `:71–114`
-    - Creates a fresh ComposeView per update; uses `removeViewImmediate`/`addView` each call.
-- Fix direction:
-  - Keep a single overlay view and update its internal state via state holder instead of tearing it down each second.
-  - Reduce update frequency (e.g., only update the displayed number via composition state, no add/remove).
-
-3) Weather fetch churn triggered by flow recompositions
+2) Weather fetch churn triggered by flow recompositions
 - What: Weather updates run from `observeData()` after combining app/settings flows. Initial app sync and settings emissions can trigger multiple updates close together.
 - Why it can freeze: Even with `weatherUpdateJob?.cancel()`, network requests and JSON parsing add work; cancellations don’t fully avoid in‑flight IO. On slow networks this can feel like the UI is unresponsive or “stuck” while waiting for successive updates.
 - Where:
@@ -44,16 +31,16 @@ Ranked Findings (highest impact first)
   - Debounce weather updates and skip when inputs didn’t materially change (lat/lon, display mode).
   - Cache results longer, or fetch on demand when user returns to home and only if stale.
 
-4) Repeated UsageStats queries on UI path (during countdowns and checks)
+3) Repeated UsageStats queries on UI path (during countdowns and checks)
 - What: `getCurrentForegroundApp(...)` is queried repeatedly during countdowns and on session transitions.
-- Why it can freeze: UsageEvents queries can be non‑trivial; calling them once per second from the main scope while also doing overlay updates compounds UI load.
+- Why it can freeze: UsageEvents queries can be non‑trivial; calling them once per second from the main scope compounds UI load during countdowns.
 - Where:
   - `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:936–948`, `:1007–1017`, `:1050–1064`, `:1088–1100`
   - `app/src/main/java/com/talauncher/utils/UsageStatsHelper.kt:151–187` (iterates usage events with a loop).
 - Fix direction:
   - Move these checks to `Dispatchers.IO` and structure them to only run while visible/active, or reduce frequency (e.g., every 2–3 seconds) while countdown runs.
 
-5) Contact search is comprehensive and fuzzy (IO‑offloaded but heavy)
+4) Contact search is comprehensive and fuzzy (IO‑offloaded but heavy)
 - What: Contact search loads batched contacts, then applies fuzzy scoring; though on `Dispatchers.IO`, the results then feed unified results sorting on main.
 - Why it can freeze: Large address books plus fuzzy scoring add latency; big results lens can stall recompositions on slow devices.
 - Where:
@@ -78,10 +65,6 @@ Suggested Remediations (actionable next steps)
 - Search performance
   - Offload app search scoring to `Dispatchers.Default` with debounce (mirror contact search approach). Consider simplifying `SearchScoring` or bounding sliding window lengths.
 
-- Overlay efficiency
-  - Hoist overlay composition into a single, long‑lived view and update via observable state; avoid re‑creating ComposeView each second.
-  - Lower the frequency of UsageStats checks during countdown to reduce pressure.
-
 - Weather update throttling
   - Debounce weather updates and only refresh when stale or when location/display actually change.
 
@@ -93,9 +76,6 @@ File References
 - `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:410`
 - `app/src/main/java/com/talauncher/utils/SearchScoring.kt:8`
 - `app/src/main/java/com/talauncher/utils/SearchScoring.kt:20`
-- `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:919`
-- `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:1129`
-- `app/src/main/java/com/talauncher/utils/BackgroundOverlayManager.kt:71`
 - `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:221`
 - `app/src/main/java/com/talauncher/ui/home/HomeViewModel.kt:1164`
 - `app/src/main/java/com/talauncher/service/WeatherService.kt:20`

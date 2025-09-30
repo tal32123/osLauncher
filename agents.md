@@ -37,6 +37,8 @@ This project follows modern Android development best practices.
     *   **Model:** Represents the data layer (e.g., Room database for app lists).
 *   **UI Toolkit:** **Jetpack Compose.** We will build the entire UI declaratively with Compose. No XML layouts.
 *   **Asynchronous Operations:** **Kotlin Coroutines and Flows.** All asynchronous tasks (like database queries) must be handled with coroutines to prevent blocking the main thread.
+*   **Network Usage:** External calls are allowed for user-facing value (e.g., weather updates) but must remain minimal, transparent, and privacy-conscious.
+*   **Overlays:** Session friction and countdown experiences should live within Compose surfaces hosted by the main activity/dialogs.
 *   **Dependency Management:** Dependencies are defined in the `build.gradle.kts` files. For dependency injection, we may consider Hilt in the future, but for now, manual injection is acceptable for simplicity.
 *   **Testing:** Writing tests is crucial.
     *   **Unit Tests:** For ViewModels and business logic.
