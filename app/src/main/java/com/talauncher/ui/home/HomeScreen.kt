@@ -82,7 +82,6 @@ private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
 fun HomeScreen(
     viewModel: HomeViewModel,
     permissionsHelper: PermissionsHelper,
-    onNavigateToAppDrawer: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
