@@ -30,15 +30,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -71,6 +75,7 @@ import com.talauncher.utils.PermissionsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
+import kotlin.math.max
 
 private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
     UiDensityOption.COMPACT -> UiDensity.Compact
@@ -82,7 +87,6 @@ private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
 fun HomeScreen(
     viewModel: HomeViewModel,
     permissionsHelper: PermissionsHelper,
-    onNavigateToAppDrawer: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -296,6 +300,11 @@ fun HomeScreen(
             } else {
                 // Apps Section with Recent Apps and Alphabet Index
                 val listState = rememberLazyListState()
+                var isScrubbing by remember { mutableStateOf(false) }
+                var previewEntry by remember { mutableStateOf<AlphabetIndexEntry?>(null) }
+                var previewFraction by remember { mutableStateOf(0f) }
+                var lastScrubbedKey by remember { mutableStateOf<String?>(null) }
+                val layoutDirection = LocalLayoutDirection.current
 
                 // Handle alphabet index scrolling
                 LaunchedEffect(uiState.alphabetIndexActiveKey) {
@@ -321,16 +330,45 @@ fun HomeScreen(
                     }
                 }
 
-                Row(
+                BoxWithConstraints(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
+                    val density = LocalDensity.current
+                    val bubbleHeight = 72.dp
+                    val previewOffsetY = remember(
+                        isScrubbing,
+                        previewFraction,
+                        maxHeight,
+                        previewEntry,
+                        density
+                    ) {
+                        if (!isScrubbing || previewEntry == null || maxHeight == Dp.Unspecified) {
+                            0.dp
+                        } else {
+                            with(density) {
+                                val containerPx = maxHeight.toPx().coerceAtLeast(0f)
+                                val bubblePx = bubbleHeight.toPx()
+                                val center = previewFraction * containerPx
+                                val top = (center - bubblePx / 2f).coerceIn(0f, max(containerPx - bubblePx, 0f))
+                                top.toDp()
+                            }
+                        }
+                    }
+
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.weight(1f).testTag("app_list"),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("app_list"),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
-                        contentPadding = PaddingValues(bottom = 80.dp), // Extra bottom padding for accessibility
+                        contentPadding = PaddingValues(
+                            start = PrimerSpacing.md,
+                            end = PrimerSpacing.md + 48.dp,
+                            top = PrimerSpacing.sm,
+                            bottom = PrimerSpacing.xl + 80.dp
+                        )
                     ) {
                         // Recently Used Apps Section
                         if (uiState.recentApps.isNotEmpty()) {
@@ -339,11 +377,7 @@ fun HomeScreen(
                                     text = "Recent Apps",
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(
-                                        start = PrimerSpacing.md,
-                                        top = PrimerSpacing.md,
-                                        bottom = PrimerSpacing.sm
-                                    )
+                                    modifier = Modifier.padding(bottom = PrimerSpacing.sm)
                                 )
                             }
 
@@ -364,10 +398,7 @@ fun HomeScreen(
                                     text = "All Apps",
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(
-                                        start = PrimerSpacing.md,
-                                        bottom = PrimerSpacing.sm
-                                    )
+                                    modifier = Modifier.padding(bottom = PrimerSpacing.sm)
                                 )
                             }
                         }
@@ -387,20 +418,57 @@ fun HomeScreen(
                         }
                     }
 
-                    // Alphabet Index on the right side
                     if (uiState.alphabetIndexEntries.isNotEmpty()) {
+                        val alignment = if (layoutDirection == LayoutDirection.Rtl) {
+                            Alignment.CenterStart
+                        } else {
+                            Alignment.CenterEnd
+                        }
+
                         AlphabetIndex(
                             entries = uiState.alphabetIndexEntries,
                             activeKey = uiState.alphabetIndexActiveKey,
                             isEnabled = uiState.isAlphabetIndexEnabled,
-                            modifier = Modifier.padding(end = PrimerSpacing.sm).testTag("alphabet_index"),
+                            modifier = Modifier
+                                .align(alignment)
+                                .padding(horizontal = PrimerSpacing.sm)
+                                .testTag("alphabet_index"),
                             onEntryFocused = { entry, fraction ->
                                 viewModel.onAlphabetIndexFocused(entry, fraction)
+                                previewEntry = entry
+                                previewFraction = fraction
+                                if (entry.hasApps && entry.key != lastScrubbedKey) {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
+                                lastScrubbedKey = entry.key
                             },
-                            onScrubbingChanged = { isScrubbing ->
-                                viewModel.onAlphabetScrubbingChanged(isScrubbing)
+                            onScrubbingChanged = { active ->
+                                viewModel.onAlphabetScrubbingChanged(active)
+                                isScrubbing = active
+                                if (active) {
+                                    keyboardController?.hide()
+                                } else {
+                                    previewEntry = null
+                                    previewFraction = 0f
+                                    lastScrubbedKey = null
+                                }
                             }
                         )
+
+                        val preview = previewEntry
+                        if (isScrubbing && preview != null) {
+                            ScrubPreviewBubble(
+                                letter = preview.displayLabel,
+                                appName = preview.previewAppName,
+                                modifier = Modifier
+                                    .align(alignment)
+                                    .padding(
+                                        start = if (layoutDirection == LayoutDirection.Rtl) PrimerSpacing.xl else 0.dp,
+                                        end = if (layoutDirection == LayoutDirection.Rtl) 0.dp else PrimerSpacing.xl
+                                    )
+                                    .offset(y = previewOffsetY)
+                            )
+                        }
                     }
                 }
             }
@@ -778,6 +846,42 @@ fun PinnedAppItem(
 // Components moved from App Drawer to Home Screen
 
 @Composable
+private fun ScrubPreviewBubble(
+    letter: String,
+    appName: String?,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = PrimerShapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+        tonalElevation = 4.dp,
+        shadowElevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = PrimerSpacing.md, vertical = PrimerSpacing.sm)
+                .widthIn(min = 64.dp, max = 160.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs)
+        ) {
+            Text(
+                text = letter,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = appName ?: "No apps",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
+        }
+    }
+}
+
 private fun AlphabetIndex(
     entries: List<AlphabetIndexEntry>,
     activeKey: String?,
