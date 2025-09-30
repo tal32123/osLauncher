@@ -418,47 +418,85 @@ fun AppIcon(
     }
 
     val tintedColor = MaterialTheme.colorScheme.primary
+    val themedBorderColor = remember(tintedColor) { tintedColor.darken(0.82f) }
     val baseModifier = modifier.size(iconSize)
+    val themedContainerModifier = baseModifier
+        .clip(CircleShape)
+        .border(BorderStroke(1.5.dp, themedBorderColor), CircleShape)
+        .padding(5.dp)
 
     if (iconBitmap != null) {
-        Image(
-            painter = BitmapPainter(iconBitmap!!),
-            contentDescription = null,
-            modifier = baseModifier,
-            colorFilter = when (iconStyle) {
-                AppIconStyleOption.THEMED -> ColorFilter.tint(
-                    tintedColor,
-                    BlendMode.SrcAtop
-                )
-                AppIconStyleOption.ORIGINAL -> null
-                AppIconStyleOption.HIDDEN -> null
+        when (iconStyle) {
+            AppIconStyleOption.THEMED -> {
+                Box(
+                    modifier = themedContainerModifier,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = BitmapPainter(iconBitmap!!),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        colorFilter = ColorFilter.tint(
+                            tintedColor,
+                            BlendMode.SrcIn
+                        ),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
-        )
-    } else {
-        val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
-        }
-        val letterColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> tintedColor
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
-        }
 
-        Box(
-            modifier = baseModifier
-                .clip(CircleShape)
-                .background(backgroundColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = letterFallback,
-                style = MaterialTheme.typography.labelLarge,
-                color = letterColor
-            )
+            AppIconStyleOption.ORIGINAL -> {
+                Image(
+                    painter = BitmapPainter(iconBitmap!!),
+                    contentDescription = null,
+                    modifier = baseModifier
+                )
+            }
+
+            AppIconStyleOption.HIDDEN -> Unit
+        }
+    } else {
+        when (iconStyle) {
+            AppIconStyleOption.THEMED -> {
+                Box(
+                    modifier = themedContainerModifier,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = letterFallback,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = tintedColor
+                    )
+                }
+            }
+
+            AppIconStyleOption.ORIGINAL -> {
+                Box(
+                    modifier = baseModifier
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = letterFallback,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            AppIconStyleOption.HIDDEN -> Unit
         }
     }
+}
+
+private fun Color.darken(factor: Float = 0.85f): Color {
+    val clampedFactor = factor.coerceIn(0f, 1f)
+    return copy(
+        red = red * clampedFactor,
+        green = green * clampedFactor,
+        blue = blue * clampedFactor
+    )
 }
 
 private suspend fun loadAppIconBitmap(
