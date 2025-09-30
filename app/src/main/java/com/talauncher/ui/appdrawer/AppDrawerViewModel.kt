@@ -609,22 +609,8 @@ class AppDrawerViewModel(
         val filteredApps = if (searchQuery.isBlank()) {
             apps.filter { !it.isHidden }
         } else {
-<<<<<<< HEAD
-            // Use fuzzy search with recency scoring for better results
-            val hasUsageStatsPermission = permissionsHelper.permissionState.value.hasUsageStats
-            val usageStats = if (hasUsageStatsPermission) {
-                withContext(Dispatchers.IO) {
-                    usageStatsHelper.getPast48HoursUsageStats(true).associateBy { it.packageName }
-                }
-            } else {
-                emptyMap()
-            }
-
-            apps.mapNotNull { app ->
-=======
             apps.filter { !it.isHidden }
                 .mapNotNull { app ->
->>>>>>> master
                     val baseScore = calculateRelevanceScore(searchQuery, app.appName)
                     if (baseScore > 0) {
                         Triple(app, baseScore, appLastUsed[app.packageName])
@@ -645,14 +631,9 @@ class AppDrawerViewModel(
         val filteredApps = if (searchQuery.isBlank()) {
             apps.filter { !it.isHidden }
         } else {
-<<<<<<< HEAD
-            // For non-search queries or when called synchronously, skip usage stats to avoid blocking
-            apps.mapNotNull { app ->
-=======
             // For non-search queries or when called synchronously, skip last-used lookups to avoid blocking
             apps.filter { !it.isHidden }
                 .mapNotNull { app ->
->>>>>>> master
                     val baseScore = calculateRelevanceScore(searchQuery, app.appName)
                     if (baseScore > 0) {
                         app to baseScore
