@@ -424,7 +424,7 @@ fun AppIcon(
     val surfaceColor = colorScheme.surface
     val themedPrimary = colorScheme.primary
     val highContrastTint = remember(themedPrimary, surfaceColor) {
-        themedPrimary.ensureContrastOn(surfaceColor)
+        themedPrimary.ensureContrastOn(surfaceColor, minimumContrast = 7f)
     }
     val tintedColor = highContrastTint
     val baseModifier = modifier.size(iconSize)
@@ -470,7 +470,7 @@ fun AppIcon(
     }
 }
 
-private fun Color.ensureContrastOn(background: Color, minimumContrast: Float = 3f): Color {
+private fun Color.ensureContrastOn(background: Color, minimumContrast: Float = 7f): Color {
     val originalColor = this
     val originalContrast = originalColor.contrastRatioAgainst(background)
     if (originalContrast >= minimumContrast) {
@@ -480,7 +480,7 @@ private fun Color.ensureContrastOn(background: Color, minimumContrast: Float = 3
     data class ContrastCandidate(val color: Color, val contrast: Float, val blendAmount: Float)
 
     fun evaluateTowards(target: Color): ContrastCandidate {
-        val steps = 20
+        val steps = 64
         var bestColor = originalColor
         var bestContrast = originalContrast
         var bestAmount = 0f
