@@ -64,6 +64,12 @@ tasks.matching { it.name.startsWith("assemble") || it.name.startsWith("bundle") 
     dependsOn("generateCommitInfo")
 }
 
+tasks.register("unitTestSuite") {
+    group = "verification"
+    description = "Runs all unit test variants without relying on a JUnit Suite class."
+    dependsOn("testDebugUnitTest")
+}
+
 android {
     namespace = "com.talauncher"
     compileSdk = 36
