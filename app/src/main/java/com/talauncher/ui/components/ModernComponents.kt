@@ -471,36 +471,59 @@ fun AppIcon(
 }
 
 private fun Color.ensureContrastOn(background: Color, minimumContrast: Float = 3f): Color {
-    if (contrastRatioAgainst(background) >= minimumContrast) {
-        return this
+    val originalColor = this
+    val originalContrast = originalColor.contrastRatioAgainst(background)
+    if (originalContrast >= minimumContrast) {
+        return originalColor
     }
 
-    fun adjustTowards(target: Color): Color {
-        var candidate = this
-        repeat(10) {
-            if (candidate.contrastRatioAgainst(background) >= minimumContrast) {
-                return candidate
+    data class ContrastCandidate(val color: Color, val contrast: Float, val blendAmount: Float)
+
+    fun evaluateTowards(target: Color): ContrastCandidate {
+        val steps = 20
+        var bestColor = originalColor
+        var bestContrast = originalContrast
+        var bestAmount = 0f
+
+        for (step in 1..steps) {
+            val amount = step / steps.toFloat()
+            val candidate = originalColor.blendTowards(target, amount)
+            val contrast = candidate.contrastRatioAgainst(background)
+
+            if (contrast >= minimumContrast) {
+                return ContrastCandidate(candidate, contrast, amount)
             }
-            candidate = candidate.blendTowards(target, 0.15f)
+
+            if (contrast > bestContrast) {
+                bestColor = candidate
+                bestContrast = contrast
+                bestAmount = amount
+            }
         }
-        return candidate
+
+        val targetContrast = target.contrastRatioAgainst(background)
+        return if (targetContrast > bestContrast) {
+            ContrastCandidate(target, targetContrast, 1f)
+        } else {
+            ContrastCandidate(bestColor, bestContrast, bestAmount)
+        }
     }
 
-    val towardBlack = adjustTowards(Color.Black)
-    val towardWhite = adjustTowards(Color.White)
+    val towardBlack = evaluateTowards(Color.Black)
+    val towardWhite = evaluateTowards(Color.White)
 
-    val towardBlackContrast = towardBlack.contrastRatioAgainst(background)
-    val towardWhiteContrast = towardWhite.contrastRatioAgainst(background)
-
-    val meetsBlack = towardBlackContrast >= minimumContrast
-    val meetsWhite = towardWhiteContrast >= minimumContrast
-
-    return when {
-        meetsBlack && meetsWhite -> if (towardBlackContrast >= towardWhiteContrast) towardBlack else towardWhite
-        meetsBlack -> towardBlack
-        meetsWhite -> towardWhite
-        else -> if (towardBlackContrast >= towardWhiteContrast) towardBlack else towardWhite
+    val satisfying = listOf(towardBlack, towardWhite).filter { it.contrast >= minimumContrast }
+    val preferred = satisfying.minWithOrNull(
+        compareBy<ContrastCandidate> { it.blendAmount }.thenByDescending { it.contrast }
+    )
+    if (preferred != null) {
+        return preferred.color
     }
+
+    return listOf(towardBlack, towardWhite)
+        .maxByOrNull { it.contrast }
+        ?.color
+        ?: originalColor
 }
 
 private fun Color.contrastRatioAgainst(other: Color): Float {
