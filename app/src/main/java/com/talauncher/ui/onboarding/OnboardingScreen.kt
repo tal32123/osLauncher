@@ -147,22 +147,6 @@ fun OnboardingScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // System Alert Window Permission
-        OnboardingStepCard(
-            modifier = Modifier.testTag("onboarding_step_overlay"),
-            icon = Icons.Default.Notifications,
-            title = "Overlay Permission",
-            description = "Allows timer notifications to appear over other apps when time limits expire",
-            isCompleted = permissionState.hasSystemAlertWindow,
-            buttonText = if (permissionState.hasSystemAlertWindow) "Completed" else "Grant Permission",
-            buttonTestTag = "onboarding_step_overlay_button",
-            onButtonClick = {
-                permissionsHelper.requestPermission(context as Activity, PermissionType.SYSTEM_ALERT_WINDOW)
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Contacts Permission
         OnboardingStepCard(
             modifier = Modifier.testTag("onboarding_step_contacts"),

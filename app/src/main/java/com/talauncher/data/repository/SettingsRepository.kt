@@ -4,7 +4,6 @@ import com.talauncher.data.database.SettingsDao
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.LauncherSettings
-import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
@@ -38,21 +37,6 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun updateTimeLimitPrompt(enabled: Boolean) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(enableTimeLimitPrompt = enabled))
-    }
-
-    suspend fun updateMathChallenge(enabled: Boolean) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(enableMathChallenge = enabled))
-    }
-
-    suspend fun updateMathDifficulty(difficulty: MathDifficulty) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(mathDifficulty = difficulty))
-    }
-
-    suspend fun updateSessionExpiryCountdown(seconds: Int) {
-        val settings = getSettingsSync()
-        updateSettings(settings.copy(sessionExpiryCountdownSeconds = seconds.coerceIn(0, 30)))
     }
 
     suspend fun updateDefaultTimeLimit(minutes: Int) {

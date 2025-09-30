@@ -6,7 +6,6 @@ import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.InstalledApp
-import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
@@ -56,9 +55,6 @@ class SettingsViewModel(
                     backgroundColor = settings?.backgroundColor ?: "system",
                     showWallpaper = settings?.showWallpaper ?: true,
                     enableTimeLimitPrompt = settings?.enableTimeLimitPrompt ?: false,
-                    enableMathChallenge = settings?.enableMathChallenge ?: false,
-                    mathDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
-                    sessionExpiryCountdownSeconds = settings?.sessionExpiryCountdownSeconds ?: 5,
                     recentAppsLimit = settings?.recentAppsLimit ?: 5,
                     defaultTimeLimitMinutes = settings?.defaultTimeLimitMinutes ?: 30,
                     showPhoneAction = settings?.showPhoneAction ?: true,
@@ -120,27 +116,9 @@ class SettingsViewModel(
         }
     }
 
-    fun toggleMathChallenge() {
-        viewModelScope.launch {
-            settingsRepository.updateMathChallenge(!_uiState.value.enableMathChallenge)
-        }
-    }
-
     fun updateDefaultTimeLimit(minutes: Int) {
         viewModelScope.launch {
             settingsRepository.updateDefaultTimeLimit(minutes)
-        }
-    }
-
-    fun updateMathDifficulty(difficulty: MathDifficulty) {
-        viewModelScope.launch {
-            settingsRepository.updateMathDifficulty(difficulty)
-        }
-    }
-
-    fun updateSessionExpiryCountdown(seconds: Int) {
-        viewModelScope.launch {
-            settingsRepository.updateSessionExpiryCountdown(seconds)
         }
     }
 
@@ -338,9 +316,6 @@ data class SettingsUiState(
     val backgroundColor: String = "system",
     val showWallpaper: Boolean = true,
     val enableTimeLimitPrompt: Boolean = false,
-    val enableMathChallenge: Boolean = false,
-    val mathDifficulty: MathDifficulty = MathDifficulty.EASY,
-    val sessionExpiryCountdownSeconds: Int = 5,
     val recentAppsLimit: Int = 5,
     val defaultTimeLimitMinutes: Int = 30,
     val isLoading: Boolean = false,

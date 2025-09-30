@@ -53,9 +53,6 @@ import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
-import com.talauncher.ui.components.MathChallengeDialog
-import com.talauncher.ui.components.SessionExpiryActionDialog
-import com.talauncher.ui.components.SessionExpiryCountdownDialog
 import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.ModernGlassCard
 import com.talauncher.ui.components.ModernSearchField
@@ -96,10 +93,7 @@ fun HomeScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
     val hasActiveDialog = uiState.showFrictionDialog ||
-        uiState.showTimeLimitDialog ||
-        uiState.showMathChallengeDialog ||
-        uiState.showSessionExpiryCountdown ||
-        uiState.showSessionExpiryDecisionDialog
+        uiState.showTimeLimitDialog
 
     LaunchedEffect(viewModel, permissionsHelper, context) {
         viewModel.events.collect { event ->
@@ -112,8 +106,6 @@ fun HomeScreen(
             when (event) {
                 HomeEvent.RequestContactsPermission ->
                     permissionsHelper.requestPermission(activity, PermissionType.CONTACTS)
-                HomeEvent.RequestOverlayPermission ->
-                    permissionsHelper.requestPermission(activity, PermissionType.SYSTEM_ALERT_WINDOW)
             }
         }
     }
@@ -123,15 +115,6 @@ fun HomeScreen(
         enabled = hasActiveDialog
     ) {
         when {
-            uiState.showSessionExpiryCountdown -> {
-                // Countdown cannot be dismissed
-            }
-            uiState.showSessionExpiryDecisionDialog -> {
-                // Force the user to make a decision
-            }
-            uiState.showMathChallengeDialog -> {
-                // Math challenge cannot be dismissed with back button - force completion
-            }
             uiState.showTimeLimitDialog -> {
                 // Time limit dialog cannot be dismissed with back button - force choice
             }
@@ -405,11 +388,13 @@ fun HomeScreen(
                                 items(uiState.hiddenApps, key = { "hidden_${it.packageName}" }) { app ->
                                     ModernAppItem(
                                         appName = app.appName,
+                                        packageName = app.packageName,
                                         onClick = { viewModel.launchApp(app.packageName) },
                                         onLongClick = {
                                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                             viewModel.showAppActionDialog(app)
                                         },
+                                        appIconStyle = uiState.appIconStyle,
                                         enableGlassmorphism = uiState.enableGlassmorphism,
                                         uiDensity = uiState.uiDensity.toUiDensity(),
                                         isHidden = true
@@ -514,28 +499,6 @@ fun HomeScreen(
             }
         }
 
-        if (uiState.showSessionExpiryCountdown) {
-            val appName = uiState.sessionExpiryAppName ?: "this app"
-            SessionExpiryCountdownDialog(
-                appName = appName,
-                remainingSeconds = uiState.sessionExpiryCountdownRemaining,
-                totalSeconds = uiState.sessionExpiryCountdownTotal
-            )
-        }
-
-        if (uiState.showSessionExpiryDecisionDialog) {
-            val appName = uiState.sessionExpiryAppName ?: "this app"
-            SessionExpiryActionDialog(
-                appName = appName,
-                showMathChallengeOption = uiState.sessionExpiryShowMathOption,
-                onExtend = { viewModel.onSessionExpiryDecisionExtend() },
-                onClose = { viewModel.onSessionExpiryDecisionClose() },
-                onMathChallenge = if (uiState.sessionExpiryShowMathOption) {
-                    { viewModel.onSessionExpiryDecisionMathChallenge() }
-                } else null
-            )
-        }
-
         if (uiState.showContactsPermissionDialog) {
             AlertDialog(
                 onDismissRequest = { viewModel.dismissContactsPermissionDialog() },
@@ -569,55 +532,6 @@ fun HomeScreen(
             )
         }
 
-        if (uiState.showOverlayPermissionDialog) {
-            val appName = uiState.sessionExpiryAppName
-                ?: stringResource(id = R.string.overlay_permission_generic_app)
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissOverlayPermissionDialog() },
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.overlay_permission_required_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                text = {
-                    Text(
-                        text = stringResource(
-                            id = R.string.overlay_permission_required_message,
-                            appName
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = { viewModel.openOverlayPermissionSettings() }) {
-                        Text(stringResource(id = R.string.overlay_permission_required_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { viewModel.dismissOverlayPermissionDialog() }) {
-                        Text(stringResource(id = R.string.overlay_permission_required_dismiss))
-                    }
-                }
-            )
-        }
-
-        // Math challenge dialog for closing apps
-        if (uiState.showMathChallengeDialog) {
-            run {
-                val selectedPackage = uiState.selectedAppForMathChallenge ?: return@run
-                MathChallengeDialog(
-                    difficulty = uiState.mathChallengeDifficulty,
-                    onCorrect = {
-                        viewModel.onMathChallengeCompleted(selectedPackage)
-                    },
-                    onDismiss = { viewModel.dismissMathChallengeDialog() },
-                    isTimeExpired = uiState.isMathChallengeForExpiredSession
-                )
-            }
-        }
         } // End Box
     }
 }

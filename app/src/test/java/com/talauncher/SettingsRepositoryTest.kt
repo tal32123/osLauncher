@@ -73,7 +73,7 @@ class SettingsRepositoryTest {
     @Test
     fun `updateSettings calls dao update`() = runTest {
         println("Running updateSettings calls dao update test")
-        val newSettings = defaultSettings.copy(enableMathChallenge = true)
+        val newSettings = defaultSettings.copy(enableTimeLimitPrompt = true)
 
         repository.updateSettings(newSettings)
 

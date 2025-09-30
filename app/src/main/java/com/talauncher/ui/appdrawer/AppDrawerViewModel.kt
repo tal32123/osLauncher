@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.InstalledApp
-import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SearchInteractionRepository
 import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
@@ -92,9 +91,6 @@ data class AppDrawerUiState(
     val timeLimitDialogUsageMinutes: Int? = null,
     val timeLimitDialogTimeLimitMinutes: Int = 0,
     val timeLimitDialogUsesDefaultLimit: Boolean = true,
-    val showMathChallengeDialog: Boolean = false,
-    val selectedAppForMathChallenge: String? = null,
-    val mathChallengeDifficulty: MathDifficulty = MathDifficulty.EASY,
     val recentAppsLimit: Int = 5,
     val searchQuery: String = "",
     val showPhoneAction: Boolean = true,
@@ -158,7 +154,6 @@ class AppDrawerViewModel(
                         allApps = combinedApps,
                         hiddenApps = hiddenApps,
                         recentApps = recentApps,
-                        mathChallengeDifficulty = settings?.mathDifficulty ?: MathDifficulty.EASY,
                         recentAppsLimit = recentLimit,
                         showPhoneAction = settings?.showPhoneAction ?: true,
                         showMessageAction = settings?.showMessageAction ?: true,
@@ -346,32 +341,6 @@ class AppDrawerViewModel(
             dismissTimeLimitDialog()
         }
     }
-
-    fun dismissMathChallengeDialog() {
-        _uiState.value = _uiState.value.copy(
-            showMathChallengeDialog = false,
-            selectedAppForMathChallenge = null
-        )
-    }
-
-    fun showMathChallengeForApp(packageName: String) {
-        viewModelScope.launch {
-            if (appRepository.shouldShowMathChallenge(packageName)) {
-                _uiState.value = _uiState.value.copy(
-                    showMathChallengeDialog = true,
-                    selectedAppForMathChallenge = packageName
-                )
-            }
-        }
-    }
-
-    fun onMathChallengeCompleted(packageName: String) {
-        viewModelScope.launch {
-            appRepository.endSessionForApp(packageName)
-            dismissMathChallengeDialog()
-        }
-    }
-
 
     fun hideApp(packageName: String) {
         viewModelScope.launch {

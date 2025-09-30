@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class PermissionState(
     val hasUsageStats: Boolean = false,
-    val hasSystemAlertWindow: Boolean = false,
     val hasNotifications: Boolean = false,
     val hasContacts: Boolean = false,
     val hasCallPhone: Boolean = false,
@@ -28,7 +27,6 @@ data class PermissionState(
     val allOnboardingPermissionsGranted: Boolean
         get() =
             hasUsageStats &&
-                hasSystemAlertWindow &&
                 hasNotifications &&
                 hasContacts &&
                 hasLocation
@@ -36,7 +34,6 @@ data class PermissionState(
 
 enum class PermissionType {
     USAGE_STATS,
-    SYSTEM_ALERT_WINDOW,
     NOTIFICATIONS,
     CONTACTS,
     CALL_PHONE,
@@ -58,7 +55,6 @@ open class PermissionsHelper(
     open fun checkAllPermissions() {
         _permissionState.value = PermissionState(
             hasUsageStats = hasUsageStatsPermission(),
-            hasSystemAlertWindow = hasSystemAlertWindowPermission(),
             hasNotifications = hasNotificationPermission(),
             hasContacts = hasContactsPermission(),
             hasCallPhone = hasCallPhonePermission(),
@@ -69,7 +65,6 @@ open class PermissionsHelper(
     open fun requestPermission(activity: Activity, type: PermissionType) {
         when (type) {
             PermissionType.USAGE_STATS -> openUsageAccessSettings()
-            PermissionType.SYSTEM_ALERT_WINDOW -> requestSystemAlertWindowPermission()
             PermissionType.NOTIFICATIONS -> requestNotificationPermission(activity)
             PermissionType.CONTACTS -> requestContactsPermission(activity)
             PermissionType.CALL_PHONE -> requestCallPhonePermission(activity)
@@ -111,14 +106,6 @@ open class PermissionsHelper(
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
-    private fun hasSystemAlertWindowPermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Settings.canDrawOverlays(context)
-        } else {
-            true // Permission not required for API < 23
-        }
-    }
-
     fun hasContactsPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,
@@ -147,19 +134,6 @@ open class PermissionsHelper(
             arrayOf(Manifest.permission.CALL_PHONE),
             CALL_PHONE_PERMISSION_REQUEST_CODE
         )
-    }
-
-    private fun requestSystemAlertWindowPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
-            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
-                data = Uri.parse("package:${context.packageName}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
-            }
-        }
     }
 
     private fun hasNotificationPermission(): Boolean {

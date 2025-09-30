@@ -33,7 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.AppIconStyleOption
-import com.talauncher.data.model.MathDifficulty
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.ui.theme.ColorPalettes
@@ -123,14 +122,8 @@ fun SettingsScreen(
             0 -> GeneralSettings(
                 enableTimeLimitPrompt = uiState.enableTimeLimitPrompt,
                 onToggleTimeLimitPrompt = viewModel::toggleTimeLimitPrompt,
-                enableMathChallenge = uiState.enableMathChallenge,
-                onToggleMathChallenge = viewModel::toggleMathChallenge,
-                mathDifficulty = uiState.mathDifficulty,
-                onUpdateMathDifficulty = viewModel::updateMathDifficulty,
                 recentAppsLimit = uiState.recentAppsLimit,
                 onUpdateRecentAppsLimit = viewModel::updateRecentAppsLimit,
-                sessionExpiryCountdownSeconds = uiState.sessionExpiryCountdownSeconds,
-                onUpdateSessionExpiryCountdown = viewModel::updateSessionExpiryCountdown,
                 showPhoneAction = uiState.showPhoneAction,
                 onToggleShowPhoneAction = viewModel::toggleShowPhoneAction,
                 showMessageAction = uiState.showMessageAction,
@@ -631,14 +624,8 @@ private fun <T> ChipGrid(
 fun GeneralSettings(
     enableTimeLimitPrompt: Boolean,
     onToggleTimeLimitPrompt: () -> Unit,
-    enableMathChallenge: Boolean,
-    onToggleMathChallenge: () -> Unit,
-    mathDifficulty: MathDifficulty,
-    onUpdateMathDifficulty: (MathDifficulty) -> Unit,
     recentAppsLimit: Int,
     onUpdateRecentAppsLimit: (Int) -> Unit,
-    sessionExpiryCountdownSeconds: Int,
-    onUpdateSessionExpiryCountdown: (Int) -> Unit,
     showPhoneAction: Boolean,
     onToggleShowPhoneAction: () -> Unit,
     showMessageAction: Boolean,
@@ -681,36 +668,8 @@ fun GeneralSettings(
                         onCheckedChange = { onToggleTimeLimitPrompt() }
                     )
 
-                    var sliderValue by remember(sessionExpiryCountdownSeconds) {
-                        mutableStateOf(sessionExpiryCountdownSeconds.toFloat())
-                    }
                     var recentAppsValue by remember(recentAppsLimit) {
                         mutableStateOf(recentAppsLimit.toFloat())
-                    }
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Countdown after timer",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Slider(
-                            value = sliderValue,
-                            onValueChange = { sliderValue = it },
-                            valueRange = 0f..15f,
-                            steps = 14,
-                            onValueChangeFinished = {
-                                onUpdateSessionExpiryCountdown(sliderValue.roundToInt())
-                            },
-                            enabled = enableTimeLimitPrompt
-                        )
-                        Text(
-                            text = "${sliderValue.roundToInt()} second${if (sliderValue.roundToInt() == 1) "" else "s"}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
 
                     Column(
@@ -743,12 +702,6 @@ fun GeneralSettings(
                         )
                     }
 
-                    SettingItem(
-                        title = "Math Challenge to Close",
-                        subtitle = "Solve math problems to close distracting apps",
-                        checked = enableMathChallenge,
-                        onCheckedChange = { onToggleMathChallenge() }
-                    )
                 }
             }
         }
@@ -868,48 +821,6 @@ fun GeneralSettings(
                                 label = { Text("°${option.symbol}") },
                                 modifier = Modifier.weight(1f)
                             )
-                        }
-                    }
-                }
-            }
-        }
-
-        if (enableMathChallenge) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "Math Challenge Settings",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Text(
-                            text = "Difficulty Level",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            MathDifficulty.entries.forEach { difficulty ->
-                                FilterChip(
-                                    selected = mathDifficulty == difficulty,
-                                    onClick = { onUpdateMathDifficulty(difficulty) },
-                                    label = { Text(difficulty.label) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
                         }
                     }
                 }

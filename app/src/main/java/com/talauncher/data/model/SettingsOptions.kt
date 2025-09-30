@@ -33,22 +33,6 @@ enum class WeatherTemperatureUnit(val symbol: String) {
     }
 }
 
-enum class MathDifficulty(val label: String) {
-    EASY("Easy"),
-    MEDIUM("Medium"),
-    HARD("Hard");
-
-    val storageValue: String
-        get() = name
-
-    companion object {
-        fun fromStorageValue(value: String?): MathDifficulty {
-            val normalized = value?.lowercase(Locale.US)
-            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: EASY
-        }
-    }
-}
-
 enum class ColorPaletteOption(val label: String) {
     DEFAULT("Default"),
     WARM("Warm"),

@@ -55,11 +55,6 @@ class SettingsFlowTest {
                     } catch (ex: Exception) { /* Not required or already completed */ }
 
                     try {
-                        composeTestRule.onNodeWithTag("onboarding_step_overlay_button").performClick()
-                        composeTestRule.waitForIdle()
-                    } catch (ex: Exception) { /* Already completed */ }
-
-                    try {
                         composeTestRule.onNodeWithTag("onboarding_step_default_launcher_button").performClick()
                         composeTestRule.waitForIdle()
                     } catch (ex: Exception) { /* Already completed */ }
