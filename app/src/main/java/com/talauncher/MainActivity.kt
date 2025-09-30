@@ -411,7 +411,6 @@ fun LauncherNavigationPager(
                     HomeScreen(
                         viewModel = homeViewModel,
                         permissionsHelper = permissionsHelper,
-                        onNavigateToAppDrawer = null, // App drawer functionality moved to home screen
                         onNavigateToSettings = {
                             coroutineScope.launch {
                                 animateToPage(0)
