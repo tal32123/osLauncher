@@ -50,6 +50,8 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.talauncher.BuildConfig
 
+private const val TAG = "HomeViewModel"
+
 internal const val RECENT_APPS_INDEX_KEY = "*"
 
 sealed class SearchItem {
