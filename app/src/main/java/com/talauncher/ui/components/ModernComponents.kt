@@ -42,7 +42,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -419,44 +418,63 @@ fun AppIcon(
 
     val tintedColor = MaterialTheme.colorScheme.primary
     val baseModifier = modifier.size(iconSize)
+    val themedColorFilter = remember(tintedColor) {
+        ColorFilter.tint(tintedColor, BlendMode.SrcIn)
+    }
 
     if (iconBitmap != null) {
-        Image(
-            painter = BitmapPainter(iconBitmap!!),
-            contentDescription = null,
-            modifier = baseModifier,
-            colorFilter = when (iconStyle) {
-                AppIconStyleOption.THEMED -> ColorFilter.tint(
-                    tintedColor,
-                    BlendMode.SrcAtop
+        when (iconStyle) {
+            AppIconStyleOption.THEMED -> {
+                Image(
+                    painter = BitmapPainter(iconBitmap!!),
+                    contentDescription = null,
+                    modifier = baseModifier,
+                    colorFilter = themedColorFilter,
+                    contentScale = ContentScale.Fit
                 )
-                AppIconStyleOption.ORIGINAL -> null
-                AppIconStyleOption.HIDDEN -> null
             }
-        )
-    } else {
-        val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
-        }
-        val letterColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> tintedColor
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
-        }
 
-        Box(
-            modifier = baseModifier
-                .clip(CircleShape)
-                .background(backgroundColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = letterFallback,
-                style = MaterialTheme.typography.labelLarge,
-                color = letterColor
-            )
+            AppIconStyleOption.ORIGINAL -> {
+                Image(
+                    painter = BitmapPainter(iconBitmap!!),
+                    contentDescription = null,
+                    modifier = baseModifier
+                )
+            }
+
+            AppIconStyleOption.HIDDEN -> Unit
+        }
+    } else {
+        when (iconStyle) {
+            AppIconStyleOption.THEMED -> {
+                Box(
+                    modifier = baseModifier,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = letterFallback,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = tintedColor
+                    )
+                }
+            }
+
+            AppIconStyleOption.ORIGINAL -> {
+                Box(
+                    modifier = baseModifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = letterFallback,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            AppIconStyleOption.HIDDEN -> Unit
         }
     }
 }
