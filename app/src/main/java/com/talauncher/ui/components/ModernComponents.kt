@@ -466,7 +466,9 @@ fun AppIcon(
     }
 }
 
-private fun isMonochrome(image: ImageBitmap, tolerance: Float = 0.1f): Boolean {
+import android.util.Log
+
+private fun isMonochrome(image: ImageBitmap, tolerance: Float = 0.2f): Boolean {
     val pixels = IntArray(image.width * image.height)
     image.readPixels(pixels, 0, 0, image.width, image.height)
 
@@ -492,8 +494,11 @@ private fun isMonochrome(image: ImageBitmap, tolerance: Float = 0.1f): Boolean {
     }
 
     val averageDistance = totalDistance / totalPixels
+    val result = averageDistance < tolerance
 
-    return averageDistance < tolerance
+    Log.d("isMonochrome", "averageDistance: $averageDistance, tolerance: $tolerance, result: $result")
+
+    return result
 }
 
 private fun colorDistance(color1: Int, color2: Int): Double {
