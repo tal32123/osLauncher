@@ -86,12 +86,19 @@ sealed interface HomeEvent {
     data object RequestContactsPermission : HomeEvent
 }
 
+/**
+ * ViewModel backing the minimalist home experience.
+ *
+ * @param weatherService Allows injecting a fake implementation in tests so they can avoid
+ * hitting the network while exercising unrelated functionality.
+ */
 class HomeViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
     private val searchInteractionRepository: SearchInteractionRepository? = null,
     private val onLaunchApp: ((String, Int?) -> Unit)? = null,
     private val appContext: Context,
+    private val weatherService: WeatherService = WeatherService(appContext),
     initialContactHelper: ContactHelper? = null,
     private val permissionsHelper: PermissionsHelper? = null,
     private val usageStatsHelper: UsageStatsHelper? = null,
@@ -107,7 +114,6 @@ class HomeViewModel(
     private val contactHelper: ContactHelper? = initialContactHelper ?: permissionsHelper?.let {
         ContactHelper(appContext, it)
     }
-    private val weatherService = WeatherService(appContext)
     private val fallbackPermissionsHelper: PermissionsHelper by lazy { PermissionsHelper(appContext) }
     private val resolvedPermissionsHelper: PermissionsHelper?
         get() = permissionsHelper ?: fallbackPermissionsHelper

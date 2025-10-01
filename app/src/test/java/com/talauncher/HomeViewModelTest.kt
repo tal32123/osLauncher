@@ -88,10 +88,12 @@ class HomeViewModelTest {
         whenever(appRepository.getAllVisibleApps()).thenReturn(flowOf(visibleApps))
 
         val appContext = ApplicationProvider.getApplicationContext<Context>()
+        // Inject the fake weather helper so this test stays offline and deterministic.
         viewModel = HomeViewModel(
             appRepository = appRepository,
             settingsRepository = settingsRepository,
             appContext = appContext,
+            weatherService = FakeWeatherService(appContext),
             permissionsHelper = permissionsHelper,
             usageStatsHelper = usageStatsHelper,
             errorHandler = errorHandler

@@ -79,10 +79,12 @@ class EdgeCaseAndErrorHandlingTest {
         whenever(usageStatsHelper.getPast48HoursUsageStats(any())).thenReturn(emptyList())
 
         val appContext = ApplicationProvider.getApplicationContext<Context>()
+        // Inject the fake weather helper so this test stays offline and deterministic.
         val viewModel = HomeViewModel(
             appRepository = appRepository,
             settingsRepository = settingsRepository,
             appContext = appContext,
+            weatherService = FakeWeatherService(appContext),
             permissionsHelper = permissionsHelper,
             usageStatsHelper = usageStatsHelper,
             errorHandler = errorHandler
