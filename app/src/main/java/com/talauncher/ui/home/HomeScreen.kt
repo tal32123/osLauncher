@@ -1,35 +1,5 @@
 package com.talauncher.ui.home
 
-/**
- * Home Screen UI Module
- *
- * Architecture Overview:
- * - MVVM pattern with clear separation of concerns
- * - UI components are stateless and composable
- * - Business logic delegated to ViewModel and Use Cases
- * - Follows SOLID principles throughout
- *
- * Component Structure:
- * - HomeScreen: Main composable coordinating the home screen UI
- * - Dialogs: Extracted to HomeDialogs.kt (FrictionDialog, AppActionDialog, ContactsPermissionDialog)
- * - List Items: Extracted to HomeListItems.kt (RecentAppItem, SearchResultItem, PinnedAppItem)
- * - Alphabet Index: Extracted to AlphabetIndexComponent.kt
- * - OtherAppsToggle: Local component for toggling hidden apps visibility
- *
- * Design Patterns Applied:
- * - Observer: StateFlow for reactive UI updates
- * - Strategy: Different dialog types with common interface
- * - Composition: Building UI from smaller, reusable components
- * - Delegation: ViewModel delegates to Use Cases for business logic
- *
- * SOLID Principles:
- * - Single Responsibility: Each component has one clear purpose
- * - Open/Closed: Components can be extended without modification
- * - Liskov Substitution: Dialog components can be swapped
- * - Interface Segregation: Specific callbacks for each action
- * - Dependency Inversion: Depends on ViewModel abstraction
- */
-
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -344,7 +314,7 @@ fun HomeScreen(
                         if (uiState.recentApps.isNotEmpty()) {
                             item {
                                 Text(
-                                    text = "Recent Apps",
+                                    text = stringResource(R.string.home_recent_apps_section),
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(
@@ -370,7 +340,7 @@ fun HomeScreen(
                             item {
                                 Spacer(modifier = Modifier.height(PrimerSpacing.lg))
                                 Text(
-                                    text = "All Apps",
+                                    text = stringResource(R.string.home_all_apps_section),
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(
@@ -538,17 +508,10 @@ fun HomeScreen(
     }
 }
 
-/**
- * Helper function to find Activity from Context.
- * Used for permission requests and other activity-specific operations.
- */
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
-
-
-// OtherAppsToggle component moved to separate file: OtherAppsToggle.kt
 
 

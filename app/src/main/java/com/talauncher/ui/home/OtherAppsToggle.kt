@@ -9,27 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.talauncher.R
 import com.talauncher.ui.components.ModernGlassCard
 import com.talauncher.ui.theme.PrimerSpacing
-
-/**
- * Toggle component for showing/hiding the hidden apps list.
- *
- * Architecture:
- * - Follows Component pattern for reusable UI elements
- * - Single Responsibility: Only handles the toggle UI
- * - Stateless component with callback for state management
- *
- * Design Pattern: Stateless Component with callback
- * SOLID: Single Responsibility, Open/Closed
- *
- * @param hiddenCount Number of hidden apps
- * @param isExpanded Whether the hidden apps list is currently expanded
- * @param enableGlassmorphism Whether to enable glassmorphism effect
- * @param onToggle Callback when toggle is clicked
- * @param modifier Modifier for styling
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OtherAppsToggle(
@@ -40,9 +25,9 @@ fun OtherAppsToggle(
     modifier: Modifier = Modifier
 ) {
     val summaryText = if (hiddenCount == 1) {
-        "1 app hidden from the main list."
+        stringResource(R.string.home_other_apps_summary_single)
     } else {
-        "$hiddenCount apps hidden from the main list."
+        stringResource(R.string.home_other_apps_summary_plural, hiddenCount)
     }
 
     ModernGlassCard(
@@ -62,14 +47,17 @@ fun OtherAppsToggle(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Other Apps",
+                    text = stringResource(R.string.home_other_apps_title),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
 
                 Text(
-                    text = if (isExpanded) "Hide" else "Show",
+                    text = if (isExpanded)
+                        stringResource(R.string.home_other_apps_hide)
+                    else
+                        stringResource(R.string.home_other_apps_show),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -86,7 +74,7 @@ fun OtherAppsToggle(
             if (!isExpanded) {
                 Spacer(modifier = Modifier.height(PrimerSpacing.xs))
                 Text(
-                    text = "Tap to reveal these hidden apps.",
+                    text = stringResource(R.string.home_other_apps_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

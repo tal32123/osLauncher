@@ -8,7 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.ui.components.AppIcon
@@ -16,29 +18,6 @@ import com.talauncher.ui.theme.PrimerCard
 import com.talauncher.ui.theme.PrimerListItemDefaults
 import com.talauncher.ui.theme.PrimerShapes
 import com.talauncher.ui.theme.PrimerSpacing
-
-/**
- * List item components for the Home screen.
- *
- * Architecture:
- * - Follows Component pattern for reusable UI elements
- * - Single Responsibility: Each component renders one type of list item
- * - Open/Closed Principle: Easy to extend with new item types
- * - Consistent styling through theme system
- */
-
-/**
- * List item for recently used apps.
- * Displays app with special "Recent" indicator.
- *
- * Design Pattern: Component pattern with composition
- * SOLID: Single Responsibility - renders recent app item only
- *
- * @param appInfo App information to display
- * @param onClick Callback when item is clicked
- * @param onLongClick Callback when item is long-pressed
- * @param iconStyle Style for the app icon
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RecentAppItem(
@@ -89,7 +68,7 @@ fun RecentAppItem(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
             ) {
                 Text(
-                    text = "Recent",
+                    text = stringResource(R.string.home_recent_badge),
                     modifier = Modifier.padding(
                         horizontal = PrimerSpacing.xs,
                         vertical = 2.dp
@@ -102,13 +81,6 @@ fun RecentAppItem(
     }
 }
 
-/**
- * List item for search results.
- * Simple card showing app name.
- *
- * @param appInfo App information to display
- * @param onClick Callback when item is clicked
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchResultItem(
@@ -140,14 +112,6 @@ fun SearchResultItem(
     }
 }
 
-/**
- * List item for pinned apps.
- * Similar to search result but with long-click support.
- *
- * @param appInfo App information to display
- * @param onClick Callback when item is clicked
- * @param onLongClick Callback when item is long-pressed
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PinnedAppItem(
