@@ -57,7 +57,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.ColorFilter
+
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
@@ -421,44 +423,93 @@ fun AppIcon(
     val baseModifier = modifier.size(iconSize)
 
     if (iconBitmap != null) {
+        val isMonochrome = remember(iconBitmap) {
+            isMonochrome(iconBitmap!!)
+        }
         Image(
             painter = BitmapPainter(iconBitmap!!),
             contentDescription = null,
             modifier = baseModifier,
-            colorFilter = when (iconStyle) {
-                AppIconStyleOption.THEMED -> ColorFilter.tint(
+            colorFilter = if (iconStyle == AppIconStyleOption.THEMED && isMonochrome) {
+                ColorFilter.tint(
                     tintedColor,
-                    BlendMode.SrcAtop
+                    BlendMode.SrcIn
                 )
-                AppIconStyleOption.ORIGINAL -> null
-                AppIconStyleOption.HIDDEN -> null
+            } else {
+                null
             }
         )
     } else {
-        val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
+        val fallbackBackgroundColor = remember(appName) {
+            val hash = appName.hashCode()
+            val r = (hash and 0xFF0000 shr 16) / 255f
+            val g = (hash and 0x00FF00 shr 8) / 255f
+            val b = (hash and 0x0000FF) / 255f
+            Color(r, g, b).copy(alpha = 0.3f)
         }
-        val letterColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> tintedColor
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
+        val fallbackLetterColor = remember(fallbackBackgroundColor) {
+            if (fallbackBackgroundColor.luminance() > 0.5f) Color.Black else Color.White
         }
 
         Box(
             modifier = baseModifier
                 .clip(CircleShape)
-                .background(backgroundColor),
+                .background(fallbackBackgroundColor),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = letterFallback,
                 style = MaterialTheme.typography.labelLarge,
-                color = letterColor
+                color = fallbackLetterColor
             )
         }
     }
+}
+
+private fun isMonochrome(image: ImageBitmap, tolerance: Float = 0.1f): Boolean {
+    val pixels = IntArray(image.width * image.height)
+    image.readPixels(pixels, 0, 0, image.width, image.height)
+
+    val colorCounts = mutableMapOf<Int, Int>()
+
+    for (color in pixels) {
+        colorCounts[color] = (colorCounts[color] ?: 0) + 1
+    }
+
+    if (colorCounts.isEmpty()) {
+        return true
+    }
+
+    val mostFrequentColor = colorCounts.maxByOrNull { it.value }!!.key
+
+    var totalDistance = 0.0
+    var totalPixels = 0
+
+    for ((color, count) in colorCounts) {
+        val distance = colorDistance(color, mostFrequentColor)
+        totalDistance += distance * count
+        totalPixels += count
+    }
+
+    val averageDistance = totalDistance / totalPixels
+
+    return averageDistance < tolerance
+}
+
+private fun colorDistance(color1: Int, color2: Int): Double {
+    val r1 = (color1 shr 16) and 0xFF
+    val g1 = (color1 shr 8) and 0xFF
+    val b1 = color1 and 0xFF
+
+    val r2 = (color2 shr 16) and 0xFF
+    val g2 = (color2 shr 8) and 0xFF
+    val b2 = color2 and 0xFF
+
+    val dr = r1 - r2
+    val dg = g1 - g2
+    val db = b1 - b2
+
+    return Math.sqrt((dr * dr + dg * dg + db * db).toDouble())
 }
 
 private suspend fun loadAppIconBitmap(

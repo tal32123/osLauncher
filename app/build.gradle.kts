@@ -75,7 +75,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.google.testing.screenshot.ScreenshotTestRunner"
     }
 
     buildTypes {
@@ -117,6 +117,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    testOptions {
+        animationsDisabled = true
     }
 }
 
@@ -177,6 +181,7 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:rules:1.6.1")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    androidTestImplementation("com.google.testing.screenshot:screenshot:0.2.0")
 }
 
 
