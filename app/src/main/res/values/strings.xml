@@ -120,5 +120,98 @@
     <string name="theme_mode_toggle_description">Toggle between light and dark theme</string>
     <string name="color_palette_button_description">Select %1$s color palette</string>
     <string name="theme_preview_description">Theme preview showing primary, secondary and background colors</string>
+
+    <!-- Settings General -->
+    <string name="settings_tab_general">General</string>
+    <string name="settings_tab_ui_theme">UI &amp; Theme</string>
+    <string name="settings_tab_distracting_apps">Distracting Apps</string>
+    <string name="settings_tab_usage_insights">Usage Insights</string>
+
+    <string name="settings_focus_productivity">Focus &amp; Productivity</string>
+    <string name="settings_time_limit_dialog_title">Time Limit Dialog</string>
+    <string name="settings_time_limit_dialog_subtitle">Show a reminder before opening distracting apps</string>
+
+    <string name="settings_contact_actions">Contact Actions</string>
+    <string name="settings_show_phone_action_title">Show Phone Action</string>
+    <string name="settings_show_phone_action_subtitle">Show a button to call the contact</string>
+    <string name="settings_show_message_action_title">Show Message Action</string>
+    <string name="settings_show_message_action_subtitle">Show a button to message the contact</string>
+    <string name="settings_show_whatsapp_action_title">Show WhatsApp Action</string>
+    <string name="settings_show_whatsapp_action_subtitle">Show a button to message the contact on WhatsApp</string>
+
+    <string name="settings_weather">Weather</string>
+    <string name="settings_weather_display_options">Display Options</string>
+    <string name="settings_weather_temperature_unit">Temperature Unit</string>
+    <string name="settings_weather_location_required">Location permission required for weather</string>
+
+    <string name="settings_build_information">Build Information</string>
+    <string name="settings_build_commit">Commit: %1$s</string>
+    <string name="settings_build_branch">Branch: %1$s</string>
+    <string name="settings_build_time">Built: %1$s</string>
+
+    <!-- Distracting Apps Settings -->
+    <string name="settings_default_time_limit">Default Time Limit</string>
+    <string name="settings_default_time_limit_subtitle">This limit applies to every distracting app unless you set a custom value.</string>
+    <string name="settings_default_time_limit_custom_hint">Tap the stopwatch icon next to an app to set a custom limit.</string>
+
+    <string name="settings_time_limit_dialog_title_app">Time limit for %1$s</string>
+    <string name="settings_time_limit_dialog_message">Choose how long you\'ll allow yourself in this app before TALauncher reminds you.</string>
+    <string name="settings_time_limit_dialog_minutes_label">Minutes</string>
+    <string name="settings_time_limit_dialog_use_default">Use default (%1$s)</string>
+    <string name="settings_time_limit_dialog_error">Enter a number between 5 and 480.</string>
+    <string name="settings_time_limit_dialog_using_default">Currently using the default limit.</string>
+    <string name="settings_time_limit_dialog_save">Save</string>
+    <string name="settings_time_limit_dialog_cancel">Cancel</string>
+
+    <string name="settings_distracting_apps_title">Distracting Apps</string>
+    <string name="settings_distracting_apps_subtitle">Apps that require friction barriers and prompts</string>
+    <string name="settings_app_time_limit">Limit: %1$d min</string>
+    <string name="settings_app_time_limit_default">Limit: %1$d min (default)</string>
+    <string name="settings_edit_time_limit_description">Edit time limit</string>
+
+    <string name="settings_search_placeholder">Search</string>
+    <string name="settings_search_clear">Clear</string>
+
+    <!-- UI Theme Settings -->
+    <string name="settings_app_icons">App Icons</string>
+    <string name="settings_app_icons_subtitle">Choose how icons appear beside app names</string>
+
+    <string name="settings_show_wallpaper_title">Show Device Wallpaper</string>
+    <string name="settings_show_wallpaper_subtitle">Display your device wallpaper as background</string>
+    <string name="settings_background_color">Background Color</string>
+    <string name="settings_background_system">System</string>
+    <string name="settings_background_black">Black</string>
+    <string name="settings_background_white">White</string>
+
+    <!-- Home Screen -->
+    <string name="home_recent_apps_section">Recent Apps</string>
+    <string name="home_all_apps_section">All Apps</string>
+    <string name="home_other_apps_title">Other Apps</string>
+    <string name="home_other_apps_show">Show</string>
+    <string name="home_other_apps_hide">Hide</string>
+    <string name="home_other_apps_summary_single">1 app hidden from the main list.</string>
+    <string name="home_other_apps_summary_plural">%1$d apps hidden from the main list.</string>
+    <string name="home_other_apps_hint">Tap to reveal these hidden apps.</string>
+    <string name="home_recent_badge">Recent</string>
+
+    <!-- Friction Dialog -->
+    <string name="friction_dialog_title">Mindful Usage</string>
+    <string name="friction_dialog_marked_distracting">You\'re trying to open %1$s, which you\'ve marked as distracting.</string>
+    <string name="friction_dialog_why">Why do you need to open this app right now?</string>
+    <string name="friction_dialog_reason_placeholder">Type your reason here...</string>
+    <string name="friction_dialog_continue">Continue</string>
+    <string name="friction_dialog_cancel">Cancel</string>
+
+    <!-- App Action Dialog -->
+    <string name="app_action_dialog_choose">Choose an action:</string>
+    <string name="app_action_dialog_cancel">Cancel</string>
+    <string name="app_action_unhide_label">Unhide app</string>
+    <string name="app_action_unhide_description">Move this app back to the main list.</string>
+    <string name="app_action_hide_label">Hide app</string>
+    <string name="app_action_hide_description">Move this app to the hidden list.</string>
+    <string name="app_action_info_label">View app info</string>
+    <string name="app_action_info_description">Open the system settings page for this app.</string>
+    <string name="app_action_uninstall_label">Uninstall app</string>
+    <string name="app_action_uninstall_description">Remove this app from your device.</string>
 </resources>
 

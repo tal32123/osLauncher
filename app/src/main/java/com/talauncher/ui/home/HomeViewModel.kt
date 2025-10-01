@@ -80,26 +80,6 @@ sealed class SearchItem {
 sealed interface HomeEvent {
     data object RequestContactsPermission : HomeEvent
 }
-
-/**
- * ViewModel backing the minimalist home experience.
- *
- * Architecture:
- * - Follows MVVM pattern with clear separation of concerns
- * - Delegates business logic to use cases (Use Case pattern)
- * - Manages UI state through StateFlow (Observer pattern)
- * - Uses dependency injection for testability (Dependency Inversion)
- *
- * SOLID Principles Applied:
- * - Single Responsibility: Coordinates between UI and domain/data layers
- * - Open/Closed: Extended through use cases without modifying ViewModel
- * - Liskov Substitution: All dependencies use interfaces/abstractions
- * - Interface Segregation: Uses specific interfaces for each concern
- * - Dependency Inversion: Depends on abstractions (repositories, use cases)
- *
- * @param weatherService Allows injecting a fake implementation in tests so they can avoid
- * hitting the network while exercising unrelated functionality.
- */
 class HomeViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
@@ -111,7 +91,6 @@ class HomeViewModel(
     private val permissionsHelper: PermissionsHelper? = null,
     private val usageStatsHelper: UsageStatsHelper? = null,
     private val errorHandler: ErrorHandler? = null,
-    // Use cases for business logic (Dependency Injection)
     private val formatTimeUseCase: FormatTimeUseCase = FormatTimeUseCase(),
     private val searchAppsUseCase: SearchAppsUseCase = SearchAppsUseCase(),
     private val buildAlphabetIndexUseCase: BuildAlphabetIndexUseCase = BuildAlphabetIndexUseCase(),
@@ -250,18 +229,6 @@ class HomeViewModel(
         }
     }
 
-
-    /**
-     * Filters apps based on search query.
-     * Delegates to SearchAppsUseCase (Delegation pattern).
-     *
-     * @deprecated Use searchAppsUseCase.execute() directly
-     */
-    @Deprecated("Use searchAppsUseCase.execute() instead")
-    private fun filterApps(query: String, apps: List<AppInfo>): List<AppInfo> {
-        return searchAppsUseCase.execute(query, apps)
-    }
-
     private suspend fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
         if (query.isBlank()) return emptyList()
 
@@ -302,10 +269,6 @@ class HomeViewModel(
             )
     }
 
-    /**
-     * Updates the current time and date display.
-     * Delegates to FormatTimeUseCase (Delegation pattern).
-     */
     private fun updateTime() {
         viewModelScope.launch {
             val result = formatTimeUseCase.execute()
@@ -758,10 +721,6 @@ class HomeViewModel(
         weatherUpdateJob?.cancel()
         contactSearchJob?.cancel()
     }
-
-    // App drawer functionality methods - now delegated to use cases
-    // Methods removed: getRecentApps, buildAlphabetIndex
-    // These are now handled by GetRecentAppsUseCase and BuildAlphabetIndexUseCase
 
     fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
         _uiState.value = _uiState.value.copy(

@@ -19,32 +19,13 @@ import androidx.compose.foundation.BorderStroke
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.domain.quotes.QuotesProvider
+import com.talauncher.ui.components.ActionButton
 import com.talauncher.ui.theme.PrimerButton
 import com.talauncher.ui.theme.PrimerSecondaryButton
 import com.talauncher.ui.theme.PrimerShapes
 import com.talauncher.ui.theme.PrimerSpacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-/**
- * Dialog components for the Home screen.
- *
- * Architecture:
- * - Follows Single Responsibility Principle - each dialog has one purpose
- * - Uses composition over inheritance for dialog structure
- * - Implements proper state management with remember and mutableStateOf
- * - Separates UI from business logic (QuotesProvider)
- */
-
-/**
- * Dialog shown when user tries to open a "distracting" app.
- * Implements a friction barrier requiring the user to provide a reason.
- *
- * @param appPackageName The package name of the app being opened
- * @param onDismiss Callback when user dismisses the dialog
- * @param onProceed Callback when user proceeds with their reason
- * @param quotesProvider Optional provider for motivational quotes (follows DIP)
- */
 @Composable
 fun FrictionDialog(
     appPackageName: String,
@@ -78,7 +59,7 @@ fun FrictionDialog(
         modifier = Modifier.testTag("friction_dialog"),
         title = {
             Text(
-                text = "Mindful Usage",
+                text = stringResource(R.string.friction_dialog_title),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -101,7 +82,7 @@ fun FrictionDialog(
                 enabled = reason.trim().isNotEmpty(),
                 modifier = Modifier.testTag("friction_continue_button")
             ) {
-                Text("Continue")
+                Text(stringResource(R.string.friction_dialog_continue))
             }
         },
         dismissButton = {
@@ -109,7 +90,7 @@ fun FrictionDialog(
                 onClick = onDismiss,
                 modifier = Modifier.testTag("friction_cancel_button")
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.friction_dialog_cancel))
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
@@ -128,7 +109,7 @@ private fun FrictionDialogContent(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "You're trying to open $appName, which you've marked as distracting.",
+            text = stringResource(R.string.friction_dialog_marked_distracting, appName),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -136,7 +117,7 @@ private fun FrictionDialogContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Why do you need to open this app right now?",
+            text = stringResource(R.string.friction_dialog_why),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Medium
@@ -150,7 +131,7 @@ private fun FrictionDialogContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("friction_reason_input"),
-            placeholder = { Text("Type your reason here...") },
+            placeholder = { Text(stringResource(R.string.friction_dialog_reason_placeholder)) },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             shape = PrimerShapes.small,
             colors = OutlinedTextFieldDefaults.colors(
@@ -172,20 +153,6 @@ private fun FrictionDialogContent(
         }
     }
 }
-
-/**
- * Dialog for app-related actions (rename, hide, info, uninstall).
- * Implements Strategy pattern for different actions.
- *
- * @param app The app to perform actions on
- * @param canUninstall Whether the app can be uninstalled
- * @param onDismiss Callback to dismiss the dialog
- * @param onRename Callback to rename the app
- * @param onHide Callback to hide the app
- * @param onUnhide Callback to unhide the app
- * @param onAppInfo Callback to view app info
- * @param onUninstall Callback to uninstall the app
- */
 @Composable
 fun AppActionDialog(
     app: AppInfo?,
@@ -226,7 +193,7 @@ fun AppActionDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.app_action_dialog_cancel))
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
@@ -250,7 +217,7 @@ private fun AppActionDialogContent(
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "Choose an action:",
+            text = stringResource(R.string.app_action_dialog_choose),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -261,7 +228,7 @@ private fun AppActionDialogContent(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
         ) {
-            ActionTextButton(
+            ActionButton(
                 label = stringResource(R.string.rename_app_action_label),
                 description = stringResource(R.string.rename_app_action_description),
                 modifier = Modifier.fillMaxWidth(),
@@ -272,9 +239,9 @@ private fun AppActionDialogContent(
             )
 
             if (isHidden) {
-                ActionTextButton(
-                    label = "Unhide app",
-                    description = "Move this app back to the main list.",
+                ActionButton(
+                    label = stringResource(R.string.app_action_unhide_label),
+                    description = stringResource(R.string.app_action_unhide_description),
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
                         onUnhide(app.packageName)
@@ -282,9 +249,9 @@ private fun AppActionDialogContent(
                     }
                 )
             } else {
-                ActionTextButton(
-                    label = "Hide app",
-                    description = "Move this app to the hidden list.",
+                ActionButton(
+                    label = stringResource(R.string.app_action_hide_label),
+                    description = stringResource(R.string.app_action_hide_description),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("hide_app_button"),
@@ -295,9 +262,9 @@ private fun AppActionDialogContent(
                 )
             }
 
-            ActionTextButton(
-                label = "View app info",
-                description = "Open the system settings page for this app.",
+            ActionButton(
+                label = stringResource(R.string.app_action_info_label),
+                description = stringResource(R.string.app_action_info_description),
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     onAppInfo(app.packageName)
@@ -306,9 +273,9 @@ private fun AppActionDialogContent(
             )
 
             if (canUninstall) {
-                ActionTextButton(
-                    label = "Uninstall app",
-                    description = "Remove this app from your device.",
+                ActionButton(
+                    label = stringResource(R.string.app_action_uninstall_label),
+                    description = stringResource(R.string.app_action_uninstall_description),
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
                         onUninstall(app.packageName)
@@ -320,55 +287,6 @@ private fun AppActionDialogContent(
     }
 }
 
-/**
- * Reusable action button with label and description.
- * Follows Component pattern for consistent styling.
- */
-@Composable
-private fun ActionTextButton(
-    label: String,
-    description: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier,
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = PrimerSpacing.xs),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            if (description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-/**
- * Dialog for contacts permission request.
- * Follows Interface Segregation Principle with specific callbacks.
- */
 @Composable
 fun ContactsPermissionDialog(
     onDismiss: () -> Unit,
@@ -403,10 +321,6 @@ fun ContactsPermissionDialog(
     )
 }
 
-/**
- * Helper function to get app display name from package manager.
- * Extracted for reusability and testability.
- */
 private suspend fun getAppDisplayName(context: Context, packageName: String): String {
     return try {
         val packageManager = context.packageManager

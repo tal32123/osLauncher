@@ -22,6 +22,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * ViewModel for Settings screen managing UI state and coordinating with repositories.
+ */
 class SettingsViewModel(
     private val appRepository: AppRepository,
     private val settingsRepository: SettingsRepository,
