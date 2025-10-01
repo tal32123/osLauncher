@@ -1,5 +1,35 @@
 package com.talauncher.ui.home
 
+/**
+ * Home Screen UI Module
+ *
+ * Architecture Overview:
+ * - MVVM pattern with clear separation of concerns
+ * - UI components are stateless and composable
+ * - Business logic delegated to ViewModel and Use Cases
+ * - Follows SOLID principles throughout
+ *
+ * Component Structure:
+ * - HomeScreen: Main composable coordinating the home screen UI
+ * - Dialogs: Extracted to HomeDialogs.kt (FrictionDialog, AppActionDialog, ContactsPermissionDialog)
+ * - List Items: Extracted to HomeListItems.kt (RecentAppItem, SearchResultItem, PinnedAppItem)
+ * - Alphabet Index: Extracted to AlphabetIndexComponent.kt
+ * - OtherAppsToggle: Local component for toggling hidden apps visibility
+ *
+ * Design Patterns Applied:
+ * - Observer: StateFlow for reactive UI updates
+ * - Strategy: Different dialog types with common interface
+ * - Composition: Building UI from smaller, reusable components
+ * - Delegation: ViewModel delegates to Use Cases for business logic
+ *
+ * SOLID Principles:
+ * - Single Responsibility: Each component has one clear purpose
+ * - Open/Closed: Components can be extended without modification
+ * - Liskov Substitution: Dialog components can be swapped
+ * - Interface Segregation: Specific callbacks for each action
+ * - Dependency Inversion: Depends on ViewModel abstraction
+ */
+
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
@@ -53,7 +83,6 @@ import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
-import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.ui.components.ModernGlassCard
 import com.talauncher.ui.components.ModernSearchField
 import com.talauncher.ui.components.ModernAppItem
@@ -62,9 +91,8 @@ import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.components.UnifiedSearchResults
 import com.talauncher.ui.theme.UiSettings
-import com.talauncher.ui.home.MotivationalQuotesProvider
-import com.talauncher.ui.home.SearchItem
 import com.talauncher.ui.theme.*
+import com.talauncher.ui.components.TimeLimitDialog
 import com.talauncher.utils.PermissionType
 import com.talauncher.utils.PermissionsHelper
 import kotlinx.coroutines.Dispatchers
@@ -494,35 +522,13 @@ fun HomeScreen(
             }
         }
 
+        // Contacts permission dialog
         if (uiState.showContactsPermissionDialog) {
-            AlertDialog(
-                onDismissRequest = { viewModel.dismissContactsPermissionDialog() },
-                title = {
-                    Text(
-                        text = stringResource(R.string.contact_permission_required_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                text = {
-                    Text(
-                        text = stringResource(R.string.contact_permission_required_message),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        keyboardController?.hide()
-                        viewModel.requestContactsPermission()
-                    }) {
-                        Text(stringResource(R.string.contact_permission_required_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { viewModel.dismissContactsPermissionDialog() }) {
-                        Text(stringResource(R.string.contact_permission_required_dismiss))
-                    }
+            ContactsPermissionDialog(
+                onDismiss = { viewModel.dismissContactsPermissionDialog() },
+                onConfirm = {
+                    keyboardController?.hide()
+                    viewModel.requestContactsPermission()
                 }
             )
         }
@@ -531,571 +537,17 @@ fun HomeScreen(
     }
 }
 
+/**
+ * Helper function to find Activity from Context.
+ * Used for permission requests and other activity-specific operations.
+ */
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
 
-@Composable
-fun FrictionDialog(
-    appPackageName: String,
-    onDismiss: () -> Unit,
-    onProceed: (String) -> Unit
-) {
-    var reason by remember { mutableStateOf("") }
-    val context = LocalContext.current
-    val quotesProvider = remember(context) { MotivationalQuotesProvider(context) }
-    val motivationalQuote = remember(appPackageName, quotesProvider) {
-        quotesProvider.getRandomQuote()
-    }
 
-    // Get app name for display
-    var appName by remember(appPackageName) { mutableStateOf(appPackageName) }
-
-    LaunchedEffect(appPackageName) {
-        appName = withContext(Dispatchers.IO) {
-            try {
-                val packageManager = context.packageManager
-                val appInfo = packageManager.getApplicationInfo(appPackageName, 0)
-                packageManager.getApplicationLabel(appInfo).toString()
-            } catch (e: Exception) {
-                appPackageName
-            }
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag("friction_dialog"),
-        title = {
-            Text(
-                text = "Mindful Usage",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "You're trying to open $appName, which you've marked as distracting.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Why do you need to open this app right now?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = reason,
-                    onValueChange = { reason = it },
-                    modifier = Modifier.fillMaxWidth().testTag("friction_reason_input"),
-                    placeholder = { Text("Type your reason here...") },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    shape = PrimerShapes.small,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                        cursorColor = MaterialTheme.colorScheme.primary
-                    )
-                )
-
-                if (motivationalQuote.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = motivationalQuote,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            PrimerButton(
-                onClick = {
-                    if (reason.trim().isNotEmpty()) {
-                        onProceed(reason.trim())
-                    }
-                },
-                enabled = reason.trim().isNotEmpty(),
-                modifier = Modifier.testTag("friction_continue_button")
-            ) {
-                Text("Continue")
-            }
-        },
-        dismissButton = {
-            PrimerSecondaryButton(
-                onClick = onDismiss,
-                modifier = Modifier.testTag("friction_cancel_button")
-            ) {
-                Text("Cancel")
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.surface,
-        shape = PrimerShapes.medium
-    )
-}
-
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun OtherAppsToggle(
-    hiddenCount: Int,
-    isExpanded: Boolean,
-    enableGlassmorphism: Boolean,
-    onToggle: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val summaryText = if (hiddenCount == 1) {
-        "1 app hidden from the main list."
-    } else {
-        "$hiddenCount apps hidden from the main list."
-    }
-
-    ModernGlassCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag("other_apps_toggle")
-            .combinedClickable(onClick = onToggle),
-        enableGlassmorphism = enableGlassmorphism
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PrimerSpacing.md)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Other Apps",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Text(
-                    text = if (isExpanded) "Hide" else "Show",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(PrimerSpacing.xs))
-
-            Text(
-                text = summaryText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            if (!isExpanded) {
-                Spacer(modifier = Modifier.height(PrimerSpacing.xs))
-                Text(
-                    text = "Tap to reveal these hidden apps.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun SearchResultItem(
-    appInfo: AppInfo,
-    onClick: () -> Unit
-) {
-    PrimerCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PrimerSpacing.md)
-                .heightIn(min = PrimerListItemDefaults.minHeight),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = appInfo.appName,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun PinnedAppItem(
-    appInfo: AppInfo,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
-    PrimerCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PrimerSpacing.md)
-                .heightIn(min = PrimerListItemDefaults.minHeight),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = appInfo.appName,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-// Components moved from App Drawer to Home Screen
-
-@Composable
-private fun AlphabetIndex(
-    entries: List<AlphabetIndexEntry>,
-    activeKey: String?,
-    isEnabled: Boolean,
-    modifier: Modifier = Modifier,
-    onEntryFocused: (AlphabetIndexEntry, Float) -> Unit,
-    onScrubbingChanged: (Boolean) -> Unit
-) {
-    var componentSize by remember { mutableStateOf(IntSize.Zero) }
-    val entryBounds = remember(entries) { mutableStateMapOf<String, ClosedFloatingPointRange<Float>>() }
-
-    fun resolveEntry(positionY: Float): Pair<AlphabetIndexEntry, Float>? {
-        if (entries.isEmpty() || componentSize.height == 0 || entryBounds.isEmpty()) {
-            return null
-        }
-        val totalHeight = componentSize.height.toFloat()
-        val boundsList = entries.mapNotNull { entry ->
-            entryBounds[entry.key]?.let { bounds -> entry to bounds }
-        }
-        if (boundsList.isEmpty()) {
-            return null
-        }
-
-        val clampedY = positionY.coerceIn(0f, totalHeight)
-        val candidate = boundsList.firstOrNull { (_, bounds) ->
-            clampedY in bounds
-        } ?: boundsList.minByOrNull { (_, bounds) ->
-            when {
-                clampedY < bounds.start -> bounds.start - clampedY
-                clampedY > bounds.endInclusive -> clampedY - bounds.endInclusive
-                else -> 0f
-            }
-        } ?: return null
-
-        val (entry, bounds) = candidate
-        val center = (bounds.start + bounds.endInclusive) / 2f
-        val fraction = if (totalHeight > 0f) {
-            (center / totalHeight).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
-        return entry to fraction
-    }
-
-    Box(
-        modifier = modifier
-            .width(48.dp)
-            .fillMaxHeight()
-            .onSizeChanged { componentSize = it }
-            .pointerInput(entries, isEnabled) {
-                if (!isEnabled) return@pointerInput
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    onScrubbingChanged(true)
-                    resolveEntry(down.position.y)?.let { (entry, fraction) ->
-                        onEntryFocused(entry, fraction)
-                    }
-                    try {
-                        drag(down.id) { change ->
-                            resolveEntry(change.position.y)?.let { (entry, fraction) ->
-                                onEntryFocused(entry, fraction)
-                            }
-                            change.consume()
-                        }
-                    } finally {
-                        onScrubbingChanged(false)
-                    }
-                }
-            }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = PrimerSpacing.md),
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            entries.forEach { entry ->
-                val isActive = isEnabled && entry.hasApps && entry.key == activeKey
-                val color = when {
-                    !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                    entry.hasApps && isActive -> MaterialTheme.colorScheme.onSurface
-                    entry.hasApps -> MaterialTheme.colorScheme.onSurfaceVariant
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                }
-                Text(
-                    text = entry.displayLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = color,
-                    modifier = Modifier
-                        .testTag("alphabet_index_entry_${entry.key}")
-                        .onGloballyPositioned { coordinates ->
-                            val position = coordinates.positionInParent()
-                            val start = position.y
-                            val end = start + coordinates.size.height
-                            entryBounds[entry.key] = start..end
-                        }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun RecentAppItem(
-    appInfo: AppInfo,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-    iconStyle: AppIconStyleOption
-) {
-    PrimerCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PrimerSpacing.md)
-                .heightIn(min = PrimerListItemDefaults.minHeight),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (iconStyle != AppIconStyleOption.HIDDEN) {
-                AppIcon(
-                    packageName = appInfo.packageName,
-                    appName = appInfo.appName,
-                    iconStyle = iconStyle
-                )
-                Spacer(modifier = Modifier.width(PrimerSpacing.md))
-            }
-            Text(
-                text = appInfo.appName,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            // Show a "recent" indicator
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                shape = PrimerShapes.small,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
-            ) {
-                Text(
-                    text = "Recent",
-                    modifier = Modifier.padding(
-                        horizontal = PrimerSpacing.xs,
-                        vertical = 2.dp
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AppActionDialog(
-    app: AppInfo?,
-    canUninstall: Boolean,
-    onDismiss: () -> Unit,
-    onRename: (AppInfo) -> Unit,
-    onHide: (String) -> Unit,
-    onUnhide: (String) -> Unit,
-    onAppInfo: (String) -> Unit,
-    onUninstall: (String) -> Unit
-) {
-    if (app != null) {
-        val isHidden = app.isHidden
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            modifier = Modifier.testTag("app_action_dialog"),
-            title = {
-                Text(
-                    text = app.appName,
-                    style = MaterialTheme.typography.titleMedium
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Choose an action:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(PrimerSpacing.sm)
-                    ) {
-
-                        ActionTextButton(
-                            label = stringResource(R.string.rename_app_action_label),
-                            description = stringResource(R.string.rename_app_action_description),
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                onRename(app)
-                                onDismiss()
-                            }
-                        )
-
-                        if (isHidden) {
-                            ActionTextButton(
-                                label = "Unhide app",
-                                description = "Move this app back to the main list.",
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = {
-                                    onUnhide(app.packageName)
-                                    onDismiss()
-                                }
-                            )
-                        } else {
-                            ActionTextButton(
-                                label = "Hide app",
-                                description = "Move this app to the hidden list.",
-                                modifier = Modifier.fillMaxWidth().testTag("hide_app_button"),
-                                onClick = {
-                                    onHide(app.packageName)
-                                    onDismiss()
-                                }
-                            )
-                        }
-
-                        ActionTextButton(
-                            label = "View app info",
-                            description = "Open the system settings page for this app.",
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                onAppInfo(app.packageName)
-                                onDismiss()
-                            }
-                        )
-
-                        if (canUninstall) {
-                            ActionTextButton(
-                                label = "Uninstall app",
-                                description = "Remove this app from your device.",
-                                modifier = Modifier.fillMaxWidth(),
-                                onClick = {
-                                    onUninstall(app.packageName)
-                                    onDismiss()
-                                }
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text("Cancel")
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = PrimerShapes.medium
-        )
-    }
-}
-
-@Composable
-private fun ActionTextButton(
-    label: String,
-    description: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier,
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = PrimerSpacing.xs),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            if (description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
+// OtherAppsToggle component moved to separate file: OtherAppsToggle.kt
 
 

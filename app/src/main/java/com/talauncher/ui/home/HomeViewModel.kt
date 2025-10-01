@@ -47,10 +47,12 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.talauncher.BuildConfig
+import com.talauncher.domain.usecases.BuildAlphabetIndexUseCase
+import com.talauncher.domain.usecases.FormatTimeUseCase
+import com.talauncher.domain.usecases.GetRecentAppsUseCase
+import com.talauncher.domain.usecases.SearchAppsUseCase
 
 private const val TAG = "HomeViewModel"
-
-internal const val RECENT_APPS_INDEX_KEY = "*"
 
 sealed class SearchItem {
     abstract val name: String
@@ -74,20 +76,25 @@ sealed class SearchItem {
     }
 }
 
-data class AlphabetIndexEntry(
-    val key: String,
-    val displayLabel: String,
-    val targetIndex: Int?,
-    val hasApps: Boolean,
-    val previewAppName: String?
-)
-
 sealed interface HomeEvent {
     data object RequestContactsPermission : HomeEvent
 }
 
 /**
  * ViewModel backing the minimalist home experience.
+ *
+ * Architecture:
+ * - Follows MVVM pattern with clear separation of concerns
+ * - Delegates business logic to use cases (Use Case pattern)
+ * - Manages UI state through StateFlow (Observer pattern)
+ * - Uses dependency injection for testability (Dependency Inversion)
+ *
+ * SOLID Principles Applied:
+ * - Single Responsibility: Coordinates between UI and domain/data layers
+ * - Open/Closed: Extended through use cases without modifying ViewModel
+ * - Liskov Substitution: All dependencies use interfaces/abstractions
+ * - Interface Segregation: Uses specific interfaces for each concern
+ * - Dependency Inversion: Depends on abstractions (repositories, use cases)
  *
  * @param weatherService Allows injecting a fake implementation in tests so they can avoid
  * hitting the network while exercising unrelated functionality.
@@ -102,7 +109,12 @@ class HomeViewModel(
     initialContactHelper: ContactHelper? = null,
     private val permissionsHelper: PermissionsHelper? = null,
     private val usageStatsHelper: UsageStatsHelper? = null,
-    private val errorHandler: ErrorHandler? = null
+    private val errorHandler: ErrorHandler? = null,
+    // Use cases for business logic (Dependency Injection)
+    private val formatTimeUseCase: FormatTimeUseCase = FormatTimeUseCase(),
+    private val searchAppsUseCase: SearchAppsUseCase = SearchAppsUseCase(),
+    private val buildAlphabetIndexUseCase: BuildAlphabetIndexUseCase = BuildAlphabetIndexUseCase(),
+    private val getRecentAppsUseCase: GetRecentAppsUseCase = GetRecentAppsUseCase(usageStatsHelper)
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -118,8 +130,6 @@ class HomeViewModel(
     private val resolvedPermissionsHelper: PermissionsHelper?
         get() = permissionsHelper ?: fallbackPermissionsHelper
 
-    private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    private val dateFormat = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault())
     private var allVisibleApps: List<AppInfo> = emptyList()
     private var allHiddenApps: List<AppInfo> = emptyList()
     private var pendingContactQuery: String? = null
@@ -157,10 +167,22 @@ class HomeViewModel(
                     }
                     allHiddenApps = hiddenApps
                     val searchableApps = allApps + hiddenApps
-                    val filtered = if (currentQuery.isNotBlank()) filterApps(currentQuery, searchableApps) else emptyList()
+                    // Use SearchAppsUseCase for filtering
+                    val filtered = if (currentQuery.isNotBlank()) {
+                        searchAppsUseCase.execute(currentQuery, searchableApps)
+                    } else {
+                        emptyList()
+                    }
                     val recentAppsLimit = settings?.recentAppsLimit ?: 10
-                    val recentApps = getRecentApps(allApps, hiddenApps, recentAppsLimit, hasUsageStatsPermission)
-                    val alphabetIndex = buildAlphabetIndex(allApps, recentApps)
+                    // Use GetRecentAppsUseCase for recent apps calculation
+                    val recentApps = getRecentAppsUseCase.execute(
+                        allApps,
+                        hiddenApps,
+                        recentAppsLimit,
+                        hasUsageStatsPermission
+                    )
+                    // Use BuildAlphabetIndexUseCase for alphabet index
+                    val alphabetIndex = buildAlphabetIndexUseCase.execute(allApps, recentApps)
 
                     withContext(Dispatchers.Main.immediate) {
                         val wasExpanded = _uiState.value.isOtherAppsExpanded
@@ -228,24 +250,15 @@ class HomeViewModel(
     }
 
 
+    /**
+     * Filters apps based on search query.
+     * Delegates to SearchAppsUseCase (Delegation pattern).
+     *
+     * @deprecated Use searchAppsUseCase.execute() directly
+     */
+    @Deprecated("Use searchAppsUseCase.execute() instead")
     private fun filterApps(query: String, apps: List<AppInfo>): List<AppInfo> {
-        val normalizedQuery = query.trim()
-        if (normalizedQuery.isEmpty()) {
-            return emptyList()
-        }
-        return apps.mapNotNull { app ->
-            val score = SearchScoring.calculateRelevanceScore(normalizedQuery, app.appName)
-            if (score > 0) {
-                app to score
-            } else {
-                null
-            }
-        }
-            .sortedWith(
-                compareByDescending<Pair<AppInfo, Int>> { it.second }
-                    .thenBy { it.first.appName.lowercase(Locale.getDefault()) }
-            )
-            .map { it.first }
+        return searchAppsUseCase.execute(query, apps)
     }
 
     private suspend fun createUnifiedSearchResults(query: String, apps: List<AppInfo>, contacts: List<ContactInfo>): List<SearchItem> {
@@ -288,25 +301,17 @@ class HomeViewModel(
             )
     }
 
+    /**
+     * Updates the current time and date display.
+     * Delegates to FormatTimeUseCase (Delegation pattern).
+     */
     private fun updateTime() {
         viewModelScope.launch {
-            try {
-                val now = Date()
-                val formattedTime = timeFormat.format(now) ?: ""
-                val formattedDate = dateFormat.format(now) ?: ""
-
-                _uiState.value = _uiState.value.copy(
-                    currentTime = formattedTime,
-                    currentDate = formattedDate
-                )
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Error formatting time/date", e)
-                // Fallback to basic formatting
-                _uiState.value = _uiState.value.copy(
-                    currentTime = "--:--",
-                    currentDate = ""
-                )
-            }
+            val result = formatTimeUseCase.execute()
+            _uiState.value = _uiState.value.copy(
+                currentTime = result.time,
+                currentDate = result.date
+            )
         }
     }
 
@@ -347,7 +352,7 @@ class HomeViewModel(
         val appResults = if (sanitized.isBlank()) {
             emptyList<AppInfo>()
         } else {
-            filterApps(sanitized, allVisibleApps + allHiddenApps)
+            searchAppsUseCase.execute(sanitized, allVisibleApps + allHiddenApps)
         }
 
         // Update individual results for backward compatibility
@@ -753,120 +758,9 @@ class HomeViewModel(
         contactSearchJob?.cancel()
     }
 
-    // Methods for app drawer functionality moved to home screen
-
-    private suspend fun getRecentApps(
-        visibleApps: List<AppInfo>,
-        hiddenApps: List<AppInfo>,
-        limit: Int,
-        hasPermission: Boolean
-    ): List<AppInfo> = withContext(Dispatchers.Default) {
-        if (!hasPermission || usageStatsHelper == null) {
-            return@withContext emptyList()
-        }
-
-        val sanitizedLimit = limit.coerceAtLeast(0)
-        if (sanitizedLimit == 0) {
-            return@withContext emptyList()
-        }
-
-        val usageStats = usageStatsHelper
-            .getPast48HoursUsageStats(hasPermission)
-            .filter { it.timeInForeground > 0 }
-            .sortedByDescending { it.timeInForeground }
-
-        val hiddenPackages = hiddenApps.mapTo(mutableSetOf()) { it.packageName }
-        val appMap = visibleApps.associateBy { it.packageName }
-        val recentApps = mutableListOf<AppInfo>()
-        val seenPackages = mutableSetOf<String>()
-
-        for (usageApp in usageStats) {
-            if (usageApp.packageName in hiddenPackages) {
-                continue
-            }
-
-            val app = appMap[usageApp.packageName] ?: continue
-
-            if (!seenPackages.add(app.packageName)) {
-                continue
-            }
-
-            recentApps += app
-
-            if (recentApps.size == sanitizedLimit) {
-                break
-            }
-        }
-
-        if (recentApps.size < sanitizedLimit) {
-            val fallbackApps = visibleApps
-                .asSequence()
-                .filterNot { it.packageName in hiddenPackages }
-                .filterNot { it.packageName in seenPackages }
-                .sortedBy { it.appName.lowercase() }
-                .toList()
-
-            for (app in fallbackApps) {
-                recentApps += app
-                seenPackages += app.packageName
-                if (recentApps.size == sanitizedLimit) {
-                    break
-                }
-            }
-        }
-
-        recentApps
-    }
-
-    private fun buildAlphabetIndex(
-        apps: List<AppInfo>,
-        recentApps: List<AppInfo>
-    ): List<AlphabetIndexEntry> {
-        val entries = mutableListOf<AlphabetIndexEntry>()
-
-        if (recentApps.isNotEmpty()) {
-            entries += AlphabetIndexEntry(
-                key = RECENT_APPS_INDEX_KEY,
-                displayLabel = RECENT_APPS_INDEX_KEY,
-                targetIndex = null,
-                hasApps = true,
-                previewAppName = recentApps.firstOrNull()?.appName
-            )
-        }
-
-        val appsByFirstChar = apps.groupBy { app ->
-            val firstChar = app.appName.firstOrNull()?.toString()?.uppercase()
-            when {
-                firstChar == null -> "#"
-                firstChar.matches(Regex("[A-Z]")) -> firstChar
-                else -> "#"
-            }
-        }
-
-        val alphabet = ('A'..'Z').map { it.toString() } + listOf("#")
-
-        alphabet.forEach { char ->
-            val appsForChar = appsByFirstChar[char] ?: emptyList()
-            entries += AlphabetIndexEntry(
-                key = char,
-                displayLabel = char,
-                targetIndex = if (appsForChar.isNotEmpty()) {
-                    // Find the index of the first app with this starting letter
-                    apps.indexOfFirst {
-                        val firstChar = it.appName.firstOrNull()?.toString()?.uppercase()
-                        when {
-                            char == "#" -> firstChar == null || !firstChar.matches(Regex("[A-Z]"))
-                            else -> firstChar == char
-                        }
-                    }.takeIf { it != -1 }
-                } else null,
-                hasApps = appsForChar.isNotEmpty(),
-                previewAppName = appsForChar.firstOrNull()?.appName
-            )
-        }
-
-        return entries
-    }
+    // App drawer functionality methods - now delegated to use cases
+    // Methods removed: getRecentApps, buildAlphabetIndex
+    // These are now handled by GetRecentAppsUseCase and BuildAlphabetIndexUseCase
 
     fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
         _uiState.value = _uiState.value.copy(
