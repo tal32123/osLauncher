@@ -58,7 +58,8 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.graphicsLayer
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TileMode
@@ -67,7 +68,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
@@ -421,20 +422,33 @@ fun AppIcon(
 
     val tintedColor = MaterialTheme.colorScheme.primary
     val baseModifier = modifier.size(iconSize)
+    val density = LocalDensity.current
 
     if (iconBitmap != null) {
-        val isMonochrome = remember(iconBitmap) {
-            isMonochrome(iconBitmap!!)
-        }
+        val grayscaleMatrix = ColorMatrix(
+            floatArrayOf(
+                0.2126f, 0.7152f, 0.0722f, 0f, 0f,
+                0.2126f, 0.7152f, 0.0722f, 0f, 0f,
+                0.2126f, 0.7152f, 0.0722f, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f
+            )
+        )
+        val tintMatrix = ColorMatrix(
+            floatArrayOf(
+                tintedColor.red, 0f, 0f, 0f, 0f,
+                0f, tintedColor.green, 0f, 0f, 0f,
+                0f, 0f, tintedColor.blue, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f
+            )
+        )
+        grayscaleMatrix.postConcat(tintMatrix)
+
         Image(
             painter = BitmapPainter(iconBitmap!!),
             contentDescription = null,
-            modifier = baseModifier,
-            colorFilter = if (iconStyle == AppIconStyleOption.THEMED && isMonochrome) {
-                ColorFilter.tint(
-                    tintedColor,
-                    BlendMode.SrcIn
-                )
+            modifier = baseModifier.graphicsLayer(shadowElevation = with(density) { 2.dp.toPx() }),
+            colorFilter = if (iconStyle == AppIconStyleOption.THEMED) {
+                ColorFilter.colorMatrix(grayscaleMatrix)
             } else {
                 null
             }
@@ -466,56 +480,9 @@ fun AppIcon(
     }
 }
 
-import android.util.Log
 
-private fun isMonochrome(image: ImageBitmap, tolerance: Float = 0.2f): Boolean {
-    val pixels = IntArray(image.width * image.height)
-    image.readPixels(pixels, 0, 0, image.width, image.height)
 
-    val colorCounts = mutableMapOf<Int, Int>()
 
-    for (color in pixels) {
-        colorCounts[color] = (colorCounts[color] ?: 0) + 1
-    }
-
-    if (colorCounts.isEmpty()) {
-        return true
-    }
-
-    val mostFrequentColor = colorCounts.maxByOrNull { it.value }!!.key
-
-    var totalDistance = 0.0
-    var totalPixels = 0
-
-    for ((color, count) in colorCounts) {
-        val distance = colorDistance(color, mostFrequentColor)
-        totalDistance += distance * count
-        totalPixels += count
-    }
-
-    val averageDistance = totalDistance / totalPixels
-    val result = averageDistance < tolerance
-
-    Log.d("isMonochrome", "averageDistance: $averageDistance, tolerance: $tolerance, result: $result")
-
-    return result
-}
-
-private fun colorDistance(color1: Int, color2: Int): Double {
-    val r1 = (color1 shr 16) and 0xFF
-    val g1 = (color1 shr 8) and 0xFF
-    val b1 = color1 and 0xFF
-
-    val r2 = (color2 shr 16) and 0xFF
-    val g2 = (color2 shr 8) and 0xFF
-    val b2 = color2 and 0xFF
-
-    val dr = r1 - r2
-    val dg = g1 - g2
-    val db = b1 - b2
-
-    return Math.sqrt((dr * dr + dg * dg + db * db).toDouble())
-}
 
 private suspend fun loadAppIconBitmap(
     context: Context,
