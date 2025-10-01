@@ -38,7 +38,6 @@ class PermissionsHelperTest {
 
     @Test
     fun `permissionState reflects usage stats permission`() = runTest {
-        println("Running permissionState reflects usage stats permission test")
         whenever(appOpsManager.checkOpNoThrow(any(), any(), any())).thenReturn(AppOpsManager.MODE_ALLOWED)
 
         permissionsHelper.checkAllPermissions()
@@ -49,7 +48,6 @@ class PermissionsHelperTest {
 
     @Test
     fun `permissionState reflects no usage stats permission`() = runTest {
-        println("Running permissionState reflects no usage stats permission test")
         whenever(appOpsManager.checkOpNoThrow(any(), any(), any())).thenReturn(AppOpsManager.MODE_ERRORED)
 
         permissionsHelper.checkAllPermissions()

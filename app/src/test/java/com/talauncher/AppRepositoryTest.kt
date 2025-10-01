@@ -65,7 +65,6 @@ class AppRepositoryTest {
 
     @Test
     fun `getAllVisibleApps returns filtered apps`() = runTest {
-        println("Running getAllVisibleApps returns filtered apps test")
         val mockApps = listOf(
             createMockApp("com.test.app1", "Test App 1"),
             createMockApp("com.test.app2", "Test App 2")
@@ -79,7 +78,6 @@ class AppRepositoryTest {
 
     @Test
     fun `hideApp marks existing app as hidden`() = runTest {
-        println("Running hideApp marks existing app as hidden test")
         val packageName = "com.test.existing"
         val existingApp = createMockApp(packageName, "Existing App")
 

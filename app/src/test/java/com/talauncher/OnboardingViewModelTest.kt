@@ -43,7 +43,6 @@ class OnboardingViewModelTest {
 
     @Test
     fun `complete onboarding updates settings`() = runTest {
-        println("Running complete onboarding updates settings test")
         viewModel = OnboardingViewModel(settingsRepository)
 
         viewModel.completeOnboarding()
