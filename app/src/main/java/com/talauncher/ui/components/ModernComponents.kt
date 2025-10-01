@@ -537,8 +537,8 @@ fun ModernBackdrop(
     }
 
     val backgroundColorValue = when (backgroundColor) {
-        "black" -> MaterialTheme.colorScheme.surface.copy(alpha = 0.1f)
-        "white" -> MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+        "black" -> Color.Black
+        "white" -> Color.White
         "system" -> MaterialTheme.colorScheme.background
         else -> runCatching { Color(android.graphics.Color.parseColor(backgroundColor)) }
             .getOrElse { MaterialTheme.colorScheme.background }
