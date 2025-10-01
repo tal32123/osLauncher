@@ -317,7 +317,7 @@ fun ModernAppItem(
     cornerRadius: Int = 12,
     uiDensity: UiDensity = UiDensity.Comfortable,
     isHidden: Boolean = false,
-    appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED
+    appIconStyle: AppIconStyleOption = AppIconStyleOption.ORIGINAL
 ) {
     val padding = when (uiDensity) {
         UiDensity.Compact -> 12.dp
@@ -420,7 +420,7 @@ fun AppIcon(
     ) {
         value = withContext(Dispatchers.IO) {
             when (iconStyle) {
-                AppIconStyleOption.THEMED -> {
+                AppIconStyleOption.MONOCHROME -> {
                     iconRenderer.renderThemedIcon(
                         packageName = packageName,
                         themeColor = themeColor,
@@ -477,12 +477,12 @@ private fun IconFallback(
     themeColor: Color
 ) {
     val backgroundColor = when (iconStyle) {
-        AppIconStyleOption.THEMED -> themeColor.copy(alpha = 0.12f)
+        AppIconStyleOption.MONOCHROME -> themeColor.copy(alpha = 0.12f)
         AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
         AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
     }
     val letterColor = when (iconStyle) {
-        AppIconStyleOption.THEMED -> themeColor
+        AppIconStyleOption.MONOCHROME -> themeColor
         AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
         AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
     }

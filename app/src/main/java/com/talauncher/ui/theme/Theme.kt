@@ -148,6 +148,30 @@ private val PaletteCatalog = mapOf(
             outline = Color(0xFF60A5FA)
         )
     ),
+    ColorPaletteOption.MONOCHROME to PaletteDefinition(
+        light = PaletteVariant(
+            primary = MinimalNeutral900,
+            secondary = MinimalNeutral700,
+            tertiary = MinimalNeutral600,
+            background = Color.White,
+            surface = MinimalNeutral50,
+            surfaceVariant = MinimalNeutral100,
+            onSurface = MinimalNeutral900,
+            onSurfaceVariant = MinimalNeutral700,
+            outline = MinimalNeutral400
+        ),
+        dark = PaletteVariant(
+            primary = MinimalNeutral100,
+            secondary = MinimalNeutral300,
+            tertiary = MinimalNeutral400,
+            background = Color(0xFF0A0A0A),
+            surface = MinimalNeutral900,
+            surfaceVariant = MinimalNeutral800,
+            onSurface = MinimalNeutral100,
+            onSurfaceVariant = MinimalNeutral300,
+            outline = MinimalNeutral600
+        )
+    ),
     // CUSTOM palette will be generated dynamically based on user selection
     ColorPaletteOption.NATURE to PaletteDefinition(
         light = PaletteVariant(
