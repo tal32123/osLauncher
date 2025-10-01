@@ -26,7 +26,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
@@ -34,11 +33,9 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.verifyBlocking
 import org.mockito.kotlin.whenever
-import org.robolectric.RobolectricTestRunner
 import org.junit.Assert.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class AppDrawerViewModelTest {
 
     @get:Rule

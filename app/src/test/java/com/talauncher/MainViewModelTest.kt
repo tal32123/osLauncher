@@ -19,16 +19,13 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.whenever
-import org.robolectric.RobolectricTestRunner
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class MainViewModelTest {
 
     @get:Rule

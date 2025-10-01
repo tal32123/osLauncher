@@ -8,14 +8,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.*
-import org.robolectric.RobolectricTestRunner
 import org.junit.Assert.*
 
-@RunWith(RobolectricTestRunner::class)
 class SessionRepositoryTest {
 
     @Mock
