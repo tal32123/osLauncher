@@ -26,9 +26,11 @@ import kotlin.math.min
 class IconColorApplier {
 
     /**
-     * Applies a monochrome color filter to a drawable while preserving alpha channel.
+     * Applies a monochrome color filter to a drawable while preserving alpha channel and detail.
      *
-     * @param drawable The drawable to tint
+     * Uses ColorMatrix to desaturate (make grayscale) while preserving luminosity,
+     * then tints with theme color using MULTIPLY mode to maintain icon details.
+     *
      * @param color The theme color to apply
      * @param isDarkTheme Whether current theme is dark mode
      * @return A ColorFilter that applies the monochrome effect with proper contrast
@@ -39,16 +41,28 @@ class IconColorApplier {
     ): ColorFilter {
         val enhancedColor = enhanceContrastIfNeeded(color, isDarkTheme)
 
-        // Use PorterDuff SRC_ATOP to preserve alpha while applying color
-        return PorterDuffColorFilter(
-            enhancedColor.toArgb(),
-            PorterDuff.Mode.SRC_ATOP
-        )
+        // Create a color matrix that:
+        // 1. Desaturates to grayscale (preserves luminosity information)
+        // 2. Tints with the theme color (preserves icon details)
+        val matrix = ColorMatrix()
+
+        // First: convert to grayscale (keeps luminosity variations)
+        val grayscaleMatrix = ColorMatrix()
+        grayscaleMatrix.setSaturation(0f)
+
+        // Second: tint with theme color while preserving luminosity
+        val tintMatrix = createTintMatrix(enhancedColor)
+
+        // Combine: grayscale first, then tint
+        matrix.postConcat(grayscaleMatrix)
+        matrix.postConcat(tintMatrix)
+
+        return ColorMatrixColorFilter(matrix)
     }
 
     /**
-     * Creates a desaturated (grayscale) version of a bitmap, then tints it.
-     * This ensures all icons become monochrome before color is applied.
+     * Creates a desaturated (grayscale) version of a bitmap, then tints it while preserving detail.
+     * This ensures all icons become monochrome before color is applied, but maintains luminosity.
      *
      * @param drawable The source drawable
      * @param targetColor The color to apply after desaturation
@@ -72,20 +86,11 @@ class IconColorApplier {
         val outputBitmap = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(outputBitmap)
 
-        // First pass: Convert to grayscale while preserving alpha
-        val grayscalePaint = Paint().apply {
-            colorFilter = createGrayscaleFilter()
+        // Apply grayscale + tint in one pass to preserve detail
+        val paint = Paint().apply {
+            colorFilter = createMonochromeFilter(targetColor, isDarkTheme)
         }
-        canvas.drawBitmap(sourceBitmap, 0f, 0f, grayscalePaint)
-
-        // Second pass: Apply theme color
-        val colorPaint = Paint().apply {
-            colorFilter = PorterDuffColorFilter(
-                enhancedColor.toArgb(),
-                PorterDuff.Mode.SRC_ATOP
-            )
-        }
-        canvas.drawBitmap(outputBitmap, 0f, 0f, colorPaint)
+        canvas.drawBitmap(sourceBitmap, 0f, 0f, paint)
 
         return outputBitmap
     }
@@ -122,6 +127,28 @@ class IconColorApplier {
             setSaturation(0f) // Remove all color saturation
         }
         return ColorMatrixColorFilter(matrix)
+    }
+
+    /**
+     * Creates a color matrix that tints grayscale images with a specific color
+     * while preserving luminosity variations (light/dark details).
+     *
+     * This works by multiplying the grayscale values by the target color components.
+     */
+    private fun createTintMatrix(color: Color): ColorMatrix {
+        // Extract RGB components (0.0 to 1.0)
+        val r = color.red
+        val g = color.green
+        val b = color.blue
+
+        // Create a matrix that multiplies each color channel by the target color
+        // This preserves luminosity while applying the tint
+        return ColorMatrix(floatArrayOf(
+            r, 0f, 0f, 0f, 0f,  // Red channel: multiply by target red
+            0f, g, 0f, 0f, 0f,  // Green channel: multiply by target green
+            0f, 0f, b, 0f, 0f,  // Blue channel: multiply by target blue
+            0f, 0f, 0f, 1f, 0f  // Alpha channel: preserve
+        ))
     }
 
     /**
@@ -190,9 +217,11 @@ class IconColorApplier {
 
     companion object {
         // Minimum luminance for dark theme (icons must be bright enough)
-        private const val MIN_LUMINANCE_DARK = 0.35f
+        // Increased from 0.35 to 0.50 for better visibility
+        private const val MIN_LUMINANCE_DARK = 0.50f
 
         // Maximum luminance for light theme (icons must be dark enough)
-        private const val MAX_LUMINANCE_LIGHT = 0.55f
+        // Decreased from 0.55 to 0.45 for better visibility
+        private const val MAX_LUMINANCE_LIGHT = 0.45f
     }
 }
