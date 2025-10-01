@@ -31,7 +31,7 @@ data class LauncherSettings(
 
     // New 2025 minimalist UI customization options
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
-    val appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED,
+    val appIconStyle: AppIconStyleOption = AppIconStyleOption.ORIGINAL,
     val customColorOption: String? = null, // Selected custom color from ColorPalettes.CustomColorOptions
     val customPrimaryColor: String? = null, // Custom primary color (hex)
     val customSecondaryColor: String? = null, // Custom secondary color (hex)

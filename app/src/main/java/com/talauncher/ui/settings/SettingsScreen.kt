@@ -338,7 +338,7 @@ fun UIThemeSettings(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Choose how icons appear beside app names",
+                        text = "Choose whether icons appear beside app names",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

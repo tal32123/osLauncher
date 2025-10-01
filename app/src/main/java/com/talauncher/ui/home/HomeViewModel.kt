@@ -180,7 +180,7 @@ class HomeViewModel(
                             weatherTemperatureUnit = settings?.weatherTemperatureUnit
                                 ?: WeatherTemperatureUnit.CELSIUS,
                             colorPalette = settings?.colorPalette ?: ColorPaletteOption.DEFAULT,
-                            appIconStyle = settings?.appIconStyle ?: AppIconStyleOption.THEMED,
+                            appIconStyle = settings?.appIconStyle ?: AppIconStyleOption.ORIGINAL,
                             wallpaperBlurAmount = settings?.wallpaperBlurAmount ?: 0f,
                             customWallpaperPath = settings?.customWallpaperPath,
                             enableGlassmorphism = settings?.enableGlassmorphism ?: true,
@@ -1016,7 +1016,7 @@ data class HomeUiState(
     val weatherDailyHigh: Double? = null,
     val weatherDailyLow: Double? = null,
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
-    val appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED,
+    val appIconStyle: AppIconStyleOption = AppIconStyleOption.ORIGINAL,
     val wallpaperBlurAmount: Float = 0f,
     val enableGlassmorphism: Boolean = true,
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,

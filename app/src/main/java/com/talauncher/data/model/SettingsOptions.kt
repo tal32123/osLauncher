@@ -57,9 +57,8 @@ enum class ColorPaletteOption(val label: String) {
 }
 
 enum class AppIconStyleOption(val label: String) {
-    THEMED("Theme color"),
-    ORIGINAL("Original colors"),
-    HIDDEN("No icons");
+    ORIGINAL("Icons on"),
+    HIDDEN("Icons off");
 
     val storageValue: String
         get() = name
@@ -67,7 +66,7 @@ enum class AppIconStyleOption(val label: String) {
     companion object {
         fun fromStorageValue(value: String?): AppIconStyleOption {
             val normalized = value?.lowercase(Locale.US)
-            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: THEMED
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: ORIGINAL
         }
     }
 }

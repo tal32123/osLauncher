@@ -54,10 +54,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
@@ -316,7 +314,7 @@ fun ModernAppItem(
     cornerRadius: Int = 12,
     uiDensity: UiDensity = UiDensity.Comfortable,
     isHidden: Boolean = false,
-    appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED
+    appIconStyle: AppIconStyleOption = AppIconStyleOption.ORIGINAL
 ) {
     val padding = when (uiDensity) {
         UiDensity.Compact -> 12.dp
@@ -417,7 +415,6 @@ fun AppIcon(
         appName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
     }
 
-    val tintedColor = MaterialTheme.colorScheme.primary
     val baseModifier = modifier.size(iconSize)
 
     if (iconBitmap != null) {
@@ -425,26 +422,11 @@ fun AppIcon(
             painter = BitmapPainter(iconBitmap!!),
             contentDescription = null,
             modifier = baseModifier,
-            colorFilter = when (iconStyle) {
-                AppIconStyleOption.THEMED -> ColorFilter.tint(
-                    tintedColor,
-                    BlendMode.SrcAtop
-                )
-                AppIconStyleOption.ORIGINAL -> null
-                AppIconStyleOption.HIDDEN -> null
-            }
+            colorFilter = null
         )
     } else {
-        val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
-        }
-        val letterColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> tintedColor
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
-        }
+        val backgroundColor = MaterialTheme.colorScheme.surfaceVariant
+        val letterColor = MaterialTheme.colorScheme.onSurface
 
         Box(
             modifier = baseModifier
