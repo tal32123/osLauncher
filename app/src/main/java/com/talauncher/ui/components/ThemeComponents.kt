@@ -432,6 +432,11 @@ private val palettePreviewColorsMap = mapOf(
         secondary = Color(0xFF6366F1),
         background = Color(0xFFE0F2FE)
     ),
+    ColorPaletteOption.BLACK_AND_WHITE to PalettePreviewColors(
+        primary = Color.Black,
+        secondary = Color.White,
+        background = Color.White
+    ),
     ColorPaletteOption.NATURE to PalettePreviewColors(
         primary = Color(0xFF256B37),
         secondary = Color(0xFF3A7D44),
