@@ -47,6 +47,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.talauncher.BuildConfig
+import com.talauncher.domain.model.AlphabetIndexEntry
 import com.talauncher.domain.usecases.BuildAlphabetIndexUseCase
 import com.talauncher.domain.usecases.FormatTimeUseCase
 import com.talauncher.domain.usecases.GetRecentAppsUseCase

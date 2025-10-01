@@ -248,7 +248,7 @@ abstract class LauncherDatabase : RoomDatabase() {
         private val MIGRATION_16_17 = object : Migration(16, 17) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
-                    "ALTER TABLE launcher_settings ADD COLUMN appIconStyle TEXT NOT NULL DEFAULT 'THEMED'"
+                    "ALTER TABLE launcher_settings ADD COLUMN appIconStyle TEXT NOT NULL DEFAULT 'BLACK_AND_WHITE'"
                 )
             }
         }

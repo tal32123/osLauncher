@@ -81,6 +81,7 @@ import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.WeatherDisplayOption
+import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
 import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.ModernGlassCard

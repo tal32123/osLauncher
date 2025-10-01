@@ -17,6 +17,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.talauncher.ui.theme.PrimerSpacing
+import com.talauncher.domain.model.AlphabetIndexEntry
+import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
 
 /**
  * Alphabet index component for quick navigation through app lists.
@@ -24,37 +26,15 @@ import com.talauncher.ui.theme.PrimerSpacing
  * Architecture:
  * - Follows Component pattern for reusable widgets
  * - Implements gesture detection with proper touch handling
- * - Uses immutable data classes for entries (AlphabetIndexEntry)
+ * - Uses immutable data classes for entries (AlphabetIndexEntry from domain layer)
  * - Provides clear callback interface (Interface Segregation Principle)
  *
  * Design Pattern: Observer pattern through callbacks
  * SOLID Principles:
  * - Single Responsibility: Only handles alphabet index UI and interaction
  * - Open/Closed: Can be extended with different entry types without modification
- * - Dependency Inversion: Depends on abstractions (callbacks) not concrete implementations
+ * - Dependency Inversion: Depends on abstractions (callbacks, domain models) not concrete implementations
  */
-
-/**
- * Represents a single entry in the alphabet index.
- *
- * @property key Unique identifier for this entry (e.g., "A", "B", "#", "*" for recent)
- * @property displayLabel Text to display in the index
- * @property targetIndex Index in the list to scroll to (null if no apps for this letter)
- * @property hasApps Whether this entry has any apps
- * @property previewAppName Optional app name for preview (future enhancement)
- */
-data class AlphabetIndexEntry(
-    val key: String,
-    val displayLabel: String,
-    val targetIndex: Int?,
-    val hasApps: Boolean,
-    val previewAppName: String?
-)
-
-/**
- * Special key constant for the "Recent Apps" index entry.
- */
-const val RECENT_APPS_INDEX_KEY = "*"
 
 /**
  * Alphabet index sidebar for quick list navigation.

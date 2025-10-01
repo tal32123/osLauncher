@@ -1,8 +1,8 @@
 package com.talauncher.domain.usecases
 
 import com.talauncher.data.model.AppInfo
-import com.talauncher.ui.home.AlphabetIndexEntry
-import com.talauncher.ui.home.RECENT_APPS_INDEX_KEY
+import com.talauncher.domain.model.AlphabetIndexEntry
+import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
 
 /**
  * Use case for building the alphabet index for app lists.
