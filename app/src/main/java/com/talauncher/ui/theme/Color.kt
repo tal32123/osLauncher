@@ -6,9 +6,9 @@ import androidx.compose.ui.graphics.Color
 // Inspired by Material Design 3 and contemporary minimalist trends
 
 // Core minimalist colors - sophisticated and refined
-val MinimalPrimary = Color(0xFF1a1a1a)        // Deep charcoal
-val MinimalSecondary = Color(0xFF6366f1)      // Modern indigo
-val MinimalAccent = Color(0xFF06b6d4)         // Cyan accent
+val MinimalPrimary = Color(0xFF2196F3)        // Vibrant blue
+val MinimalSecondary = Color(0xFFFF9800)      // Warm orange
+val MinimalAccent = MinimalSecondary          // Secondary accent
 val MinimalNeutral900 = Color(0xFF111827)     // Almost black
 val MinimalNeutral800 = Color(0xFF1f2937)     // Dark slate
 val MinimalNeutral700 = Color(0xFF374151)     // Slate
@@ -21,13 +21,13 @@ val MinimalNeutral100 = Color(0xFFf3f4f6)     // Off white
 val MinimalNeutral50 = Color(0xFFf9fafb)      // Pure white base
 
 // Light theme colors - clean and airy
-val MinimalPrimaryLight = Color(0xFF6366f1)   // Indigo primary
+val MinimalPrimaryLight = Color(0xFF2196F3)   // Blue primary
 val MinimalSurfaceLight = Color(0xFFffffff)   // Pure white
 val MinimalBackgroundLight = Color(0xFFfafafa) // Subtle warm white
 val MinimalOnSurfaceLight = Color(0xFF1a1a1a) // Deep text
 
 // Dark theme colors - sophisticated and deep
-val MinimalPrimaryDark = Color(0xFF818cf8)    // Lighter indigo for dark
+val MinimalPrimaryDark = Color(0xFF2196F3)    // Blue for dark theme
 val MinimalSurfaceDark = Color(0xFF0f0f0f)    // Deep black
 val MinimalBackgroundDark = Color(0xFF080808) // Ultra deep black
 val MinimalOnSurfaceDark = Color(0xFFfafafa)  // Pure white text
@@ -111,7 +111,7 @@ val PrimerGray200 = MinimalNeutral200
 val PrimerGray100 = MinimalNeutral100
 val PrimerGray50 = MinimalNeutral50
 
-val PrimerBlueDark = Color(0xFF818cf8)
+val PrimerBlueDark = Color(0xFFFFB74D)
 val PrimerGray900Dark = MinimalNeutral50
 val PrimerGray800Dark = MinimalNeutral100
 val PrimerGray700Dark = MinimalNeutral300

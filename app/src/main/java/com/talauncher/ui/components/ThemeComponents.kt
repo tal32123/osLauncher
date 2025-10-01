@@ -418,8 +418,8 @@ private fun ColorPreview(
  */
 private val palettePreviewColorsMap = mapOf(
     ColorPaletteOption.DEFAULT to PalettePreviewColors(
-        primary = Color(0xFF6366F1),
-        secondary = Color(0xFF06B6D4),
+        primary = Color(0xFF2196F3),
+        secondary = Color(0xFFFF9800),
         background = Color(0xFFFAFAFA)
     ),
     ColorPaletteOption.WARM to PalettePreviewColors(
@@ -458,8 +458,8 @@ private val palettePreviewColorsMap = mapOf(
         background = Color(0xFFFEF2F2)
     ),
     ColorPaletteOption.CUSTOM to PalettePreviewColors(
-        primary = Color(0xFF6366F1),
-        secondary = Color(0xFF8B5CF6),
+        primary = Color(0xFF2196F3),
+        secondary = Color(0xFFFF9800),
         background = Color(0xFFF8F9FA)
     )
 )
@@ -678,8 +678,8 @@ fun AdvancedCustomColorPickerDialog(
 ) {
     if (!isVisible) return
 
-    var selectedPrimaryColor by remember { mutableStateOf(currentPrimaryColor ?: "#6366F1") }
-    var selectedSecondaryColor by remember { mutableStateOf(currentSecondaryColor ?: "#8B5CF6") }
+    var selectedPrimaryColor by remember { mutableStateOf(currentPrimaryColor ?: "#2196F3") }
+    var selectedSecondaryColor by remember { mutableStateOf(currentSecondaryColor ?: "#FF9800") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -733,7 +733,7 @@ fun AdvancedCustomColorPickerDialog(
                             value = selectedPrimaryColor,
                             onValueChange = { selectedPrimaryColor = it },
                             label = { Text("Hex Color") },
-                            placeholder = { Text("#6366F1") },
+                            placeholder = { Text("#2196F3") },
                             leadingIcon = {
                                 Box(
                                     modifier = Modifier
@@ -771,7 +771,7 @@ fun AdvancedCustomColorPickerDialog(
                             value = selectedSecondaryColor,
                             onValueChange = { selectedSecondaryColor = it },
                             label = { Text("Hex Color") },
-                            placeholder = { Text("#8B5CF6") },
+                            placeholder = { Text("#FF9800") },
                             leadingIcon = {
                                 Box(
                                     modifier = Modifier
@@ -843,9 +843,9 @@ private fun parseHexColorSafe(hexColor: String): Color {
         when (cleanHex.length) {
             6 -> Color(cleanHex.toLong(16) or 0xFF000000)
             8 -> Color(cleanHex.toLong(16))
-            else -> Color(0xFF6366F1) // Default fallback
+            else -> Color(0xFF2196F3) // Default fallback
         }
     } catch (e: NumberFormatException) {
-        Color(0xFF6366F1) // Default fallback
+        Color(0xFF2196F3) // Default fallback
     }
 }
