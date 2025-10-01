@@ -16,6 +16,7 @@ class IconGalleryTest {
 
     @Test
     fun generateIconGallery() {
-        Screenshot.snapActivity(composeTestRule.activity).record()
+        val view = composeTestRule.activity.window.decorView
+        Screenshot.snap(view).setName("IconGallery").record()
     }
 }
