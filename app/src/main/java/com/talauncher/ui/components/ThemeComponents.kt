@@ -432,11 +432,6 @@ private val palettePreviewColorsMap = mapOf(
         secondary = Color(0xFF6366F1),
         background = Color(0xFFE0F2FE)
     ),
-    ColorPaletteOption.MONOCHROME to PalettePreviewColors(
-        primary = Color(0xFF1F2937),
-        secondary = Color(0xFF4B5563),
-        background = Color(0xFFF5F5F5)
-    ),
     ColorPaletteOption.NATURE to PalettePreviewColors(
         primary = Color(0xFF256B37),
         secondary = Color(0xFF3A7D44),

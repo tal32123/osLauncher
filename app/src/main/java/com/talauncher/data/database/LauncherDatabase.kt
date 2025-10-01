@@ -13,7 +13,7 @@ import com.talauncher.data.model.SearchInteractionEntity
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class],
-    version = 17,
+    version = 18,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -248,7 +248,19 @@ abstract class LauncherDatabase : RoomDatabase() {
         private val MIGRATION_16_17 = object : Migration(16, 17) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
-                    "ALTER TABLE launcher_settings ADD COLUMN appIconStyle TEXT NOT NULL DEFAULT 'THEMED'"
+                    "ALTER TABLE launcher_settings ADD COLUMN appIconStyle TEXT NOT NULL DEFAULT 'BLACK_AND_WHITE'"
+                )
+            }
+        }
+
+        private val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Update old MONOCHROME values to BLACK_AND_WHITE for both colorPalette and appIconStyle
+                database.execSQL(
+                    "UPDATE launcher_settings SET colorPalette = 'BLACK_AND_WHITE' WHERE colorPalette = 'MONOCHROME'"
+                )
+                database.execSQL(
+                    "UPDATE launcher_settings SET appIconStyle = 'BLACK_AND_WHITE' WHERE appIconStyle = 'MONOCHROME'"
                 )
             }
         }
@@ -275,7 +287,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_13_14,
                     MIGRATION_14_15,
                     MIGRATION_15_16,
-                    MIGRATION_16_17
+                    MIGRATION_16_17,
+                    MIGRATION_17_18
                 ).build()
                 INSTANCE = instance
                 instance

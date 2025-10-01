@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.ui.theme.*
+import com.talauncher.ui.icons.IconRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -316,7 +317,7 @@ fun ModernAppItem(
     cornerRadius: Int = 12,
     uiDensity: UiDensity = UiDensity.Comfortable,
     isHidden: Boolean = false,
-    appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED
+    appIconStyle: AppIconStyleOption = AppIconStyleOption.ORIGINAL
 ) {
     val padding = when (uiDensity) {
         UiDensity.Compact -> 12.dp
@@ -400,16 +401,38 @@ fun AppIcon(
     }
 
     val context = LocalContext.current
-    val iconBitmap by produceState<ImageBitmap?>(
-        initialValue = AppIconBitmapCache.get(packageName),
-        packageName
+    val isDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+    val themeColor = MaterialTheme.colorScheme.primary
+    val iconSizePx = remember(iconSize) {
+        (iconSize.value * context.resources.displayMetrics.density).toInt()
+    }
+
+    // Create IconRenderer instance (can be optimized with remember and singleton)
+    val iconRenderer = remember(context) { IconRenderer(context) }
+
+    // Load and render icon based on style
+    val iconDrawable by produceState<android.graphics.drawable.Drawable?>(
+        initialValue = null,
+        packageName,
+        iconStyle,
+        themeColor,
+        isDarkTheme
     ) {
-        val cached = AppIconBitmapCache.get(packageName)
-        if (cached != null) {
-            value = cached
-        } else {
-            value = loadAppIconBitmap(context, packageName)
-            value?.let { AppIconBitmapCache.put(packageName, it) }
+        value = withContext(Dispatchers.IO) {
+            when (iconStyle) {
+                AppIconStyleOption.BLACK_AND_WHITE -> {
+                    iconRenderer.renderThemedIcon(
+                        packageName = packageName,
+                        themeColor = themeColor,
+                        iconSize = iconSizePx,
+                        isDarkTheme = isDarkTheme
+                    )
+                }
+                AppIconStyleOption.ORIGINAL -> {
+                    iconRenderer.renderOriginalIcon(packageName)
+                }
+                AppIconStyleOption.HIDDEN -> null
+            }
         }
     }
 
@@ -417,76 +440,67 @@ fun AppIcon(
         appName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
     }
 
-    val tintedColor = MaterialTheme.colorScheme.primary
     val baseModifier = modifier.size(iconSize)
 
-    if (iconBitmap != null) {
-        Image(
-            painter = BitmapPainter(iconBitmap!!),
-            contentDescription = null,
-            modifier = baseModifier,
-            colorFilter = when (iconStyle) {
-                AppIconStyleOption.THEMED -> ColorFilter.tint(
-                    tintedColor,
-                    BlendMode.SrcAtop
-                )
-                AppIconStyleOption.ORIGINAL -> null
-                AppIconStyleOption.HIDDEN -> null
+    // Display icon or fallback
+    if (iconDrawable != null) {
+        val bitmap = remember(iconDrawable) {
+            try {
+                val drawable = iconDrawable!!
+                val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: iconSizePx
+                val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: iconSizePx
+                drawable.toBitmap(width, height).asImageBitmap()
+            } catch (e: Exception) {
+                null
             }
-        )
-    } else {
-        val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
-        }
-        val letterColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> tintedColor
-            AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
-            AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
         }
 
-        Box(
-            modifier = baseModifier
-                .clip(CircleShape)
-                .background(backgroundColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = letterFallback,
-                style = MaterialTheme.typography.labelLarge,
-                color = letterColor
+        if (bitmap != null) {
+            Image(
+                painter = BitmapPainter(bitmap),
+                contentDescription = null,
+                modifier = baseModifier
             )
+        } else {
+            IconFallback(letterFallback, iconStyle, baseModifier, themeColor)
         }
+    } else {
+        IconFallback(letterFallback, iconStyle, baseModifier, themeColor)
     }
 }
 
-private suspend fun loadAppIconBitmap(
-    context: Context,
-    packageName: String
-): ImageBitmap? = withContext(Dispatchers.IO) {
-    runCatching {
-        val drawable = context.packageManager.getApplicationIcon(packageName).mutate()
-        val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 128
-        val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 128
-        drawable.toBitmap(width, height).asImageBitmap()
-    }.getOrNull()
-}
-
-private object AppIconBitmapCache {
-    private const val CacheSize = 64
-    private val cache = object : LruCache<String, ImageBitmap>(CacheSize) {}
-
-    fun get(key: String): ImageBitmap? = synchronized(cache) {
-        cache.get(key)
+@Composable
+private fun IconFallback(
+    letter: String,
+    iconStyle: AppIconStyleOption,
+    modifier: Modifier,
+    themeColor: Color
+) {
+    val backgroundColor = when (iconStyle) {
+        AppIconStyleOption.BLACK_AND_WHITE -> themeColor.copy(alpha = 0.12f)
+        AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
+        AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val letterColor = when (iconStyle) {
+        AppIconStyleOption.BLACK_AND_WHITE -> themeColor
+        AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
+        AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
     }
 
-    fun put(key: String, bitmap: ImageBitmap) {
-        synchronized(cache) {
-            cache.put(key, bitmap)
-        }
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = letter,
+            style = MaterialTheme.typography.labelLarge,
+            color = letterColor
+        )
     }
 }
+
 
 enum class UiDensity {
     Compact,
