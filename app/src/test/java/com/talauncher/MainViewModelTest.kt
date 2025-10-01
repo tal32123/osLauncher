@@ -58,7 +58,6 @@ class MainViewModelTest {
 
     @Test
     fun `initial state is loading`() {
-        println("Running initial state is loading test")
         viewModel = MainViewModel(settingsRepository, appRepository)
 
         assertTrue(viewModel.uiState.value.isLoading)
@@ -67,7 +66,6 @@ class MainViewModelTest {
 
     @Test
     fun `loading completes when settings are loaded`() = runTest {
-        println("Running loading completes when settings are loaded test")
         whenever(settingsRepository.getSettings()).thenReturn(flowOf(LauncherSettings(isOnboardingCompleted = true)))
 
         viewModel = MainViewModel(settingsRepository, appRepository)
@@ -79,7 +77,6 @@ class MainViewModelTest {
 
     @Test
     fun `onboarding not completed shows onboarding flow`() = runTest {
-        println("Running onboarding not completed shows onboarding flow test")
         whenever(settingsRepository.getSettings()).thenReturn(flowOf(LauncherSettings(isOnboardingCompleted = false)))
 
         viewModel = MainViewModel(settingsRepository, appRepository)
@@ -91,7 +88,6 @@ class MainViewModelTest {
 
     @Test
     fun `onOnboardingCompleted updates ui state`() = runTest {
-        println("Running onOnboardingCompleted updates ui state test")
         viewModel = MainViewModel(settingsRepository, appRepository)
 
         viewModel.onOnboardingCompleted()

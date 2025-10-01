@@ -80,7 +80,6 @@ class HomeViewModelTest {
 
     @Test
     fun `all visible apps load correctly`() = runTest {
-        println("Running all visible apps load correctly test")
         val visibleApps = listOf(
             AppInfo("com.test.app1", "App 1"),
             AppInfo("com.test.app2", "App 2")

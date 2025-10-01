@@ -31,7 +31,6 @@ class UsageStatsHelperTest {
 
     @Test
     fun `getTodayUsageStats returns empty list when permission not granted`() = runTest {
-        println("Running getTodayUsageStats returns empty list when permission not granted test")
         val usageStats = usageStatsHelper.getTodayUsageStats(false)
         assertTrue(usageStats.isEmpty())
     }

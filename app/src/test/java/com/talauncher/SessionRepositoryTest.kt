@@ -31,7 +31,6 @@ class SessionRepositoryTest {
 
     @Test
     fun `startSession creates new session`() = runTest {
-        println("Running startSession creates new session test")
         val packageName = "com.test.app"
         val plannedDurationMinutes = 30
 
@@ -50,7 +49,6 @@ class SessionRepositoryTest {
 
     @Test
     fun `endSession updates session`() = runTest {
-        println("Running endSession updates session test")
         val sessionId = 5L
 
         repository.endSession(sessionId)
