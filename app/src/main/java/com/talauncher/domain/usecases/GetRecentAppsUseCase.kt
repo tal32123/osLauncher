@@ -1,6 +1,7 @@
 package com.talauncher.domain.usecases
 
 import com.talauncher.data.model.AppInfo
+import com.talauncher.data.model.AppUsage
 import com.talauncher.utils.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -92,7 +93,7 @@ class GetRecentAppsUseCase(
      * Collects recent apps from usage statistics.
      */
     private fun collectRecentAppsFromUsage(
-        usageStats: List<com.talauncher.utils.UsageApp>,
+        usageStats: List<AppUsage>,
         appMap: Map<String, AppInfo>,
         hiddenPackages: Set<String>,
         limit: Int
