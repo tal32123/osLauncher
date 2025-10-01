@@ -146,7 +146,6 @@ class ThemeSettingsTest {
             ColorPaletteOption.DEFAULT,
             ColorPaletteOption.WARM,
             ColorPaletteOption.COOL,
-            ColorPaletteOption.MONOCHROME,
             ColorPaletteOption.NATURE,
             ColorPaletteOption.OCEANIC,
             ColorPaletteOption.SUNSET,

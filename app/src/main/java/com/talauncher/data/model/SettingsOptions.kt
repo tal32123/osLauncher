@@ -37,7 +37,6 @@ enum class ColorPaletteOption(val label: String) {
     DEFAULT("Default"),
     WARM("Warm"),
     COOL("Cool"),
-    MONOCHROME("Mono"),
     NATURE("Nature"),
     OCEANIC("Oceanic"),
     SUNSET("Sunset"),

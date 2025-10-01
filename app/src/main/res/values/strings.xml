@@ -83,7 +83,6 @@
     <string name="color_palette_default">Default</string>
     <string name="color_palette_warm">Warm</string>
     <string name="color_palette_cool">Cool</string>
-    <string name="color_palette_monochrome">Mono</string>
     <string name="color_palette_nature">Nature</string>
     <string name="color_palette_oceanic">Oceanic</string>
     <string name="color_palette_sunset">Sunset</string>
