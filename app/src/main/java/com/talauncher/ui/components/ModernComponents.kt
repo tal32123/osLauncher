@@ -420,7 +420,7 @@ fun AppIcon(
     ) {
         value = withContext(Dispatchers.IO) {
             when (iconStyle) {
-                AppIconStyleOption.MONOCHROME -> {
+                AppIconStyleOption.BLACK_AND_WHITE -> {
                     iconRenderer.renderThemedIcon(
                         packageName = packageName,
                         themeColor = themeColor,
@@ -477,12 +477,12 @@ private fun IconFallback(
     themeColor: Color
 ) {
     val backgroundColor = when (iconStyle) {
-        AppIconStyleOption.MONOCHROME -> themeColor.copy(alpha = 0.12f)
+        AppIconStyleOption.BLACK_AND_WHITE -> themeColor.copy(alpha = 0.12f)
         AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
         AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
     }
     val letterColor = when (iconStyle) {
-        AppIconStyleOption.MONOCHROME -> themeColor
+        AppIconStyleOption.BLACK_AND_WHITE -> themeColor
         AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.onSurface
         AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.onSurface
     }

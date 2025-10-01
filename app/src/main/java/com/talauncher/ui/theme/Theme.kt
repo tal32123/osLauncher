@@ -148,7 +148,7 @@ private val PaletteCatalog = mapOf(
             outline = Color(0xFF60A5FA)
         )
     ),
-    ColorPaletteOption.MONOCHROME to PaletteDefinition(
+    ColorPaletteOption.BLACK_AND_WHITE to PaletteDefinition(
         light = PaletteVariant(
             primary = MinimalNeutral900,
             secondary = MinimalNeutral700,

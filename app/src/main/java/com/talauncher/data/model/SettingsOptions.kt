@@ -37,7 +37,7 @@ enum class ColorPaletteOption(val label: String) {
     DEFAULT("Default"),
     WARM("Warm"),
     COOL("Cool"),
-    MONOCHROME("Mono"),
+    BLACK_AND_WHITE("Black & White"),
     NATURE("Nature"),
     OCEANIC("Oceanic"),
     SUNSET("Sunset"),
@@ -58,7 +58,7 @@ enum class ColorPaletteOption(val label: String) {
 
 enum class AppIconStyleOption(val label: String) {
     ORIGINAL("Original colors"),
-    MONOCHROME("Monochrome"),
+    BLACK_AND_WHITE("Black & white"),
     HIDDEN("No icons");
 
     val storageValue: String

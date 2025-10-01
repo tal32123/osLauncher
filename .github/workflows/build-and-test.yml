@@ -45,6 +45,8 @@ jobs:
       run: ./gradlew test --no-daemon --stacktrace
 
     - name: Build debug APK
+      env:
+        DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
       run: ./gradlew assembleDebug --no-daemon --stacktrace
 
     - name: Upload debug APK
