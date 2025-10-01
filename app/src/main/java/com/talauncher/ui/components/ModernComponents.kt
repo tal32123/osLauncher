@@ -417,7 +417,7 @@ fun AppIcon(
         appName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
     }
 
-    val tintedColor = MaterialTheme.colorScheme.onSurface
+    val tintedColor = MaterialTheme.colorScheme.primary
     val baseModifier = modifier.size(iconSize)
 
     if (iconBitmap != null) {
@@ -436,7 +436,7 @@ fun AppIcon(
         )
     } else {
         val backgroundColor = when (iconStyle) {
-            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+            AppIconStyleOption.THEMED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
             AppIconStyleOption.ORIGINAL -> MaterialTheme.colorScheme.surfaceVariant
             AppIconStyleOption.HIDDEN -> MaterialTheme.colorScheme.surfaceVariant
         }
