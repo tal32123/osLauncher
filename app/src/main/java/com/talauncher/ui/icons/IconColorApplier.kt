@@ -133,7 +133,8 @@ class IconColorApplier {
      * Creates a color matrix that tints grayscale images with a specific color
      * while preserving luminosity variations (light/dark details).
      *
-     * This works by multiplying the grayscale values by the target color components.
+     * This works by multiplying the grayscale values by the target color components,
+     * then adding a slight brightness boost to maintain visibility.
      */
     private fun createTintMatrix(color: Color): ColorMatrix {
         // Extract RGB components (0.0 to 1.0)
@@ -141,13 +142,18 @@ class IconColorApplier {
         val g = color.green
         val b = color.blue
 
-        // Create a matrix that multiplies each color channel by the target color
-        // This preserves luminosity while applying the tint
+        // Add a brightness boost to prevent icons from being too dark
+        // This helps maintain visibility after multiplication
+        val brightnessBoost = 0.15f
+
+        // Create a matrix that:
+        // 1. Multiplies each color channel by the target color (tinting)
+        // 2. Adds a brightness offset to maintain visibility
         return ColorMatrix(floatArrayOf(
-            r, 0f, 0f, 0f, 0f,  // Red channel: multiply by target red
-            0f, g, 0f, 0f, 0f,  // Green channel: multiply by target green
-            0f, 0f, b, 0f, 0f,  // Blue channel: multiply by target blue
-            0f, 0f, 0f, 1f, 0f  // Alpha channel: preserve
+            r, 0f, 0f, 0f, brightnessBoost * r * 255,  // Red: multiply + boost
+            0f, g, 0f, 0f, brightnessBoost * g * 255,  // Green: multiply + boost
+            0f, 0f, b, 0f, brightnessBoost * b * 255,  // Blue: multiply + boost
+            0f, 0f, 0f, 1f, 0f                          // Alpha: preserve
         ))
     }
 
