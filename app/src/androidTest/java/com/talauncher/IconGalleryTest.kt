@@ -3,7 +3,7 @@ package com.talauncher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.talauncher.ui.activities.IconGalleryActivity
-import com.google.testing.screenshot.Screenshot
+import com.facebook.testing.screenshot.Screenshot
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,6 +17,6 @@ class IconGalleryTest {
     @Test
     fun generateIconGallery() {
         val view = composeTestRule.activity.window.decorView
-        Screenshot.capture(view).setName("IconGallery").record()
+        Screenshot.snap(view).setName("IconGallery").record()
     }
 }

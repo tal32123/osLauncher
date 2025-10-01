@@ -75,7 +75,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "com.google.testing.screenshot.ScreenshotTestRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -181,7 +181,8 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:rules:1.6.1")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
-    androidTestImplementation("com.google.testing.screenshot:screenshot:0.2.0-alpha01")
+    androidTestImplementation("com.facebook.testing.screenshot:core:0.14.0")
+
 }
 
 
