@@ -5,9 +5,9 @@
     <color name="white">#FFFFFFFF</color>
 
     <!-- Default palette colors -->
-    <color name="default_primary_light">#FF6366F1</color>
-    <color name="default_primary_dark">#FF818CF8</color>
-    <color name="default_secondary">#FF06B6D4</color>
+    <color name="default_primary_light">#FF2196F3</color>
+    <color name="default_primary_dark">#FF2196F3</color>
+    <color name="default_secondary">#FFFF9800</color>
     <color name="default_tertiary_light">#FF4B5563</color>
     <color name="default_tertiary_dark">#FF9CA3AF</color>
     <color name="default_background_light">#FFFAFAFA</color>

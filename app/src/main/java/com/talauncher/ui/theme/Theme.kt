@@ -410,12 +410,12 @@ private fun createCustomPaletteDefinition(
 ): PaletteDefinition {
     // Priority: direct color values > named option > fallback
     val primary = when {
-        customPrimaryColor != null -> parseHexColor(customPrimaryColor) ?: Color(0xFF6366F1)
+        customPrimaryColor != null -> parseHexColor(customPrimaryColor) ?: Color(0xFF2196F3)
         customColorOption != null -> {
             ColorPalettes.CustomColorOptions[customColorOption]?.get("primary")
                 ?: ColorPalettes.CustomColorOptions["Purple"]!!["primary"]!!
         }
-        else -> Color(0xFF6366F1) // Default purple
+        else -> Color(0xFF2196F3) // Default blue
     }
 
     val secondary = when {
