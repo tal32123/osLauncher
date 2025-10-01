@@ -14,7 +14,7 @@ import com.talauncher.ui.components.UiDensity
  */
 data class UiSettings(
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
-    val appIconStyle: AppIconStyleOption = AppIconStyleOption.THEMED,
+    val appIconStyle: AppIconStyleOption = AppIconStyleOption.ORIGINAL,
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val enableGlassmorphism: Boolean = true,
     val enableAnimations: Boolean = true,
