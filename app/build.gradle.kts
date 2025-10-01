@@ -24,19 +24,38 @@ tasks.register("checkGitStatus") {
 tasks.register("generateCommitInfo") {
     dependsOn("checkGitStatus")
     doLast {
-        val commitHash = providers.exec {
+        val environment = System.getenv()
+        val githubEventName = environment["GITHUB_EVENT_NAME"] ?: ""
+        val isGitHubActions = environment["GITHUB_ACTIONS"] == "true"
+        val isPullRequestBuild = isGitHubActions && githubEventName.startsWith("pull_request")
+
+        val prHeadCommit = if (isPullRequestBuild) {
+            val candidate = providers.exec {
+                isIgnoreExitValue = true
+                commandLine("git", "rev-parse", "--verify", "HEAD^2")
+            }.standardOutput.asText.get().trim()
+            candidate.ifBlank { null }
+        } else {
+            null
+        }
+
+        val commitHash = prHeadCommit ?: providers.exec {
             commandLine("git", "rev-parse", "HEAD")
         }.standardOutput.asText.get().trim()
 
+        if (prHeadCommit != null) {
+            println("[INFO] Using PR head commit for metadata: $commitHash")
+        }
+
         val commitMessage = providers.exec {
-            commandLine("git", "log", "-1", "--pretty=format:%s")
+            commandLine("git", "log", "-1", "--pretty=format:%s", commitHash)
         }.standardOutput.asText.get().trim()
 
         val commitDate = providers.exec {
-            commandLine("git", "log", "-1", "--pretty=format:%ci")
+            commandLine("git", "log", "-1", "--pretty=format:%ci", commitHash)
         }.standardOutput.asText.get().trim()
 
-        val branch = providers.exec {
+        val branch = environment["GITHUB_HEAD_REF"]?.takeIf { it.isNotBlank() } ?: providers.exec {
             commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
         }.standardOutput.asText.get().trim()
 
