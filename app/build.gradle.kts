@@ -1,4 +1,6 @@
+import java.io.File
 import java.util.Date
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -124,6 +126,29 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        unitTests.all { test ->
+            val localProperties = rootProject.file("local.properties")
+            if (localProperties.exists()) {
+                val props = Properties().apply {
+                    localProperties.inputStream().use { stream ->
+                        load(stream)
+                    }
+                }
+                val sdkDirPath = props.getProperty("sdk.dir")?.takeIf { it.isNotBlank() }
+                if (sdkDirPath != null) {
+                    val sdkDir = File(sdkDirPath)
+                    test.systemProperty("robolectric.offline", "true")
+                    test.systemProperty("robolectric.sdkDirectory", sdkDir.absolutePath)
+                    val dependencyDir = sdkDir.resolve("robolectric-deps")
+                    if (dependencyDir.exists()) {
+                        test.systemProperty("robolectric.dependency.dir", dependencyDir.absolutePath)
+                    }
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -163,6 +188,7 @@ dependencies {
     // Unit Testing
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
