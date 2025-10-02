@@ -23,6 +23,8 @@ data class AppActionHandlers(
     val onRename: (AppInfo) -> Unit,
     val onHide: (String) -> Unit,
     val onUnhide: (String) -> Unit,
+    val onMarkDistracting: (String) -> Unit,
+    val onUnmarkDistracting: (String) -> Unit,
     val onAppInfo: (String) -> Unit,
     val onUninstall: (String) -> Unit
 )
@@ -43,6 +45,8 @@ fun AppActionDialog(
         onRename = handlers.onRename,
         onHide = handlers.onHide,
         onUnhide = handlers.onUnhide,
+        onMarkDistracting = handlers.onMarkDistracting,
+        onUnmarkDistracting = handlers.onUnmarkDistracting,
         onAppInfo = handlers.onAppInfo,
         onUninstall = handlers.onUninstall
     )
@@ -56,12 +60,15 @@ fun AppActionDialog(
     onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
     onUnhide: (String) -> Unit,
+    onMarkDistracting: (String) -> Unit,
+    onUnmarkDistracting: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
 ) {
     if (app == null) return
 
     val isHidden = app.isHidden
+    val isDistracting = app.isDistracting
 
     BaseActionDialog(
         title = app.appName,
@@ -94,6 +101,28 @@ fun AppActionDialog(
                     onDismiss()
                 }
             )
+
+            if (isDistracting) {
+                ActionButton(
+                    label = stringResource(R.string.app_action_unmark_distracting_label),
+                    description = stringResource(R.string.app_action_unmark_distracting_description),
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        onUnmarkDistracting(app.packageName)
+                        onDismiss()
+                    }
+                )
+            } else {
+                ActionButton(
+                    label = stringResource(R.string.app_action_mark_distracting_label),
+                    description = stringResource(R.string.app_action_mark_distracting_description),
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        onMarkDistracting(app.packageName)
+                        onDismiss()
+                    }
+                )
+            }
 
             if (isHidden) {
                 ActionButton(

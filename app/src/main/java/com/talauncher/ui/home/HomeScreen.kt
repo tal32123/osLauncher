@@ -444,6 +444,8 @@ fun HomeScreen(
                 onRename = { app -> viewModel.renameApp(app) },
                 onHide = { packageName -> viewModel.hideApp(packageName) },
                 onUnhide = { packageName -> viewModel.unhideApp(packageName) },
+                onMarkDistracting = { packageName -> viewModel.markAppAsDistracting(packageName) },
+                onUnmarkDistracting = { packageName -> viewModel.unmarkAppAsDistracting(packageName) },
                 onAppInfo = { packageName -> viewModel.openAppInfo(packageName) },
                 onUninstall = { packageName -> viewModel.uninstallApp(packageName) }
             )

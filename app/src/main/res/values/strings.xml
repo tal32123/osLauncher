@@ -209,6 +209,10 @@
     <string name="app_action_unhide_description">Move this app back to the main list.</string>
     <string name="app_action_hide_label">Hide app</string>
     <string name="app_action_hide_description">Move this app to the hidden list.</string>
+    <string name="app_action_mark_distracting_label">Mark as distracting</string>
+    <string name="app_action_mark_distracting_description">Add friction before opening this app.</string>
+    <string name="app_action_unmark_distracting_label">Remove distracting label</string>
+    <string name="app_action_unmark_distracting_description">Stop showing friction for this app.</string>
     <string name="app_action_info_label">View app info</string>
     <string name="app_action_info_description">Open the system settings page for this app.</string>
     <string name="app_action_uninstall_label">Uninstall app</string>

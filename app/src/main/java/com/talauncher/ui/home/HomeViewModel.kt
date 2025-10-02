@@ -906,6 +906,36 @@ class HomeViewModel(
         }
     }
 
+    fun markAppAsDistracting(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.updateDistractingStatus(packageName, true)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to mark app as distracting",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
+    fun unmarkAppAsDistracting(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.updateDistractingStatus(packageName, false)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to remove distracting status",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
     fun openAppInfo(packageName: String) {
         try {
             val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
