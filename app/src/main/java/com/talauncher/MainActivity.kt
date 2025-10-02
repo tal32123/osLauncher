@@ -142,6 +142,14 @@ class MainActivity : ComponentActivity() {
                 }
                 val mainUiState by mainViewModel.uiState.collectAsState()
 
+                // Log UI state changes
+                LaunchedEffect(mainUiState.isOnboardingCompleted, mainUiState.isLoading) {
+                    android.util.Log.d("MainActivity", "===== UI State Changed =====")
+                    android.util.Log.d("MainActivity", "  isLoading: ${mainUiState.isLoading}")
+                    android.util.Log.d("MainActivity", "  isOnboardingCompleted: ${mainUiState.isOnboardingCompleted}")
+                    android.util.Log.d("MainActivity", "===== END UI State =====")
+                }
+
                 TALauncherTheme(
                     themeMode = mainUiState.themeMode,
                     colorPalette = mainUiState.colorPalette,

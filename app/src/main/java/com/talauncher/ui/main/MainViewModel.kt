@@ -59,7 +59,11 @@ class MainViewModel(
     }
 
     fun onOnboardingCompleted() {
+        android.util.Log.d("MainViewModel", "===== onOnboardingCompleted() CALLED =====")
+        android.util.Log.d("MainViewModel", "Current isOnboardingCompleted: ${_uiState.value.isOnboardingCompleted}")
         _uiState.value = _uiState.value.copy(isOnboardingCompleted = true)
+        android.util.Log.d("MainViewModel", "New isOnboardingCompleted: ${_uiState.value.isOnboardingCompleted}")
+        android.util.Log.d("MainViewModel", "===== onOnboardingCompleted() END =====")
     }
 }
 

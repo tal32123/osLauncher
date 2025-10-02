@@ -234,4 +234,67 @@ class OnboardingDiagnosticTest {
         println("=== END RACE CONDITION TEST ===")
         assert(true)
     }
+
+    @Test
+    fun diagnostic_manualCompletionCheck() {
+        // This test manually verifies the completion logic
+        println("=== MANUAL COMPLETION CHECK ===")
+
+        // Wait for onboarding screen
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            composeTestRule.onAllNodesWithTag("onboarding_step_default_launcher")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        println("Onboarding screen visible")
+
+        // Click all buttons to trigger permission requests
+        val buttons = mutableListOf(
+            "onboarding_step_default_launcher_button",
+            "onboarding_step_usage_stats_button",
+            "onboarding_step_contacts_button",
+            "onboarding_step_location_button"
+        )
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            buttons.add(2, "onboarding_step_notifications_button")
+        }
+
+        // Click each button
+        buttons.forEach { buttonTag ->
+            try {
+                println("Clicking button: $buttonTag")
+                composeTestRule.onNodeWithTag(buttonTag).performClick()
+                Thread.sleep(500)
+                device.pressBack()
+                Thread.sleep(500)
+            } catch (e: Exception) {
+                println("Error clicking $buttonTag: ${e.message}")
+            }
+        }
+
+        println("Waiting 5 seconds for state to settle...")
+        Thread.sleep(5000)
+
+        // Check final state
+        val successVisible = try {
+            composeTestRule.onNodeWithTag("onboarding_success_card").assertExists()
+            true
+        } catch (e: AssertionError) {
+            false
+        }
+
+        val homeVisible = try {
+            composeTestRule.onNodeWithTag("launcher_home_page").assertExists()
+            true
+        } catch (e: AssertionError) {
+            false
+        }
+
+        println("Success card visible: $successVisible")
+        println("Home screen visible: $homeVisible")
+
+        println("=== END MANUAL COMPLETION CHECK ===")
+        assert(true)
+    }
 }

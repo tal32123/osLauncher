@@ -75,6 +75,7 @@ fun OnboardingScreen(
         isDefaultLauncher
     ) {
         // Debug logging
+        android.util.Log.d("OnboardingScreen", "===== LaunchedEffect TRIGGERED =====")
         android.util.Log.d("OnboardingScreen", "Permission check:")
         android.util.Log.d("OnboardingScreen", "  hasUsageStats: ${permissionState.hasUsageStats}")
         android.util.Log.d("OnboardingScreen", "  hasNotifications: ${permissionState.hasNotifications}")
@@ -84,10 +85,16 @@ fun OnboardingScreen(
         android.util.Log.d("OnboardingScreen", "  allOnboardingPermissionsGranted: ${permissionState.allOnboardingPermissionsGranted}")
 
         if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
-            android.util.Log.d("OnboardingScreen", "All requirements met! Completing onboarding...")
+            android.util.Log.d("OnboardingScreen", "*** ALL REQUIREMENTS MET! ***")
+            android.util.Log.d("OnboardingScreen", "Calling viewModel.completeOnboarding()...")
             viewModel.completeOnboarding()
+            android.util.Log.d("OnboardingScreen", "Calling onOnboardingComplete()...")
             onOnboardingComplete()
+            android.util.Log.d("OnboardingScreen", "onOnboardingComplete() returned")
+        } else {
+            android.util.Log.d("OnboardingScreen", "Requirements NOT met - staying on onboarding screen")
         }
+        android.util.Log.d("OnboardingScreen", "===== LaunchedEffect END =====")
     }
 
     Column(
