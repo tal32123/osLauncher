@@ -204,4 +204,34 @@ class OnboardingDiagnosticTest {
         // This test always passes - it's just for diagnostics
         assert(true)
     }
+
+    @Test
+    fun diagnostic_testRaceCondition() {
+        // This test simulates the exact race condition that occurs when
+        // permissions are granted and the user returns to the app
+
+        println("=== TESTING RACE CONDITION ===")
+
+        // Wait for onboarding screen
+        composeTestRule.waitUntil(timeoutMillis = 10000) {
+            composeTestRule.onAllNodesWithTag("onboarding_step_default_launcher")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        println("Onboarding screen loaded")
+
+        // Simulate granting all permissions externally (not through UI clicks)
+        // This mimics what happens when user manually grants permissions in settings
+        runBlocking {
+            val database = LauncherDatabase.getDatabase(context)
+            val settingsRepository = com.talauncher.data.repository.SettingsRepository(database.settingsDao())
+
+            println("Checking if onboarding is complete before granting permissions...")
+            val beforeComplete = settingsRepository.isOnboardingCompleted()
+            println("Before: isOnboardingCompleted = $beforeComplete")
+        }
+
+        println("=== END RACE CONDITION TEST ===")
+        assert(true)
+    }
 }

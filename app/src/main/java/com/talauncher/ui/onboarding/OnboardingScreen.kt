@@ -65,8 +65,26 @@ fun OnboardingScreen(
         isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
     }
 
-    LaunchedEffect(permissionState.allOnboardingPermissionsGranted, isDefaultLauncher) {
+    // Check completion whenever ANY relevant state changes
+    // We need to track the actual permission values, not just the computed property
+    LaunchedEffect(
+        permissionState.hasUsageStats,
+        permissionState.hasNotifications,
+        permissionState.hasContacts,
+        permissionState.hasLocation,
+        isDefaultLauncher
+    ) {
+        // Debug logging
+        android.util.Log.d("OnboardingScreen", "Permission check:")
+        android.util.Log.d("OnboardingScreen", "  hasUsageStats: ${permissionState.hasUsageStats}")
+        android.util.Log.d("OnboardingScreen", "  hasNotifications: ${permissionState.hasNotifications}")
+        android.util.Log.d("OnboardingScreen", "  hasContacts: ${permissionState.hasContacts}")
+        android.util.Log.d("OnboardingScreen", "  hasLocation: ${permissionState.hasLocation}")
+        android.util.Log.d("OnboardingScreen", "  isDefaultLauncher: $isDefaultLauncher")
+        android.util.Log.d("OnboardingScreen", "  allOnboardingPermissionsGranted: ${permissionState.allOnboardingPermissionsGranted}")
+
         if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
+            android.util.Log.d("OnboardingScreen", "All requirements met! Completing onboarding...")
             viewModel.completeOnboarding()
             onOnboardingComplete()
         }
