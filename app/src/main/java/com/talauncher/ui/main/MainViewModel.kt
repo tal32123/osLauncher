@@ -33,8 +33,16 @@ class MainViewModel(
             settingsRepository.getSettings().collect { settings ->
                 val uiSettings = settings.toUiSettingsOrDefault()
                 val isOnboardingCompleted = settings?.isOnboardingCompleted ?: false
+
+                // Only update isOnboardingCompleted from database if current value is false
+                // This prevents database flow from overwriting the immediate navigation trigger
+                val currentCompleted = _uiState.value.isOnboardingCompleted
+                val newCompleted = if (currentCompleted) currentCompleted else isOnboardingCompleted
+
+                android.util.Log.d("MainViewModel", "Database flow update: isOnboardingCompleted=$isOnboardingCompleted, current=$currentCompleted, using=$newCompleted")
+
                 _uiState.value = _uiState.value.copy(
-                    isOnboardingCompleted = isOnboardingCompleted,
+                    isOnboardingCompleted = newCompleted,
                     colorPalette = uiSettings.colorPalette,
                     customColorOption = settings?.customColorOption,
                     themeMode = uiSettings.themeMode,
