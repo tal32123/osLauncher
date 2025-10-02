@@ -131,18 +131,8 @@ fun HomeScreen(
         keyboardController?.hide()
     }
 
-    LaunchedEffect(uiState.showTime, uiState.showDate) {
-        if (uiState.showTime || uiState.showDate) {
-            viewModel.refreshTime() // Initial refresh
-            // Use a timer instead of infinite loop to allow event queue to go idle during tests
-            while (coroutineContext.isActive) {
-                kotlinx.coroutines.delay(60000) // Only refresh if time/date is shown
-                if (coroutineContext.isActive) {
-                    viewModel.refreshTime()
-                }
-            }
-        }
-    }
+    // Time updates are now handled by BroadcastReceiver in ViewModel
+    // No need for manual polling with delay() - more efficient and accurate
 
     // Use modern backdrop with new design system
     ModernBackdrop(
@@ -458,6 +448,15 @@ fun HomeScreen(
                 onUninstall = { packageName -> viewModel.uninstallApp(packageName) }
             )
         }
+
+        // Rename App Dialog
+        RenameAppDialog(
+            app = uiState.appBeingRenamed,
+            newName = uiState.renameInput,
+            onNameChange = { viewModel.updateRenameInput(it) },
+            onConfirm = { viewModel.confirmRename() },
+            onDismiss = { viewModel.dismissRenameDialog() }
+        )
 
         // Friction barrier dialog for distracting apps
         if (uiState.showFrictionDialog) {
