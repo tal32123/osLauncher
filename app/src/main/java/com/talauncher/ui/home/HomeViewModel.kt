@@ -753,8 +753,40 @@ class HomeViewModel(
     }
 
     fun renameApp(app: AppInfo) {
-        // For now, just dismiss the dialog - renaming would require additional UI
         dismissAppActionDialog()
+        _uiState.value = _uiState.value.copy(
+            appBeingRenamed = app,
+            renameInput = app.appName
+        )
+    }
+
+    fun updateRenameInput(value: String) {
+        _uiState.value = _uiState.value.copy(renameInput = value)
+    }
+
+    fun dismissRenameDialog() {
+        _uiState.value = _uiState.value.copy(
+            appBeingRenamed = null,
+            renameInput = ""
+        )
+    }
+
+    fun confirmRename() {
+        val app = _uiState.value.appBeingRenamed ?: return
+        val newName = _uiState.value.renameInput.trim()
+        if (newName.isEmpty()) {
+            return
+        }
+
+        if (newName == app.appName) {
+            dismissRenameDialog()
+            return
+        }
+
+        viewModelScope.launch {
+            appRepository.renameApp(app.packageName, newName)
+            dismissRenameDialog()
+        }
     }
 
     fun hideApp(packageName: String) {
@@ -883,5 +915,7 @@ data class HomeUiState(
     val showAppActionDialog: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val selectedAppSupportsUninstall: Boolean = false,
-    val isOtherAppsExpanded: Boolean = false
+    val isOtherAppsExpanded: Boolean = false,
+    val appBeingRenamed: AppInfo? = null,
+    val renameInput: String = ""
 )

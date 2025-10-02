@@ -49,6 +49,7 @@ import com.talauncher.utils.MainErrorHandler
 import com.talauncher.utils.CommitInfoReader
 import com.talauncher.utils.IdlingResourceHelper
 import com.talauncher.ui.components.ErrorDialog
+import com.talauncher.receivers.PackageChangeReceiver
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -61,6 +62,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var permissionsHelper: PermissionsHelper
     private lateinit var usageStatsHelper: UsageStatsHelper
     private lateinit var contactHelper: ContactHelper
+    private var packageChangeReceiver: PackageChangeReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +83,15 @@ class MainActivity : ComponentActivity() {
                 this.errorHandler
             )
             this.searchInteractionRepository = SearchInteractionRepository(database.searchInteractionDao())
+
+            packageChangeReceiver = PackageChangeReceiver.register(
+                context = applicationContext,
+                onPackageChanged = {
+                    lifecycleScope.launch {
+                        appRepository.syncInstalledApps()
+                    }
+                }
+            )
 
             // Run asynchronous initialization tasks
             // Add delay to allow UI to fully initialize first for Espresso tests
@@ -203,11 +214,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Always navigate back to the home page when the launcher becomes visible
         shouldNavigateToHome = true
         if(::permissionsHelper.isInitialized) {
             permissionsHelper.checkAllPermissions()
         }
+        if(::appRepository.isInitialized) {
+            lifecycleScope.launch {
+                appRepository.syncInstalledApps()
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        PackageChangeReceiver.unregister(applicationContext, packageChangeReceiver)
+        packageChangeReceiver = null
     }
 
     @Deprecated("This method has been deprecated in favor of using the Activity Result API")

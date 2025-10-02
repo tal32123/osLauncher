@@ -459,6 +459,15 @@ fun HomeScreen(
             )
         }
 
+        // Rename App Dialog
+        RenameAppDialog(
+            app = uiState.appBeingRenamed,
+            newName = uiState.renameInput,
+            onNameChange = { viewModel.updateRenameInput(it) },
+            onConfirm = { viewModel.confirmRename() },
+            onDismiss = { viewModel.dismissRenameDialog() }
+        )
+
         // Friction barrier dialog for distracting apps
         if (uiState.showFrictionDialog) {
             run {
