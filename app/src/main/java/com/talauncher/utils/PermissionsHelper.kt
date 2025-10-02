@@ -25,11 +25,18 @@ data class PermissionState(
     val hasLocation: Boolean = false
 ) {
     val allOnboardingPermissionsGranted: Boolean
-        get() =
-            hasUsageStats &&
-                hasNotifications &&
+        get() {
+            // For Android < 13, notifications permission is automatically granted
+            val notificationsRequired = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                hasNotifications
+            } else {
+                true
+            }
+            return hasUsageStats &&
+                notificationsRequired &&
                 hasContacts &&
                 hasLocation
+        }
 }
 
 enum class PermissionType {
