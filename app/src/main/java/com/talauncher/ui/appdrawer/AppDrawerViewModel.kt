@@ -83,8 +83,6 @@ data class AppDrawerUiState(
     val selectedAppForAction: AppInfo? = null,
     val appBeingRenamed: AppInfo? = null,
     val renameInput: String = "",
-    val showFrictionDialog: Boolean = false,
-    val selectedAppForFriction: String? = null,
     val showTimeLimitDialog: Boolean = false,
     val selectedAppForTimeLimit: String? = null,
     val timeLimitDialogAppName: String? = null,
@@ -257,38 +255,11 @@ class AppDrawerViewModel(
                 return@launch
             }
 
-            // Try to launch the app through repository (handles friction checks)
             val launched = appRepository.launchApp(packageName)
             if (launched) {
                 searchInteractionRepository?.recordAppLaunch(packageName)
                 // App was launched successfully, use callback if available
                 onLaunchApp?.invoke(packageName, null)
-            }
-            else {
-                // Show friction barrier for distracting app
-                _uiState.value = _uiState.value.copy(
-                    showFrictionDialog = true,
-                    selectedAppForFriction = packageName
-                )
-            }
-        }
-    }
-
-    fun dismissFrictionDialog() {
-        _uiState.value = _uiState.value.copy(
-            showFrictionDialog = false,
-            selectedAppForFriction = null
-        )
-    }
-
-    fun launchAppWithReason(packageName: String, reason: String) {
-        viewModelScope.launch {
-            // Log the reason for analytics/insights if needed
-            val launched = appRepository.launchApp(packageName, bypassFriction = true)
-            if (launched) {
-                searchInteractionRepository?.recordAppLaunch(packageName)
-                onLaunchApp?.invoke(packageName, null)
-                dismissFrictionDialog()
             }
         }
     }
@@ -331,7 +302,6 @@ class AppDrawerViewModel(
         viewModelScope.launch {
             val launched = appRepository.launchApp(
                 packageName,
-                bypassFriction = true,
                 plannedDuration = durationMinutes
             )
             if (launched) {

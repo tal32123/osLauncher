@@ -393,11 +393,6 @@ class HomeViewModel(
                 searchInteractionRepository?.recordAppLaunch(packageName)
                 clearSearch()
                 onLaunchApp?.invoke(packageName, null)
-            } else {
-                _uiState.value = _uiState.value.copy(
-                    showFrictionDialog = true,
-                    selectedAppForFriction = packageName
-                )
             }
         }
     }
@@ -590,25 +585,6 @@ class HomeViewModel(
         )
     }
 
-    fun dismissFrictionDialog() {
-        _uiState.value = _uiState.value.copy(
-            showFrictionDialog = false,
-            selectedAppForFriction = null
-        )
-    }
-
-    fun launchAppWithReason(packageName: String, reason: String) {
-        viewModelScope.launch {
-            val launched = appRepository.launchApp(packageName, bypassFriction = true)
-            if (launched) {
-                searchInteractionRepository?.recordAppLaunch(packageName)
-                clearSearch()
-                onLaunchApp?.invoke(packageName, null)
-                dismissFrictionDialog()
-            }
-        }
-    }
-
     fun dismissTimeLimitDialog() {
         _uiState.value = _uiState.value.copy(
             showTimeLimitDialog = false,
@@ -624,7 +600,6 @@ class HomeViewModel(
         viewModelScope.launch {
             val launched = appRepository.launchApp(
                 packageName,
-                bypassFriction = true,
                 plannedDuration = durationMinutes
             )
 
@@ -1008,8 +983,6 @@ data class HomeUiState(
     val unifiedSearchResults: List<SearchItem> = emptyList(),
     val isContactsPermissionMissing: Boolean = false,
     val showContactsPermissionDialog: Boolean = false,
-    val showFrictionDialog: Boolean = false,
-    val selectedAppForFriction: String? = null,
     val showTimeLimitDialog: Boolean = false,
     val selectedAppForTimeLimit: String? = null,
     val timeLimitDialogAppName: String? = null,
