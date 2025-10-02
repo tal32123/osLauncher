@@ -1,8 +1,10 @@
 package com.talauncher.ui.home
 
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -118,10 +120,43 @@ class HomeViewModel(
     private var contactSearchJob: Job? = null
     private val searchQueryFlow = MutableStateFlow("")
 
+    /**
+     * BroadcastReceiver for system time updates.
+     *
+     * Architecture:
+     * - Responds to ACTION_TIME_TICK (sent every minute when time changes)
+     * - Responds to ACTION_TIME_CHANGED (manual time changes)
+     * - Responds to ACTION_TIMEZONE_CHANGED (timezone changes)
+     *
+     * Lifecycle Management:
+     * - Registered when time/date display is enabled
+     * - Unregistered when ViewModel is cleared to prevent memory leaks
+     * - Registered with application context (not Activity) to survive config changes
+     *
+     * Performance:
+     * - More efficient than manual polling with delay()
+     * - No wasted battery from constant coroutine loops
+     * - Updates exactly when needed (minute boundaries)
+     */
+    private val timeTickReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_TIME_TICK,
+                Intent.ACTION_TIME_CHANGED,
+                Intent.ACTION_TIMEZONE_CHANGED -> {
+                    updateTime()
+                }
+            }
+        }
+    }
+
+    private var isTimeReceiverRegistered = false
+
     init {
         observeData()
         updateTime()
         setupDebouncedContactSearch()
+        registerTimeReceiver()
     }
 
     private fun observeData() {
@@ -269,6 +304,65 @@ class HomeViewModel(
             )
     }
 
+    /**
+     * Registers the BroadcastReceiver for time updates.
+     *
+     * SOLID Principle - Single Responsibility:
+     * - This method only handles receiver registration
+     * - Separate from time formatting logic
+     *
+     * Android Best Practices:
+     * - Uses application context to avoid memory leaks
+     * - Registers for multiple time-related intents
+     * - Guarded against multiple registrations
+     */
+    private fun registerTimeReceiver() {
+        if (isTimeReceiverRegistered) return
+
+        try {
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_TIME_TICK)
+                addAction(Intent.ACTION_TIME_CHANGED)
+                addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            }
+            appContext.registerReceiver(timeTickReceiver, filter)
+            isTimeReceiverRegistered = true
+            Log.d(TAG, "Time receiver registered successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to register time receiver", e)
+        }
+    }
+
+    /**
+     * Unregisters the BroadcastReceiver for time updates.
+     *
+     * Lifecycle Management:
+     * - Called in onCleared() to prevent memory leaks
+     * - Guarded against unregistering when not registered
+     */
+    private fun unregisterTimeReceiver() {
+        if (!isTimeReceiverRegistered) return
+
+        try {
+            appContext.unregisterReceiver(timeTickReceiver)
+            isTimeReceiverRegistered = false
+            Log.d(TAG, "Time receiver unregistered successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to unregister time receiver", e)
+        }
+    }
+
+    /**
+     * Updates the current time and date in the UI state.
+     *
+     * Thread-Safety:
+     * - Uses thread-safe FormatTimeUseCase with DateTimeFormatter
+     * - No synchronization needed
+     *
+     * Performance:
+     * - Lightweight operation, safe to call from BroadcastReceiver
+     * - Updates happen on main thread via coroutine
+     */
     private fun updateTime() {
         viewModelScope.launch {
             val result = formatTimeUseCase.execute()
@@ -718,6 +812,7 @@ class HomeViewModel(
 
     override fun onCleared() {
         super.onCleared()
+        unregisterTimeReceiver()
         weatherUpdateJob?.cancel()
         contactSearchJob?.cancel()
     }
