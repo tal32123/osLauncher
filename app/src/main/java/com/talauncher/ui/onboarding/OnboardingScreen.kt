@@ -17,7 +17,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,9 +43,24 @@ fun OnboardingScreen(
     val context = LocalContext.current
     val appName = stringResource(R.string.app_name)
     var isDefaultLauncher by remember { mutableStateOf(usageStatsHelper.isDefaultLauncher()) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     PermissionManager(permissionsHelper)
 
+    // Re-check default launcher status when returning from settings
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Also check when permissions change (in case user grants permissions)
     LaunchedEffect(permissionState) {
         isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
     }
