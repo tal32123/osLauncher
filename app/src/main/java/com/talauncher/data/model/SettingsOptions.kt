@@ -58,7 +58,7 @@ enum class ColorPaletteOption(val label: String) {
 
 enum class AppIconStyleOption(val label: String) {
     ORIGINAL("Original colors"),
-    BLACK_AND_WHITE("Black & white"),
+    BLACK_AND_WHITE("Monochrome"),
     HIDDEN("No icons");
 
     val storageValue: String
