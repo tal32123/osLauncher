@@ -49,8 +49,6 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.talauncher.BuildConfig
-import com.talauncher.domain.model.AlphabetIndexEntry
-import com.talauncher.domain.usecases.BuildAlphabetIndexUseCase
 import com.talauncher.domain.usecases.FormatTimeUseCase
 import com.talauncher.domain.usecases.GetRecentAppsUseCase
 import com.talauncher.domain.usecases.SearchAppsUseCase
@@ -95,7 +93,6 @@ class HomeViewModel(
     private val errorHandler: ErrorHandler? = null,
     private val formatTimeUseCase: FormatTimeUseCase = FormatTimeUseCase(),
     private val searchAppsUseCase: SearchAppsUseCase = SearchAppsUseCase(),
-    private val buildAlphabetIndexUseCase: BuildAlphabetIndexUseCase = BuildAlphabetIndexUseCase(),
     private val getRecentAppsUseCase: GetRecentAppsUseCase = GetRecentAppsUseCase(usageStatsHelper)
 ) : ViewModel() {
 
@@ -196,8 +193,6 @@ class HomeViewModel(
                         recentAppsLimit,
                         hasUsageStatsPermission
                     )
-                    // Use BuildAlphabetIndexUseCase for alphabet index
-                    val alphabetIndex = buildAlphabetIndexUseCase.execute(allApps, recentApps)
 
                     withContext(Dispatchers.Main.immediate) {
                         val wasExpanded = _uiState.value.isOtherAppsExpanded
@@ -224,9 +219,7 @@ class HomeViewModel(
                             uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                             enableAnimations = settings?.enableAnimations ?: true,
                             // App drawer functionality moved to home screen
-                            recentApps = recentApps,
-                            alphabetIndexEntries = alphabetIndex,
-                            isAlphabetIndexEnabled = allApps.isNotEmpty()
+                            recentApps = recentApps
                         ).let { updated ->
                             val keepExpanded = wasExpanded && hiddenApps.isNotEmpty()
                             if (updated.isOtherAppsExpanded != keepExpanded) {
@@ -792,20 +785,6 @@ class HomeViewModel(
         contactSearchJob?.cancel()
     }
 
-    fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
-        _uiState.value = _uiState.value.copy(
-            alphabetIndexActiveKey = entry.key
-        )
-    }
-
-    fun onAlphabetScrubbingChanged(isScrubbing: Boolean) {
-        if (!isScrubbing) {
-            _uiState.value = _uiState.value.copy(
-                alphabetIndexActiveKey = null
-            )
-        }
-    }
-
     fun showAppActionDialog(app: AppInfo) {
         _uiState.value = _uiState.value.copy(
             showAppActionDialog = true,
@@ -1007,9 +986,6 @@ data class HomeUiState(
     val enableAnimations: Boolean = true,
     // App drawer functionality moved to home screen
     val recentApps: List<AppInfo> = emptyList(),
-    val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
-    val alphabetIndexActiveKey: String? = null,
-    val isAlphabetIndexEnabled: Boolean = true,
     val showAppActionDialog: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val selectedAppSupportsUninstall: Boolean = false,

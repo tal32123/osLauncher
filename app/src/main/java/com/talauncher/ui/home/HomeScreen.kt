@@ -48,10 +48,11 @@ import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.isActive
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
+import com.talauncher.ui.components.scrollbar.SimpleScrollbar
+import com.talauncher.ui.components.scrollbar.ScrollbarDefaults
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.WeatherDisplayOption
-import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
 import com.talauncher.ui.components.ContactItem
 import com.talauncher.ui.components.GoogleSearchItem
 import com.talauncher.ui.components.ModernGlassCard
@@ -257,41 +258,22 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
             } else {
-                // Apps Section with Recent Apps and Alphabet Index
+                // Apps Section with Recent Apps
                 val listState = rememberLazyListState()
 
-                // Handle alphabet index scrolling
-                LaunchedEffect(uiState.alphabetIndexActiveKey) {
-                    val activeKey = uiState.alphabetIndexActiveKey
-                    if (activeKey != null) {
-                        val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
-                        if (entry != null) {
-                            if (entry.key == RECENT_APPS_INDEX_KEY) {
-                                listState.animateScrollToItem(0)
-                            } else {
-                                entry.targetIndex?.let { targetIndex ->
-                                    // Adjust index to account for recent apps section
-                                    val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                        // Add header + recent apps + spacer/title before "All Apps"
-                                        targetIndex + uiState.recentApps.size + 2
-                                    } else {
-                                        targetIndex
-                                    }
-                                    listState.animateScrollToItem(adjustedIndex)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
+                SimpleScrollbar(
+                    scrollState = listState,
+                    config = ScrollbarDefaults.config(
+                        thumbColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        autoHideEnabled = true
+                    ),
+                    modifier = Modifier.weight(1f)
                 ) {
                     LazyColumn(
                         state = listState,
-                        modifier = Modifier.weight(1f).testTag("app_list"),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("app_list"),
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
                         contentPadding = PaddingValues(bottom = 80.dp), // Extra bottom padding for accessibility
                     ) {
@@ -380,22 +362,6 @@ fun HomeScreen(
                                 }
                             }
                         }
-                    }
-
-                    // Alphabet Index on the right side
-                    if (uiState.alphabetIndexEntries.isNotEmpty()) {
-                        AlphabetIndex(
-                            entries = uiState.alphabetIndexEntries,
-                            activeKey = uiState.alphabetIndexActiveKey,
-                            isEnabled = uiState.isAlphabetIndexEnabled,
-                            modifier = Modifier.padding(end = PrimerSpacing.sm).testTag("alphabet_index"),
-                            onEntryFocused = { entry, fraction ->
-                                viewModel.onAlphabetIndexFocused(entry, fraction)
-                            },
-                            onScrubbingChanged = { isScrubbing ->
-                                viewModel.onAlphabetScrubbingChanged(isScrubbing)
-                            }
-                        )
                     }
                 }
             }
