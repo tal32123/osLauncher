@@ -69,8 +69,15 @@ class MainViewModel(
     fun onOnboardingCompleted() {
         android.util.Log.d("MainViewModel", "===== onOnboardingCompleted() CALLED =====")
         android.util.Log.d("MainViewModel", "Current isOnboardingCompleted: ${_uiState.value.isOnboardingCompleted}")
-        _uiState.value = _uiState.value.copy(isOnboardingCompleted = true)
-        android.util.Log.d("MainViewModel", "New isOnboardingCompleted: ${_uiState.value.isOnboardingCompleted}")
+
+        // Update state with timestamp to force emission even if other values are the same
+        // This ensures MainActivity receives the update and navigates away from onboarding
+        _uiState.value = _uiState.value.copy(
+            isOnboardingCompleted = true,
+            navigationTimestamp = System.currentTimeMillis()
+        )
+
+        android.util.Log.d("MainViewModel", "New state: isOnboardingCompleted=true, timestamp=${_uiState.value.navigationTimestamp}")
         android.util.Log.d("MainViewModel", "===== onOnboardingCompleted() END =====")
     }
 }
@@ -81,5 +88,7 @@ data class MainUiState(
     val colorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
     val customColorOption: String? = null,
     val themeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
-    val uiSettings: UiSettings = UiSettings()
+    val uiSettings: UiSettings = UiSettings(),
+    // Timestamp to force state emission when onboarding completes
+    val navigationTimestamp: Long = 0L
 )
