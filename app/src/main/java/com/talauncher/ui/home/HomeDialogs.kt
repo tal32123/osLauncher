@@ -2,20 +2,6 @@ package com.talauncher.ui.home
 
 import androidx.compose.runtime.Composable
 import com.talauncher.data.model.AppInfo
-import com.talauncher.domain.quotes.QuotesProvider
-
-@Composable
-fun FrictionDialog(
-    appPackageName: String,
-    onDismiss: () -> Unit,
-    onProceed: (String) -> Unit,
-    quotesProvider: QuotesProvider? = null
-) = com.talauncher.ui.home.dialogs.FrictionDialog(
-    appPackageName = appPackageName,
-    onDismiss = onDismiss,
-    onProceed = onProceed,
-    quotesProvider = quotesProvider
-)
 
 @Composable
 fun AppActionDialog(

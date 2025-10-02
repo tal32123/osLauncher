@@ -212,17 +212,8 @@ class AppRepository(
         }
     }
 
-    suspend fun launchApp(packageName: String, bypassFriction: Boolean = false, plannedDuration: Int? = null): Boolean {
+    suspend fun launchApp(packageName: String, plannedDuration: Int? = null): Boolean {
         try {
-            // Check if app is distracting and should show friction barrier
-            val app = getApp(packageName)
-
-            val requiresFriction = !bypassFriction && plannedDuration == null && app?.isDistracting == true
-            if (requiresFriction) {
-                // Return false to indicate friction barrier should be shown
-                return false
-            }
-
             if (plannedDuration != null && plannedDuration > 0 && sessionRepository != null) {
                 sessionRepository.startSession(packageName, plannedDuration)
             }

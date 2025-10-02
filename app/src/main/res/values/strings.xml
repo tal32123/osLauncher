@@ -194,14 +194,6 @@
     <string name="home_other_apps_hint">Tap to reveal these hidden apps.</string>
     <string name="home_recent_badge">Recent</string>
 
-    <!-- Friction Dialog -->
-    <string name="friction_dialog_title">Mindful Usage</string>
-    <string name="friction_dialog_marked_distracting">You\'re trying to open %1$s, which you\'ve marked as distracting.</string>
-    <string name="friction_dialog_why">Why do you need to open this app right now?</string>
-    <string name="friction_dialog_reason_placeholder">Type your reason here...</string>
-    <string name="friction_dialog_continue">Continue</string>
-    <string name="friction_dialog_cancel">Cancel</string>
-
     <!-- App Action Dialog -->
     <string name="app_action_dialog_choose">Choose an action:</string>
     <string name="app_action_dialog_cancel">Cancel</string>

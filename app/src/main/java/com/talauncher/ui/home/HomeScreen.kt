@@ -91,8 +91,7 @@ fun HomeScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
     val context = LocalContext.current
-    val hasActiveDialog = uiState.showFrictionDialog ||
-        uiState.showTimeLimitDialog
+    val hasActiveDialog = uiState.showTimeLimitDialog
 
     LaunchedEffect(viewModel, permissionsHelper, context) {
         viewModel.events.collect { event ->
@@ -116,10 +115,6 @@ fun HomeScreen(
         when {
             uiState.showTimeLimitDialog -> {
                 // Time limit dialog cannot be dismissed with back button - force choice
-            }
-            uiState.showFrictionDialog -> {
-                // Friction dialog can be dismissed to respect user choice
-                viewModel.dismissFrictionDialog()
             }
         }
     }
@@ -459,20 +454,6 @@ fun HomeScreen(
             onConfirm = { viewModel.confirmRename() },
             onDismiss = { viewModel.dismissRenameDialog() }
         )
-
-        // Friction barrier dialog for distracting apps
-        if (uiState.showFrictionDialog) {
-            run {
-                val selectedPackage = uiState.selectedAppForFriction ?: return@run
-                FrictionDialog(
-                    appPackageName = selectedPackage,
-                    onDismiss = { viewModel.dismissFrictionDialog() },
-                    onProceed = { reason ->
-                        viewModel.launchAppWithReason(selectedPackage, reason)
-                    }
-                )
-            }
-        }
 
         // Time limit dialog for distracting apps
         if (uiState.showTimeLimitDialog) {
