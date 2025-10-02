@@ -42,7 +42,7 @@ jobs:
     # CI requires a clean working tree due to checkGitStatus task
 
     - name: Run unit tests
-      run: ./gradlew test --no-daemon --stacktrace
+      run: ./gradlew :app:unitTestSuite --no-daemon --stacktrace
 
     - name: Build debug APK
       run: ./gradlew assembleDebug --no-daemon --stacktrace
