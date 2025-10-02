@@ -119,23 +119,20 @@ private fun AppIconStyleSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            AppIconStyleOption.entries.forEach { option ->
-                FilterChip(
-                    selected = appIconStyle == option,
-                    onClick = { onUpdateAppIconStyle(option) },
-                    label = {
-                        Text(
-                            text = option.label,
-                            maxLines = 1
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        ChipGrid(
+            items = AppIconStyleOption.entries,
+            modifier = Modifier.fillMaxWidth()
+        ) { option ->
+            FilterChip(
+                selected = appIconStyle == option,
+                onClick = { onUpdateAppIconStyle(option) },
+                label = {
+                    Text(
+                        text = option.label,
+                        maxLines = 1
+                    )
+                }
+            )
         }
     }
 }
