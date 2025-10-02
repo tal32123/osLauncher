@@ -25,6 +25,8 @@ fun AppActionDialog(
     onRename: (AppInfo) -> Unit,
     onHide: (String) -> Unit,
     onUnhide: (String) -> Unit,
+    onMarkDistracting: (String) -> Unit,
+    onUnmarkDistracting: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
 ) = com.talauncher.ui.home.dialogs.AppActionDialog(
@@ -34,6 +36,8 @@ fun AppActionDialog(
     onRename = onRename,
     onHide = onHide,
     onUnhide = onUnhide,
+    onMarkDistracting = onMarkDistracting,
+    onUnmarkDistracting = onUnmarkDistracting,
     onAppInfo = onAppInfo,
     onUninstall = onUninstall
 )
