@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -40,7 +39,6 @@ import com.talauncher.utils.UsageStatsHelper
 private enum class OnboardingStepId {
     DEFAULT_LAUNCHER,
     USAGE_STATS,
-    NOTIFICATIONS,
     CONTACTS,
     LOCATION,
     APPEARANCE
@@ -69,7 +67,6 @@ fun OnboardingScreen(
         buildList {
             add(OnboardingStepId.DEFAULT_LAUNCHER)
             add(OnboardingStepId.USAGE_STATS)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(OnboardingStepId.NOTIFICATIONS)
             add(OnboardingStepId.CONTACTS)
             add(OnboardingStepId.LOCATION)
             add(OnboardingStepId.APPEARANCE)
@@ -148,26 +145,7 @@ fun OnboardingScreen(
                 canProceed = permissionState.hasUsageStats
             )
 
-            OnboardingStepId.NOTIFICATIONS -> {
-                var inProgress by remember { mutableStateOf(false) }
-                LaunchedEffect(permissionState.hasNotifications) { if (permissionState.hasNotifications) inProgress = false }
-                PermissionStep(
-                    icon = Icons.Default.Notifications,
-                    title = stringResource(R.string.onboarding_step_notifications_title),
-                    description = stringResource(R.string.onboarding_step_notifications_desc),
-                    isGranted = permissionState.hasNotifications,
-                    primaryButtonText = if (permissionState.hasNotifications) stringResource(R.string.completed) else stringResource(R.string.onboarding_action_allow_notifications),
-                    onPrimary = {
-                        inProgress = true
-                        permissionsHelper.requestPermission(context as Activity, PermissionType.NOTIFICATIONS)
-                    },
-                    onNext = { viewModel.goToNextStep() },
-                    onBack = { viewModel.goToPreviousStep() },
-                    canProceed = permissionState.hasNotifications || !inProgress,
-                    allowSkip = true,
-                    onSkip = { viewModel.goToNextStep() }
-                )
-            }
+            
 
             OnboardingStepId.CONTACTS -> PermissionStep(
                 icon = Icons.Default.Person,
@@ -205,6 +183,10 @@ fun OnboardingScreen(
                 showWallpaper = uiState.showWallpaper,
                 onToggleWallpaper = viewModel::setShowWallpaper,
                 onPickWallpaper = { pickWallpaperLauncher.launch(arrayOf("image/*")) },
+                wallpaperBlurAmount = uiState.wallpaperBlurAmount,
+                backgroundOpacity = uiState.backgroundOpacity,
+                backgroundColor = uiState.backgroundColor,
+                customWallpaperPath = uiState.customWallpaperPath,
                 onFinish = {
                     viewModel.completeOnboarding()
                     onOnboardingComplete()
@@ -235,6 +217,9 @@ private fun PermissionStep(
     allowSkip: Boolean = false,
     onSkip: (() -> Unit)? = null
 ) {
+    LaunchedEffect(isGranted) {
+        if (isGranted) onNext()
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -294,6 +279,10 @@ private fun AppearanceStep(
     showWallpaper: Boolean,
     onToggleWallpaper: (Boolean) -> Unit,
     onPickWallpaper: () -> Unit,
+    wallpaperBlurAmount: Float,
+    backgroundOpacity: Float,
+    backgroundColor: String,
+    customWallpaperPath: String?,
     onFinish: () -> Unit,
     onBack: () -> Unit,
     onSkip: () -> Unit
@@ -338,11 +327,19 @@ private fun AppearanceStep(
         Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.color_palette_preview_title), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        // Simple preview: three sample apps demonstrating icon style + typography
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ModernAppItem(appName = "Calendar", packageName = "com.android.calendar", onClick = {}, appIconStyle = selectedIconStyle)
-            ModernAppItem(appName = "Messages", packageName = "com.android.messaging", onClick = {}, appIconStyle = selectedIconStyle)
-            ModernAppItem(appName = "Notes", packageName = "com.example.notes", onClick = {}, appIconStyle = selectedIconStyle)
+        // Preview with wallpaper backdrop
+        com.talauncher.ui.components.ModernBackdrop(
+            showWallpaper = showWallpaper,
+            blurAmount = wallpaperBlurAmount,
+            backgroundColor = backgroundColor,
+            opacity = backgroundOpacity,
+            customWallpaperPath = customWallpaperPath
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(8.dp)) {
+                ModernAppItem(appName = "Calendar", packageName = "com.android.calendar", onClick = {}, appIconStyle = selectedIconStyle)
+                ModernAppItem(appName = "Messages", packageName = "com.android.messaging", onClick = {}, appIconStyle = selectedIconStyle)
+                ModernAppItem(appName = "Notes", packageName = "com.example.notes", onClick = {}, appIconStyle = selectedIconStyle)
+            }
         }
 
         Spacer(Modifier.height(16.dp))
