@@ -48,6 +48,8 @@ class AppRepository(
 
     fun getDistractingApps(): Flow<List<AppInfo>> = appDao.getDistractingApps()
 
+    fun getPinnedApps(): Flow<List<AppInfo>> = appDao.getPinnedApps()
+
     suspend fun getApp(packageName: String): AppInfo? = appDao.getApp(packageName)
 
     suspend fun insertApp(app: AppInfo) = appDao.insertApp(app)
@@ -133,6 +135,38 @@ class AppRepository(
             errorHandler?.showError(
                 "Update Status Error",
                 "Failed to update distracting status: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
+        }
+    }
+
+    suspend fun pinApp(packageName: String) {
+        try {
+            val app = getApp(packageName) ?: getAppInfoFromPackage(packageName)
+            if (app != null) {
+                appDao.updatePinnedStatus(packageName, true)
+                if (getApp(packageName) == null) {
+                    insertApp(app.copy(isPinned = true))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error pinning app: $packageName", e)
+            errorHandler?.showError(
+                "Pin App Error",
+                "Failed to pin app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
+                e
+            )
+        }
+    }
+
+    suspend fun unpinApp(packageName: String) {
+        try {
+            appDao.updatePinnedStatus(packageName, false)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unpinning app: $packageName", e)
+            errorHandler?.showError(
+                "Unpin App Error",
+                "Failed to unpin app: ${e.localizedMessage ?: e.message ?: "Unknown error"}",
                 e
             )
         }

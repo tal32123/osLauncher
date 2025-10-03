@@ -470,6 +470,8 @@ fun HomeScreen(
                 onUnhide = { packageName -> viewModel.unhideApp(packageName) },
                 onMarkDistracting = { packageName -> viewModel.markAppAsDistracting(packageName) },
                 onUnmarkDistracting = { packageName -> viewModel.unmarkAppAsDistracting(packageName) },
+                onPin = { packageName -> viewModel.pinApp(packageName) },
+                onUnpin = { packageName -> viewModel.unpinApp(packageName) },
                 onAppInfo = { packageName -> viewModel.openAppInfo(packageName) },
                 onUninstall = { packageName -> viewModel.uninstallApp(packageName) }
             )

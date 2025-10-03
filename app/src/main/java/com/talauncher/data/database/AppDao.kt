@@ -44,6 +44,11 @@ interface AppDao {
     @Query("UPDATE app_info SET timeLimitMinutes = :timeLimit WHERE packageName = :packageName")
     suspend fun updateTimeLimit(packageName: String, timeLimit: Int?)
 
+    @Query("UPDATE app_info SET isPinned = :isPinned WHERE packageName = :packageName")
+    suspend fun updatePinnedStatus(packageName: String, isPinned: Boolean)
+
+    @Query("SELECT * FROM app_info WHERE isPinned = 1 ORDER BY appName ASC")
+    fun getPinnedApps(): Flow<List<AppInfo>>
 
     @Query("SELECT * FROM app_info")
     fun getAllApps(): Flow<List<AppInfo>>

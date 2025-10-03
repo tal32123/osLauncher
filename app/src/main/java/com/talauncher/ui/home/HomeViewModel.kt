@@ -222,9 +222,16 @@ class HomeViewModel(
                                 )
                                 emptyList()
                             }
+                            // Get pinned apps
+                            val pinnedApps = try {
+                                appRepository.getPinnedApps().first()
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error getting pinned apps", e)
+                                emptyList<AppInfo>()
+                            }
                             // Build enhanced SectionIndex for per-app fast scrolling
                             val sectionIndex = try {
-                                buildAlphabetIndexUseCase.buildSectionIndex(allApps, recentApps)
+                                buildAlphabetIndexUseCase.buildSectionIndex(allApps, recentApps, pinnedApps)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error building section index", e)
                                 errorHandler?.showError(
@@ -957,6 +964,36 @@ class HomeViewModel(
             } catch (e: Exception) {
                 errorHandler?.showError(
                     "Failed to remove distracting status",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
+    fun pinApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.pinApp(packageName)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to pin app",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
+    fun unpinApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.unpinApp(packageName)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to unpin app",
                     e.message ?: "Unknown error",
                     e
                 )
