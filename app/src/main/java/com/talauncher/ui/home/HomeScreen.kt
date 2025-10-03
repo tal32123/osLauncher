@@ -259,6 +259,7 @@ fun HomeScreen(
             } else {
                 // Apps Section with Recent Apps and Alphabet Index
                 val listState = rememberLazyListState()
+                val scope = rememberCoroutineScope()
 
                 // Handle alphabet index scrolling
                 LaunchedEffect(uiState.alphabetIndexActiveKey) {
