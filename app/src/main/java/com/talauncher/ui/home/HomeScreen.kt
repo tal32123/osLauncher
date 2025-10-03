@@ -62,6 +62,7 @@ import com.talauncher.ui.components.AppIcon
 import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.components.UnifiedSearchResults
+import com.talauncher.ui.components.appSectionItems
 import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.theme.*
 import com.talauncher.ui.components.TimeLimitDialog
@@ -323,8 +324,8 @@ fun HomeScreen(
                                 iconColor = uiState.pinnedAppsIconColor,
                                 enableGlassmorphism = uiState.enableGlassmorphism,
                                 uiDensity = uiState.uiDensity.toUiDensity(),
-                                onClick = { app -> viewModel.launchApp(app.packageName) },
-                                onLongClick = { app ->
+                                onClick = { app: AppInfo -> viewModel.launchApp(app.packageName) },
+                                onLongClick = { app: AppInfo ->
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.showAppActionDialog(app)
                                 },
@@ -358,8 +359,8 @@ fun HomeScreen(
                                 iconColor = uiState.recentAppsIconColor,
                                 enableGlassmorphism = uiState.enableGlassmorphism,
                                 uiDensity = uiState.uiDensity.toUiDensity(),
-                                onClick = { app -> viewModel.launchApp(app.packageName) },
-                                onLongClick = { app ->
+                                onClick = { app: AppInfo -> viewModel.launchApp(app.packageName) },
+                                onLongClick = { app: AppInfo ->
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.showAppActionDialog(app)
                                 },
@@ -388,8 +389,8 @@ fun HomeScreen(
                             iconColor = uiState.allAppsIconColor,
                             enableGlassmorphism = uiState.enableGlassmorphism,
                             uiDensity = uiState.uiDensity.toUiDensity(),
-                            onClick = { app -> viewModel.launchApp(app.packageName) },
-                            onLongClick = { app ->
+                            onClick = { app: AppInfo -> viewModel.launchApp(app.packageName) },
+                            onLongClick = { app: AppInfo ->
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.showAppActionDialog(app)
                             },
