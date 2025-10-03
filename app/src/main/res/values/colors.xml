@@ -15,6 +15,10 @@
     <color name="default_surface_light">#FFFFFFFF</color>
     <color name="default_surface_dark">#FF0F0F0F</color>
 
+    <!-- App icon colors -->
+    <color name="tal_icon_background">@color/default_primary_light</color>
+    <color name="tal_icon_foreground">@android:color/white</color>
+
     <!-- Warm palette colors -->
     <color name="warm_primary_light">#FFB94517</color>
     <color name="warm_primary_dark">#FFFFB68D</color>
