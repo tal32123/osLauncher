@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.layout.width
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.UiDensityOption
