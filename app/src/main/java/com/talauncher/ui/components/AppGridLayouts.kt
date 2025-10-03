@@ -1,6 +1,7 @@
 package com.talauncher.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -25,7 +26,9 @@ fun LazyListScope.appSectionItems(
     uiDensity: UiDensity,
     onClick: (AppInfo) -> Unit,
     onLongClick: ((AppInfo) -> Unit)? = null,
-    keyPrefix: String = ""
+    keyPrefix: String = "",
+    activeGlobalIndex: Int? = null,
+    sectionGlobalStartIndex: Int = 0
 ) {
     when (layout) {
         AppSectionLayoutOption.LIST -> {
@@ -50,13 +53,16 @@ fun LazyListScope.appSectionItems(
 
             items(chunked.size, key = { rowIndex -> "${keyPrefix}_row_$rowIndex" }) { rowIndex ->
                 val rowApps = chunked[rowIndex]
+                val rowStartGlobalIndex = sectionGlobalStartIndex + rowIndex * columns
                 AppGridRow(
                     apps = rowApps,
                     columns = columns,
                     displayStyle = displayStyle,
                     iconColor = iconColor,
                     onClick = onClick,
-                    onLongClick = onLongClick
+                    onLongClick = onLongClick,
+                    rowStartGlobalIndex = rowStartGlobalIndex,
+                    activeGlobalIndex = activeGlobalIndex
                 )
             }
         }
@@ -103,7 +109,9 @@ private fun AppGridRow(
     displayStyle: AppDisplayStyleOption,
     iconColor: IconColorOption,
     onClick: (AppInfo) -> Unit,
-    onLongClick: ((AppInfo) -> Unit)?
+    onLongClick: ((AppInfo) -> Unit)?,
+    rowStartGlobalIndex: Int,
+    activeGlobalIndex: Int?
 ) {
     Row(
         modifier = Modifier
@@ -111,14 +119,15 @@ private fun AppGridRow(
             .padding(horizontal = 4.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        apps.forEach { app ->
+        apps.forEachIndexed { colIndex, app ->
             Box(modifier = Modifier.weight(1f)) {
                 AppGridItem(
                     app = app,
                     displayStyle = displayStyle,
                     iconColor = iconColor,
                     onClick = { onClick(app) },
-                    onLongClick = onLongClick?.let { { it(app) } }
+                    onLongClick = onLongClick?.let { { it(app) } },
+                    isActive = (activeGlobalIndex == (rowStartGlobalIndex + colIndex))
                 )
             }
         }
@@ -139,7 +148,8 @@ private fun AppGridItem(
     displayStyle: AppDisplayStyleOption,
     iconColor: IconColorOption,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    isActive: Boolean = false
 ) {
     val iconStyle = when {
         displayStyle == AppDisplayStyleOption.TEXT_ONLY -> AppIconStyleOption.HIDDEN
@@ -147,13 +157,16 @@ private fun AppGridItem(
         else -> AppIconStyleOption.ORIGINAL
     }
 
+    val scale = if (isActive) 1.06f else 1.0f
+
     when (displayStyle) {
         AppDisplayStyleOption.ICON_ONLY -> {
             AppGridItemIconOnly(
                 app = app,
                 iconStyle = iconStyle,
                 onClick = onClick,
-                onLongClick = onLongClick
+                onLongClick = onLongClick,
+                modifier = Modifier.graphicsLayer(scaleX = scale, scaleY = scale)
             )
         }
         AppDisplayStyleOption.ICON_AND_TEXT -> {
@@ -161,14 +174,16 @@ private fun AppGridItem(
                 app = app,
                 iconStyle = iconStyle,
                 onClick = onClick,
-                onLongClick = onLongClick
+                onLongClick = onLongClick,
+                modifier = Modifier.graphicsLayer(scaleX = scale, scaleY = scale)
             )
         }
         AppDisplayStyleOption.TEXT_ONLY -> {
             AppGridItemTextOnly(
                 app = app,
                 onClick = onClick,
-                onLongClick = onLongClick
+                onLongClick = onLongClick,
+                modifier = Modifier.graphicsLayer(scaleX = scale, scaleY = scale)
             )
         }
     }

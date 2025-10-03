@@ -23,10 +23,11 @@ fun AppGridItemIconOnly(
     app: AppInfo,
     iconStyle: AppIconStyleOption,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .aspectRatio(1f)
             .combinedClickable(
                 onClick = onClick,
@@ -60,10 +61,11 @@ fun AppGridItemWithText(
     app: AppInfo,
     iconStyle: AppIconStyleOption,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -105,10 +107,11 @@ fun AppGridItemWithText(
 fun AppGridItemTextOnly(
     app: AppInfo,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
