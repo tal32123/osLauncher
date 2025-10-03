@@ -43,6 +43,11 @@ Modern launchers are designed to keep you engaged—often at the cost of your at
 - **System Integrations:** UsageStatsManager for insights, PackageManager for installed apps
 - **Minimum SDK:** Android 5.0 (API 21) while compiling against the latest stable SDK
 - **Tooling:** Gradle, ktlint, and a growing automated test suite (unit + instrumentation)
+## Roadmap
+- **Grid Layout**
+- **Widgets** 
+- **PWA** 
+- **Distracting app features** 
 
 ## Getting Started
 1. **Install prerequisites**
