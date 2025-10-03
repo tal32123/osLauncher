@@ -18,6 +18,9 @@ import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
+import com.talauncher.data.model.AppSectionLayoutOption
+import com.talauncher.data.model.AppDisplayStyleOption
+import com.talauncher.data.model.IconColorOption
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SearchInteractionRepository
 import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
@@ -271,7 +274,20 @@ class HomeViewModel(
                             recentApps = recentApps,
                             alphabetIndexEntries = alphabetIndex,
                             sectionIndex = sectionIndex,
-                            isAlphabetIndexEnabled = allApps.isNotEmpty()
+                            isAlphabetIndexEnabled = allApps.isNotEmpty(),
+
+                            // App section display settings
+                            pinnedAppsLayout = settings?.pinnedAppsLayout ?: AppSectionLayoutOption.LIST,
+                            pinnedAppsDisplayStyle = settings?.pinnedAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                            pinnedAppsIconColor = settings?.pinnedAppsIconColor ?: IconColorOption.ORIGINAL,
+
+                            recentAppsLayout = settings?.recentAppsLayout ?: AppSectionLayoutOption.LIST,
+                            recentAppsDisplayStyle = settings?.recentAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                            recentAppsIconColor = settings?.recentAppsIconColor ?: IconColorOption.ORIGINAL,
+
+                            allAppsLayout = settings?.allAppsLayout ?: AppSectionLayoutOption.LIST,
+                            allAppsDisplayStyle = settings?.allAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                            allAppsIconColor = settings?.allAppsIconColor ?: IconColorOption.ORIGINAL
                         ).let { updated ->
                             val keepExpanded = wasExpanded && hiddenApps.isNotEmpty()
                             if (updated.isOtherAppsExpanded != keepExpanded) {
@@ -1108,5 +1124,18 @@ data class HomeUiState(
     val selectedAppSupportsUninstall: Boolean = false,
     val isOtherAppsExpanded: Boolean = false,
     val appBeingRenamed: AppInfo? = null,
-    val renameInput: String = ""
+    val renameInput: String = "",
+
+    // App section display settings
+    val pinnedAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val pinnedAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val pinnedAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val recentAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val recentAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val recentAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val allAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL
 )
