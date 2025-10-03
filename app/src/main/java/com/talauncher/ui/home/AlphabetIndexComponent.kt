@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalDensity
+// Removed duplicate LocalDensity import
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -251,6 +251,7 @@ fun EnhancedAlphabetFastScroller(
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
     onScrollToIndex: (Int) -> Unit = {},
+    onActiveGlobalIndexChanged: (Int?) -> Unit = {},
     // Sidebar styling controls
     activeScale: Float = 1.4f,
     popOutDp: Float = 16f,
@@ -313,6 +314,8 @@ fun EnhancedAlphabetFastScroller(
                                     railBottomPadding = PrimerSpacing.md.toPx(),
                                     onScrollToIndex = onScrollToIndex
                                 )
+                                // Notify active target for grid highlight
+                                onActiveGlobalIndexChanged(controller.state.value.currentTarget?.globalIndex)
                             } catch (e: Exception) {
                                 android.util.Log.e("EnhancedFastScroller", "Error handling initial touch", e)
                             }
@@ -328,6 +331,8 @@ fun EnhancedAlphabetFastScroller(
                                             railBottomPadding = PrimerSpacing.md.toPx(),
                                             onScrollToIndex = onScrollToIndex
                                         )
+                                        // Notify active target for grid highlight
+                                        onActiveGlobalIndexChanged(controller.state.value.currentTarget?.globalIndex)
                                         change.consume()
                                     } catch (e: Exception) {
                                         android.util.Log.e("EnhancedFastScroller", "Error during drag", e)
@@ -338,6 +343,7 @@ fun EnhancedAlphabetFastScroller(
                             } finally {
                                 try {
                                     controller.onTouchEnd()
+                                    onActiveGlobalIndexChanged(null)
                                 } catch (e: Exception) {
                                     android.util.Log.e("EnhancedFastScroller", "Error in onTouchEnd", e)
                                 }

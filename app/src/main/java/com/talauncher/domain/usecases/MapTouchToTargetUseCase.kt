@@ -86,24 +86,23 @@ class MapTouchToTargetUseCase {
 
             val normalizedY = ((touchY - railTopPadding) / contentHeight).coerceIn(0f, 1f)
 
-            // Step 2: Map normalized Y to section index
-            val sections = sectionIndex.sections
-            val totalSections = sections.size
+            // Step 2: Proportional mapping by total item count (not equal sections)
+            val total = sectionIndex.totalCount
+            if (total <= 0) return null
 
-            if (totalSections == 0) {
-                return null
-            }
+            // Map normalized [0,1] to a global item index [0..total-1]
+            val targetGlobal = floor(normalizedY * total).toInt().coerceIn(0, total - 1)
 
-            // Compute which section the touch falls into
-            val sectionIndexFloat = normalizedY * totalSections
-            val targetSectionIndex = sectionIndexFloat.toInt().coerceIn(0, totalSections - 1)
+            // Step 3: Find which section this global index falls into (binary search on prefix sums)
+            val cumulative = sectionIndex.cumulative
+            val secIdx = findSectionIndexForGlobal(targetGlobal, cumulative)
+                .coerceIn(0, sectionIndex.sections.size - 1)
+            val section = sectionIndex.sections.getOrNull(secIdx) ?: return null
 
-            val section = sections.getOrNull(targetSectionIndex) ?: return null
-
-            // If section has no apps, return the first position
+            // If section empty, default to its first position
             if (section.count == 0) {
                 return TouchTarget(
-                    sectionIndex = targetSectionIndex,
+                    sectionIndex = secIdx,
                     section = section,
                     intraOffset = 0,
                     globalIndex = section.firstPosition,
@@ -111,37 +110,22 @@ class MapTouchToTargetUseCase {
                 )
             }
 
-            // Step 3: Compute intra-section fraction
-            // Each section occupies a fractional portion: 1.0 / totalSections
-            val sectionFraction = 1.0f / totalSections
-            val sectionStart = targetSectionIndex * sectionFraction
-            val sectionEnd = sectionStart + sectionFraction
+            // Step 4: intraOffset = targetGlobal - sectionStart
+            val sectionStart = cumulative[secIdx]
+            val intraOffset = (targetGlobal - sectionStart).coerceIn(0, section.count - 1)
 
-            // Local position within this section's range [0..1]
-            val intraSectionFraction = if (sectionFraction > 0f) {
-                ((normalizedY - sectionStart) / sectionFraction).coerceIn(0f, 1f)
-            } else {
-                0f
-            }
-
-            // Step 4: Convert fraction to intraOffset
-            // For a section with N apps, we want indices [0..N-1]
-            val intraOffset = floor(intraSectionFraction * section.count).toInt()
-                .coerceIn(0, section.count - 1)
-
-            // Step 5: Compute global index using prefix sums
+            // Step 5: Compute global index (same as targetGlobal)
             val globalIndex = try {
-                sectionIndex.computeGlobalIndex(targetSectionIndex, intraOffset)
+                sectionIndex.computeGlobalIndex(secIdx, intraOffset)
             } catch (e: Exception) {
                 android.util.Log.e("MapTouchToTargetUseCase", "Error computing global index", e)
                 null
-            } ?: return null
+            } ?: targetGlobal
 
-            // Get app name for preview (with bounds checking)
             val appName = section.appNames.getOrNull(intraOffset) ?: section.appNames.firstOrNull() ?: ""
 
             TouchTarget(
-                sectionIndex = targetSectionIndex,
+                sectionIndex = secIdx,
                 section = section,
                 intraOffset = intraOffset,
                 globalIndex = globalIndex,
@@ -151,6 +135,26 @@ class MapTouchToTargetUseCase {
             android.util.Log.e("MapTouchToTargetUseCase", "Error in execute", e)
             null
         }
+    }
+
+    /**
+     * Binary search for section index such that cumulative[i] <= target < cumulative[i] + count[i].
+     */
+    private fun findSectionIndexForGlobal(targetGlobal: Int, cumulative: List<Int>): Int {
+        var lo = 0
+        var hi = cumulative.size - 1
+        var ans = 0
+        while (lo <= hi) {
+            val mid = (lo + hi) ushr 1
+            val start = cumulative[mid]
+            if (start <= targetGlobal) {
+                ans = mid
+                lo = mid + 1
+            } else {
+                hi = mid - 1
+            }
+        }
+        return ans
     }
 
     /**
