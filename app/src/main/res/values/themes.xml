@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_tal_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.TALauncher</item>
+    </style>
     <style name="Theme.TALauncher" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

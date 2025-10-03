@@ -1,5 +1,7 @@
 package com.talauncher
 
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -65,6 +67,7 @@ class MainActivity : ComponentActivity() {
     private var packageChangeReceiver: PackageChangeReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
 
         try {
