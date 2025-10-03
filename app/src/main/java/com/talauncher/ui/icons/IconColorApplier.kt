@@ -171,11 +171,11 @@ class IconColorApplier {
         val luminance = color.luminance()
 
         return when {
-            // Dark theme: ensure color is bright enough (luminance > 0.3)
+            // Dark theme: ensure color is bright enough (luminance > threshold)
             isDarkTheme && luminance < MIN_LUMINANCE_DARK -> {
                 brightenColor(color, MIN_LUMINANCE_DARK)
             }
-            // Light theme: ensure color is dark enough (luminance < 0.6)
+            // Light theme: ensure color is dark enough (luminance < threshold)
             !isDarkTheme && luminance > MAX_LUMINANCE_LIGHT -> {
                 darkenColor(color, MAX_LUMINANCE_LIGHT)
             }
@@ -223,11 +223,11 @@ class IconColorApplier {
 
     companion object {
         // Minimum luminance for dark theme (icons must be bright enough)
-        // Increased from 0.35 to 0.50 for better visibility
-        private const val MIN_LUMINANCE_DARK = 0.50f
+        // Relaxed to avoid washing out saturated brand colors
+        private const val MIN_LUMINANCE_DARK = 0.35f
 
         // Maximum luminance for light theme (icons must be dark enough)
-        // Decreased from 0.55 to 0.45 for better visibility
-        private const val MAX_LUMINANCE_LIGHT = 0.45f
+        // Relaxed so default palette accents retain their intended hue
+        private const val MAX_LUMINANCE_LIGHT = 0.75f
     }
 }
