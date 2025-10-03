@@ -150,8 +150,6 @@ fun SettingsScreen(
                 onToggleShowWallpaper = viewModel::updateShowWallpaper,
                 colorPalette = uiState.colorPalette,
                 onUpdateColorPalette = viewModel::updateColorPalette,
-                appIconStyle = uiState.appIconStyle,
-                onUpdateAppIconStyle = viewModel::updateAppIconStyle,
                 customColorOption = uiState.customColorOption,
                 onUpdateCustomColorOption = viewModel::updateCustomColorOption,
                 customPrimaryColor = uiState.customPrimaryColor,

@@ -2,8 +2,10 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.talauncher.data.model.AppDisplayStyleOption
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.ColorPaletteOption
+import com.talauncher.data.model.IconColorOption
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,6 +107,27 @@ class OnboardingViewModel(
 
     fun completeOnboarding() {
         viewModelScope.launch {
+            // Set section defaults based on user's icon style choice
+            val currentIconStyle = _uiState.value.selectedAppIconStyle
+            val displayStyle = when (currentIconStyle) {
+                AppIconStyleOption.HIDDEN -> AppDisplayStyleOption.TEXT_ONLY
+                else -> AppDisplayStyleOption.ICON_AND_TEXT
+            }
+            val iconColor = when (currentIconStyle) {
+                AppIconStyleOption.BLACK_AND_WHITE -> IconColorOption.MONOCHROME
+                else -> IconColorOption.ORIGINAL
+            }
+
+            // Apply defaults to all three sections (Pinned, Recent, All Apps)
+            settingsRepository.updatePinnedAppsDisplayStyle(displayStyle)
+            settingsRepository.updatePinnedAppsIconColor(iconColor)
+
+            settingsRepository.updateRecentAppsDisplayStyle(displayStyle)
+            settingsRepository.updateRecentAppsIconColor(iconColor)
+
+            settingsRepository.updateAllAppsDisplayStyle(displayStyle)
+            settingsRepository.updateAllAppsIconColor(iconColor)
+
             settingsRepository.completeOnboarding()
             _uiState.value = _uiState.value.copy(isOnboardingCompleted = true)
         }

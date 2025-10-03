@@ -9,7 +9,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.talauncher.R
-import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
@@ -25,8 +24,6 @@ fun UIThemeSettingsScreen(
     onToggleShowWallpaper: (Boolean) -> Unit,
     colorPalette: ColorPaletteOption,
     onUpdateColorPalette: (ColorPaletteOption) -> Unit,
-    appIconStyle: AppIconStyleOption,
-    onUpdateAppIconStyle: (AppIconStyleOption) -> Unit,
     customColorOption: String?,
     onUpdateCustomColorOption: (String) -> Unit,
     customPrimaryColor: String?,
@@ -71,15 +68,6 @@ fun UIThemeSettingsScreen(
                 currentCustomSecondaryColor = customSecondaryColor,
                 onCustomPrimaryColorSelected = onUpdateCustomPrimaryColor,
                 onCustomSecondaryColorSelected = onUpdateCustomSecondaryColor
-            )
-        },
-        CollapsibleSection(
-            id = "app_icons",
-            title = stringResource(R.string.settings_app_icons)
-        ) {
-            AppIconStyleContent(
-                appIconStyle = appIconStyle,
-                onUpdateAppIconStyle = onUpdateAppIconStyle
             )
         },
         CollapsibleSection(
@@ -155,34 +143,6 @@ private fun ThemeModeContent(
                 modifier = Modifier.weight(1f)
             )
         }
-    }
-}
-
-@Composable
-private fun AppIconStyleContent(
-    appIconStyle: AppIconStyleOption,
-    onUpdateAppIconStyle: (AppIconStyleOption) -> Unit
-) {
-    Text(
-        text = stringResource(R.string.settings_app_icons_subtitle),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-
-    ChipGrid(
-        items = AppIconStyleOption.entries,
-        modifier = Modifier.fillMaxWidth()
-    ) { option ->
-        FilterChip(
-            selected = appIconStyle == option,
-            onClick = { onUpdateAppIconStyle(option) },
-            label = {
-                Text(
-                    text = option.label,
-                    maxLines = 1
-                )
-            }
-        )
     }
 }
 
