@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="tal_icon_background">@color/default_primary_dark</color>
+    <color name="tal_icon_foreground">@android:color/white</color>
+</resources>
