@@ -359,6 +359,12 @@ private fun AppearanceStep(
         Text(stringResource(R.string.color_palette_preview_title), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
 
+        val previewApps = listOf(
+            "Calendar" to "com.android.calendar",
+            "Messages" to "com.android.messaging",
+            "Notes" to "com.example.notes"
+        )
+
         com.talauncher.ui.components.ModernBackdrop(
             showWallpaper = showWallpaper,
             blurAmount = wallpaperBlurAmount,
@@ -366,14 +372,25 @@ private fun AppearanceStep(
             opacity = backgroundOpacity,
             customWallpaperPath = customWallpaperPath,
             modifier = Modifier
-                .fillMaxWidth(0.72f)
-                .aspectRatio(9f / 19.5f)
+                .align(Alignment.CenterHorizontally)
+                .fillMaxWidth()
+                .widthIn(max = 360.dp)
+                .heightIn(max = 240.dp)
                 .clip(RoundedCornerShape(16.dp))
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(8.dp)) {
-                ModernAppItem(appName = "Calendar", packageName = "com.android.calendar", onClick = {}, appIconStyle = selectedIconStyle, enableGlassmorphism = true)
-                ModernAppItem(appName = "Messages", packageName = "com.android.messaging", onClick = {}, appIconStyle = selectedIconStyle, enableGlassmorphism = true)
-                ModernAppItem(appName = "Notes", packageName = "com.example.notes", onClick = {}, appIconStyle = selectedIconStyle, enableGlassmorphism = true)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(12.dp)
+            ) {
+                previewApps.take(3).forEach { (appName, packageName) ->
+                    ModernAppItem(
+                        appName = appName,
+                        packageName = packageName,
+                        onClick = {},
+                        appIconStyle = selectedIconStyle,
+                        enableGlassmorphism = true
+                    )
+                }
             }
         }
 
