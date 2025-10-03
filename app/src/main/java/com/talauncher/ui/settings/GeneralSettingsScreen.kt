@@ -9,10 +9,10 @@ import androidx.compose.ui.unit.dp
 import com.talauncher.R
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
-import com.talauncher.ui.components.Collapsible
+import com.talauncher.ui.components.CollapsibleSection
+import com.talauncher.ui.components.CollapsibleSectionContainer
 import com.talauncher.ui.components.SettingItem
 import com.talauncher.ui.components.SettingsLazyColumn
-import com.talauncher.ui.components.SettingsSectionCard
 import com.talauncher.ui.components.SliderSetting
 import com.talauncher.utils.PermissionsHelper
 import kotlin.math.roundToInt
@@ -38,16 +38,11 @@ fun GeneralSettingsScreen(
     buildBranch: String?,
     buildTime: String?
 ) {
-    var expandedSection by remember { mutableStateOf<String?>("focus_productivity") }
-
-    SettingsLazyColumn {
-        item {
-            Collapsible(
-                title = stringResource(R.string.settings_focus_productivity),
-                isExpanded = expandedSection == "focus_productivity",
-                onToggle = {
-                    expandedSection = if (expandedSection == "focus_productivity") null else "focus_productivity"
-                }
+    val sections = buildList {
+        add(
+            CollapsibleSection(
+                id = "focus_productivity",
+                title = stringResource(R.string.settings_focus_productivity)
             ) {
                 FocusProductivityContent(
                     enableTimeLimitPrompt = enableTimeLimitPrompt,
@@ -56,16 +51,11 @@ fun GeneralSettingsScreen(
                     onUpdateRecentAppsLimit = onUpdateRecentAppsLimit
                 )
             }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Collapsible(
-                title = stringResource(R.string.settings_contact_actions),
-                isExpanded = expandedSection == "contact_actions",
-                onToggle = {
-                    expandedSection = if (expandedSection == "contact_actions") null else "contact_actions"
-                }
+        )
+        add(
+            CollapsibleSection(
+                id = "contact_actions",
+                title = stringResource(R.string.settings_contact_actions)
             ) {
                 ContactActionsContent(
                     showPhoneAction = showPhoneAction,
@@ -76,16 +66,11 @@ fun GeneralSettingsScreen(
                     onToggleShowWhatsAppAction = onToggleShowWhatsAppAction
                 )
             }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Collapsible(
-                title = stringResource(R.string.settings_weather),
-                isExpanded = expandedSection == "weather",
-                onToggle = {
-                    expandedSection = if (expandedSection == "weather") null else "weather"
-                }
+        )
+        add(
+            CollapsibleSection(
+                id = "weather",
+                title = stringResource(R.string.settings_weather)
             ) {
                 WeatherContent(
                     weatherDisplay = weatherDisplay,
@@ -95,17 +80,12 @@ fun GeneralSettingsScreen(
                     permissionsHelper = permissionsHelper
                 )
             }
-        }
-
+        )
         if (buildCommitHash != null || buildBranch != null || buildTime != null) {
-            item {
-                Spacer(modifier = Modifier.height(12.dp))
-                Collapsible(
-                    title = stringResource(R.string.settings_build_information),
-                    isExpanded = expandedSection == "build_info",
-                    onToggle = {
-                        expandedSection = if (expandedSection == "build_info") null else "build_info"
-                    }
+            add(
+                CollapsibleSection(
+                    id = "build_info",
+                    title = stringResource(R.string.settings_build_information)
                 ) {
                     BuildInformationContent(
                         buildCommitHash = buildCommitHash,
@@ -113,7 +93,16 @@ fun GeneralSettingsScreen(
                         buildTime = buildTime
                     )
                 }
-            }
+            )
+        }
+    }
+
+    SettingsLazyColumn {
+        item {
+            CollapsibleSectionContainer(
+                sections = sections,
+                initialExpandedId = "focus_productivity"
+            )
         }
     }
 }

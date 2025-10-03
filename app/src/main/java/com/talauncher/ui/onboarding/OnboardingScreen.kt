@@ -32,7 +32,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.ThemeModeOption
-import com.talauncher.ui.components.Collapsible
+import com.talauncher.ui.components.CollapsibleSection
+import com.talauncher.ui.components.CollapsibleSectionContainer
 import com.talauncher.ui.components.ModernAppItem
 import com.talauncher.ui.components.PermissionManager
 import com.talauncher.utils.PermissionType
@@ -295,30 +296,19 @@ private fun AppearanceStep(
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
-    var expandedSection by remember { mutableStateOf<AppearanceSection?>(AppearanceSection.THEME_MODE) }
+    val obVm: OnboardingViewModel = viewModel()
+    val obState by obVm.uiState.collectAsState()
 
-    Column(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.onboarding_appearance_title), style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(12.dp))
-
-        Collapsible(
-            title = stringResource(R.string.theme_mode_title),
-            isExpanded = expandedSection == AppearanceSection.THEME_MODE,
-            onToggle = {
-                expandedSection = if (expandedSection == AppearanceSection.THEME_MODE) null else AppearanceSection.THEME_MODE
-            }
+    val sections = listOf(
+        CollapsibleSection(
+            id = "theme_mode",
+            title = stringResource(R.string.theme_mode_title)
         ) {
             FlowRowChipsTheme(selectedTheme, onSelectTheme)
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        Collapsible(
-            title = stringResource(R.string.settings_app_icons),
-            isExpanded = expandedSection == AppearanceSection.ICON_STYLE,
-            onToggle = {
-                expandedSection = if (expandedSection == AppearanceSection.ICON_STYLE) null else AppearanceSection.ICON_STYLE
-            }
+        },
+        CollapsibleSection(
+            id = "icon_style",
+            title = stringResource(R.string.settings_app_icons)
         ) {
             Text(
                 text = stringResource(R.string.settings_app_icons_subtitle),
@@ -327,35 +317,21 @@ private fun AppearanceStep(
             )
             Spacer(Modifier.height(8.dp))
             FlowRowChipsIcon(selectedIconStyle, onSelectIconStyle)
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        Collapsible(
-            title = stringResource(R.string.color_palette_title),
-            isExpanded = expandedSection == AppearanceSection.THEME_OPTIONS,
-            onToggle = {
-                expandedSection = if (expandedSection == AppearanceSection.THEME_OPTIONS) null else AppearanceSection.THEME_OPTIONS
-            }
+        },
+        CollapsibleSection(
+            id = "theme_options",
+            title = stringResource(R.string.color_palette_title)
         ) {
-            val obVm: OnboardingViewModel = viewModel()
-            val obState by obVm.uiState.collectAsState()
             com.talauncher.ui.components.ColorPaletteSelector(
                 selectedPalette = obState.selectedColorPalette,
                 onPaletteSelected = { obVm.setColorPalette(it) },
                 currentCustomColor = obState.customColorOption,
                 onCustomColorSelected = { colorName -> obVm.setCustomPalette(colorName) }
             )
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        Collapsible(
-            title = stringResource(R.string.wallpaper_settings_title),
-            isExpanded = expandedSection == AppearanceSection.WALLPAPER,
-            onToggle = {
-                expandedSection = if (expandedSection == AppearanceSection.WALLPAPER) null else AppearanceSection.WALLPAPER
-            }
+        },
+        CollapsibleSection(
+            id = "wallpaper",
+            title = stringResource(R.string.wallpaper_settings_title)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = stringResource(R.string.settings_show_wallpaper_title), modifier = Modifier.weight(1f))
@@ -368,6 +344,16 @@ private fun AppearanceStep(
                 }
             }
         }
+    )
+
+    Column(Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.onboarding_appearance_title), style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(12.dp))
+
+        CollapsibleSectionContainer(
+            sections = sections,
+            initialExpandedId = "theme_mode"
+        )
 
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.color_palette_preview_title), style = MaterialTheme.typography.titleMedium)
