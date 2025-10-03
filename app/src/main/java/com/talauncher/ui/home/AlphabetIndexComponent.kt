@@ -9,11 +9,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.talauncher.ui.theme.PrimerSpacing
@@ -26,7 +28,11 @@ fun AlphabetIndex(
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
     onEntryFocused: (AlphabetIndexEntry, Float) -> Unit,
-    onScrubbingChanged: (Boolean) -> Unit
+    onScrubbingChanged: (Boolean) -> Unit,
+    // Sidebar styling controls
+    activeScale: Float = 1.4f,
+    popOutDp: Float = 16f,
+    waveSpread: Float = 1.5f
 ) {
     var componentSize by remember { mutableStateOf(IntSize.Zero) }
     val entryBounds = remember(entries) {
@@ -105,11 +111,20 @@ fun AlphabetIndex(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            entries.forEach { entry ->
+            val activeIndex = remember(activeKey, entries) {
+                entries.indexOfFirst { it.key == activeKey }.takeIf { it >= 0 }
+            }
+
+            entries.forEachIndexed { index, entry ->
                 AlphabetIndexItem(
                     entry = entry,
                     isActive = isEnabled && entry.hasApps && entry.key == activeKey,
                     isEnabled = isEnabled,
+                    index = index,
+                    activeIndex = activeIndex,
+                    activeScale = activeScale,
+                    popOutDp = popOutDp,
+                    waveSpread = waveSpread,
                     onPositioned = { bounds ->
                         entryBounds[entry.key] = bounds
                     }
@@ -124,20 +139,49 @@ private fun AlphabetIndexItem(
     entry: AlphabetIndexEntry,
     isActive: Boolean,
     isEnabled: Boolean,
+    index: Int,
+    activeIndex: Int?,
+    activeScale: Float,
+    popOutDp: Float,
+    waveSpread: Float,
     onPositioned: (ClosedFloatingPointRange<Float>) -> Unit
 ) {
-    val color = when {
-        !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-        entry.hasApps && isActive -> MaterialTheme.colorScheme.onSurface
-        entry.hasApps -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+    val baseColorEnabled = MaterialTheme.colorScheme.onSurfaceVariant
+    val baseColorDisabled = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+
+    // Wave influence based on distance from active index
+    val distance = remember(activeIndex, index) {
+        activeIndex?.let { kotlin.math.abs(index - it) } ?: Int.MAX_VALUE
     }
+    val influence = remember(distance, waveSpread) {
+        if (activeIndex == null || distance == Int.MAX_VALUE) 0f
+        else if (waveSpread <= 0f) {
+            if (distance == 0) 1f else 0f
+        } else {
+            // Smooth exponential falloff
+            kotlin.math.exp(-distance / waveSpread)
+        }
+    }
+
+    val scale = 1f + (activeScale - 1f) * influence
+
+    val density = LocalDensity.current
+    val translationX = with(density) { (-popOutDp * influence).dp.toPx() }
+
+    // Fade entries based on influence for a calm effect
+    val alpha = if (!isEnabled) 0.3f else 0.4f + 0.6f * influence
+    val color = if (!entry.hasApps) baseColorDisabled else baseColorEnabled.copy(alpha = alpha)
 
     Text(
         text = entry.displayLabel,
         style = MaterialTheme.typography.labelSmall,
         color = color,
         modifier = Modifier
+            .graphicsLayer(
+                scaleX = scale,
+                scaleY = scale,
+                translationX = translationX
+            )
             .testTag("alphabet_index_entry_${entry.key}")
             .onGloballyPositioned { coordinates ->
                 val position = coordinates.positionInParent()

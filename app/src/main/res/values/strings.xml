@@ -209,5 +209,12 @@
     <string name="app_action_info_description">Open the system settings page for this app.</string>
     <string name="app_action_uninstall_label">Uninstall app</string>
     <string name="app_action_uninstall_description">Remove this app from your device.</string>
+    
+    <!-- Sidebar (Alphabet Index) Settings -->
+    <string name="settings_sidebar_title">Sidebar</string>
+    <string name="settings_sidebar_subtitle">Control how the alphabetical sidebar feels</string>
+    <string name="settings_sidebar_active_scale">Active letter size</string>
+    <string name="settings_sidebar_popout">Active letter pop-out</string>
+    <string name="settings_sidebar_wave_spread">Wave effect size</string>
 </resources>
 

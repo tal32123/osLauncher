@@ -47,4 +47,13 @@ data class LauncherSettings(
     val fontScale: Float = 1.0f, // Text size scaling factor (0.8-1.4)
     val enableAnimations: Boolean = true, // Enable smooth UI animations
     val cardElevation: Int = 2 // Card elevation in dp (0-8)
+
+    ,
+    // Sidebar (Alphabet Index) customization
+    // How large the active letter scales (1.0 = no scale)
+    val sidebarActiveScale: Float = 1.4f,
+    // How far the active letter pops out in dp (0 = no offset)
+    val sidebarPopOutDp: Int = 16,
+    // Controls how far the wave effect spreads to neighbor letters (higher = farther)
+    val sidebarWaveSpread: Float = 1.5f
 )

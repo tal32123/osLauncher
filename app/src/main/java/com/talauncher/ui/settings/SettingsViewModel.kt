@@ -84,6 +84,10 @@ class SettingsViewModel(
                     uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                     enableAnimations = settings?.enableAnimations ?: true,
                     customWallpaperPath = settings?.customWallpaperPath,
+                    // Sidebar settings
+                    sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
+                    sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
+                    sidebarWaveSpread = settings?.sidebarWaveSpread ?: 1.5f,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -269,6 +273,25 @@ class SettingsViewModel(
         }
     }
 
+    // Sidebar settings
+    fun updateSidebarActiveScale(scale: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateSidebarActiveScale(scale)
+        }
+    }
+
+    fun updateSidebarPopOutDp(popOut: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateSidebarPopOutDp(popOut)
+        }
+    }
+
+    fun updateSidebarWaveSpread(spread: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateSidebarWaveSpread(spread)
+        }
+    }
+
     fun updateWeatherDisplay(display: WeatherDisplayOption) {
         viewModelScope.launch {
             settingsRepository.updateWeatherDisplay(display)
@@ -346,4 +369,9 @@ data class SettingsUiState(
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     val customWallpaperPath: String? = null
+    ,
+    // Sidebar customization
+    val sidebarActiveScale: Float = 1.4f,
+    val sidebarPopOutDp: Int = 16,
+    val sidebarWaveSpread: Float = 1.5f
 )

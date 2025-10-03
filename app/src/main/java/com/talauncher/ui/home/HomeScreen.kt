@@ -394,7 +394,10 @@ fun HomeScreen(
                             },
                             onScrubbingChanged = { isScrubbing ->
                                 viewModel.onAlphabetScrubbingChanged(isScrubbing)
-                            }
+                            },
+                            activeScale = uiState.sidebarActiveScale,
+                            popOutDp = uiState.sidebarPopOutDp.toFloat(),
+                            waveSpread = uiState.sidebarWaveSpread
                         )
                     }
                 }
