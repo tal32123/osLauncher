@@ -301,6 +301,39 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
                         contentPadding = PaddingValues(bottom = 80.dp), // Extra bottom padding for accessibility
                     ) {
+                        // Pinned Apps Section
+                        if (uiState.pinnedApps.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = "📌 Pinned",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(
+                                        start = PrimerSpacing.md,
+                                        top = PrimerSpacing.md,
+                                        bottom = PrimerSpacing.sm
+                                    )
+                                )
+                            }
+
+                            items(uiState.pinnedApps, key = { "pinned_${it.packageName}" }) { app ->
+                                ModernAppItem(
+                                    appName = app.appName,
+                                    packageName = app.packageName,
+                                    onClick = { viewModel.launchApp(app.packageName) },
+                                    onLongClick = {
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.showAppActionDialog(app)
+                                    },
+                                    iconStyle = uiState.appIconStyle
+                                )
+                            }
+
+                            item {
+                                Spacer(modifier = Modifier.height(PrimerSpacing.lg))
+                            }
+                        }
+
                         // Recently Used Apps Section
                         if (uiState.recentApps.isNotEmpty()) {
                             item {

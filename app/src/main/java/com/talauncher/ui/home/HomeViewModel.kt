@@ -267,6 +267,7 @@ class HomeViewModel(
                             uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                             enableAnimations = settings?.enableAnimations ?: true,
                             // App drawer functionality moved to home screen
+                            pinnedApps = pinnedApps,
                             recentApps = recentApps,
                             alphabetIndexEntries = alphabetIndex,
                             sectionIndex = sectionIndex,
@@ -1096,6 +1097,7 @@ data class HomeUiState(
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     // App drawer functionality moved to home screen
+    val pinnedApps: List<AppInfo> = emptyList(),
     val recentApps: List<AppInfo> = emptyList(),
     val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
     val sectionIndex: SectionIndex = SectionIndex.EMPTY,
