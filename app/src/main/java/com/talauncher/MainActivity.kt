@@ -179,17 +179,28 @@ class MainActivity : ComponentActivity() {
                                 usageStatsHelper = usageStatsHelper
                             )
                         } else {
-                            TALauncherApp(
-                                appRepository = appRepository,
-                                searchInteractionRepository = searchInteractionRepository,
-                                settingsRepository = settingsRepository,
-                                permissionsHelper = permissionsHelper,
-                                usageStatsHelper = usageStatsHelper,
-                                contactHelper = contactHelper,
-                                errorHandler = errorHandler,
-                                shouldNavigateToHome = shouldNavigateToHome,
-                                onNavigatedToHome = { shouldNavigateToHome = false }
-                            )
+                            var appError by remember { mutableStateOf<Throwable?>(null) }
+
+                            if (appError != null) {
+                                StartupErrorScreen(appError!!)
+                            } else {
+                                try {
+                                    TALauncherApp(
+                                        appRepository = appRepository,
+                                        searchInteractionRepository = searchInteractionRepository,
+                                        settingsRepository = settingsRepository,
+                                        permissionsHelper = permissionsHelper,
+                                        usageStatsHelper = usageStatsHelper,
+                                        contactHelper = contactHelper,
+                                        errorHandler = errorHandler,
+                                        shouldNavigateToHome = shouldNavigateToHome,
+                                        onNavigatedToHome = { shouldNavigateToHome = false }
+                                    )
+                                } catch (e: Throwable) {
+                                    Log.e(TAG, "Error rendering main app", e)
+                                    appError = e
+                                }
+                            }
                         }
                     }
                 }
@@ -360,41 +371,52 @@ fun LauncherNavigationPager(
                         .fillMaxSize()
                         .testTag("launcher_home_page")
                 ) {
-                    // Main/Home Screen with pinned apps
-                    val context = LocalContext.current
-                    val applicationContext = context.applicationContext
-                    val homeViewModel: HomeViewModel = viewModel {
-                        HomeViewModel(
-                            appRepository = appRepository,
-                            searchInteractionRepository = searchInteractionRepository,
-                            settingsRepository = settingsRepository,
-                            onLaunchApp = onLaunchApp,
-                            appContext = applicationContext,
-                            initialContactHelper = contactHelper,
-                            permissionsHelper = permissionsHelper,
-                            usageStatsHelper = usageStatsHelper,
-                            errorHandler = errorHandler
-                        )
-                    }
-                    LaunchedEffect(homeViewModel) {
-                        homeViewModelState = homeViewModel
-                    }
-                    // Clear search when navigating to home screen
-                    LaunchedEffect(pagerState.currentPage) {
-                        if (pagerState.currentPage == 1) {
-                            homeViewModel.clearSearchOnNavigation()
-                        }
-                    }
+                    var homePageError by remember { mutableStateOf<Throwable?>(null) }
 
-                    HomeScreen(
-                        viewModel = homeViewModel,
-                        permissionsHelper = permissionsHelper,
-                        onNavigateToSettings = {
-                            coroutineScope.launch {
-                                animateToPage(0)
+                    if (homePageError != null) {
+                        StartupErrorScreen(homePageError!!)
+                    } else {
+                        try {
+                            // Main/Home Screen with pinned apps
+                            val context = LocalContext.current
+                            val applicationContext = context.applicationContext
+                            val homeViewModel: HomeViewModel = viewModel {
+                                HomeViewModel(
+                                    appRepository = appRepository,
+                                    searchInteractionRepository = searchInteractionRepository,
+                                    settingsRepository = settingsRepository,
+                                    onLaunchApp = onLaunchApp,
+                                    appContext = applicationContext,
+                                    initialContactHelper = contactHelper,
+                                    permissionsHelper = permissionsHelper,
+                                    usageStatsHelper = usageStatsHelper,
+                                    errorHandler = errorHandler
+                                )
                             }
+                            LaunchedEffect(homeViewModel) {
+                                homeViewModelState = homeViewModel
+                            }
+                            // Clear search when navigating to home screen
+                            LaunchedEffect(pagerState.currentPage) {
+                                if (pagerState.currentPage == 1) {
+                                    homeViewModel.clearSearchOnNavigation()
+                                }
+                            }
+
+                            HomeScreen(
+                                viewModel = homeViewModel,
+                                permissionsHelper = permissionsHelper,
+                                onNavigateToSettings = {
+                                    coroutineScope.launch {
+                                        animateToPage(0)
+                                    }
+                                }
+                            )
+                        } catch (e: Throwable) {
+                            Log.e(TAG, "Error rendering home screen", e)
+                            homePageError = e
                         }
-                    )
+                    }
                 }
             }
         }
