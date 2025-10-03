@@ -1,15 +1,19 @@
 package com.talauncher.ui.onboarding
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -24,10 +28,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
+import com.talauncher.data.model.AppIconStyleOption
+import com.talauncher.data.model.ThemeModeOption
+import com.talauncher.ui.components.ModernAppItem
 import com.talauncher.ui.components.PermissionManager
 import com.talauncher.utils.PermissionType
 import com.talauncher.utils.PermissionsHelper
 import com.talauncher.utils.UsageStatsHelper
+
+private enum class OnboardingStepId {
+    DEFAULT_LAUNCHER,
+    USAGE_STATS,
+    CONTACTS,
+    LOCATION,
+    APPEARANCE
+}
 
 @Composable
 fun OnboardingScreen(
@@ -37,6 +52,7 @@ fun OnboardingScreen(
     usageStatsHelper: UsageStatsHelper
 ) {
     val permissionState by permissionsHelper.permissionState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val appName = stringResource(R.string.app_name)
     var isDefaultLauncher by remember { mutableStateOf(usageStatsHelper.isDefaultLauncher()) }
@@ -47,10 +63,37 @@ fun OnboardingScreen(
         isDefaultLauncher = usageStatsHelper.isDefaultLauncher()
     }
 
-    LaunchedEffect(permissionState.allOnboardingPermissionsGranted, isDefaultLauncher) {
-        if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
-            viewModel.completeOnboarding()
-            onOnboardingComplete()
+    val steps = remember(permissionState) {
+        buildList {
+            add(OnboardingStepId.DEFAULT_LAUNCHER)
+            add(OnboardingStepId.USAGE_STATS)
+            add(OnboardingStepId.CONTACTS)
+            add(OnboardingStepId.LOCATION)
+            add(OnboardingStepId.APPEARANCE)
+        }
+    }
+
+    val currentStep = steps.getOrNull(uiState.currentStepIndex) ?: OnboardingStepId.APPEARANCE
+
+    val pickWallpaperLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            runCatching {
+                uiState.customWallpaperPath?.let { existing ->
+                    context.contentResolver.releasePersistableUriPermission(
+                        Uri.parse(existing),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                }
+            }
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            viewModel.setCustomWallpaper(it.toString())
         }
     }
 
@@ -61,263 +104,270 @@ fun OnboardingScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Welcome to $appName",
-            style = MaterialTheme.typography.displayMedium,
+            text = stringResource(R.string.onboarding_title_welcome, appName),
+            style = MaterialTheme.typography.headlineLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Light
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "A minimalist launcher designed to reduce digital distraction",
+            text = stringResource(R.string.onboarding_subtitle_tagline),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
         )
+        Spacer(modifier = Modifier.height(28.dp))
 
-        Spacer(modifier = Modifier.height(48.dp))
-
-        Text(
-            text = "Setup Required",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Medium
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Set as Default Launcher
-        OnboardingStepCard(
-            modifier = Modifier.testTag("onboarding_step_default_launcher"),
-            icon = Icons.Default.Home,
-            title = "Set as Default Launcher",
-            description = "Make $appName your default home screen",
-            isCompleted = isDefaultLauncher,
-            buttonText = if (isDefaultLauncher) "Completed" else "Set as Default",
-            buttonTestTag = "onboarding_step_default_launcher_button",
-            onButtonClick = {
-                permissionsHelper.requestPermission(context as Activity, PermissionType.DEFAULT_LAUNCHER)
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Usage Stats Permission
-        OnboardingStepCard(
-            modifier = Modifier.testTag("onboarding_step_usage_stats"),
-            icon = Icons.Default.Info,
-            title = "Usage Statistics Permission",
-            description = "Required to show your app usage insights and track time spent in distracting apps",
-            isCompleted = permissionState.hasUsageStats,
-            buttonText = if (permissionState.hasUsageStats) "Completed" else "Grant Permission",
-            buttonTestTag = "onboarding_step_usage_stats_button",
-            onButtonClick = {
-                permissionsHelper.requestPermission(context as Activity, PermissionType.USAGE_STATS)
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Notification Permission (Android 13+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            var notificationsRequestInProgress by remember { mutableStateOf(false) }
-            LaunchedEffect(permissionState.hasNotifications) {
-                if (permissionState.hasNotifications) notificationsRequestInProgress = false
-            }
-            OnboardingStepCard(
-                modifier = Modifier.testTag("onboarding_step_notifications"),
-                icon = Icons.Default.Notifications,
-                title = "Allow Notifications",
-                description = "Required to show gentle reminders when time limits expire",
-                isCompleted = permissionState.hasNotifications,
-                buttonText = if (permissionState.hasNotifications) "Completed" else "Allow Notifications",
-                buttonTestTag = "onboarding_step_notifications_button",
-                buttonEnabled = !permissionState.hasNotifications && !notificationsRequestInProgress,
-                onButtonClick = {
-                    notificationsRequestInProgress = true
-                    permissionsHelper.requestPermission(context as Activity, PermissionType.NOTIFICATIONS)
-                }
+        when (currentStep) {
+            OnboardingStepId.DEFAULT_LAUNCHER -> PermissionStep(
+                icon = Icons.Default.Home,
+                title = stringResource(R.string.onboarding_step_default_title),
+                description = stringResource(R.string.onboarding_step_default_desc, appName),
+                isGranted = isDefaultLauncher,
+                primaryButtonText = if (isDefaultLauncher) stringResource(R.string.completed) else stringResource(R.string.onboarding_action_set_default),
+                onPrimary = { permissionsHelper.requestPermission(context as Activity, PermissionType.DEFAULT_LAUNCHER) },
+                onNext = { viewModel.goToNextStep() },
+                canProceed = isDefaultLauncher
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+            OnboardingStepId.USAGE_STATS -> PermissionStep(
+                icon = Icons.Default.Info,
+                title = stringResource(R.string.onboarding_step_usage_title),
+                description = stringResource(R.string.onboarding_step_usage_desc),
+                isGranted = permissionState.hasUsageStats,
+                primaryButtonText = if (permissionState.hasUsageStats) stringResource(R.string.completed) else stringResource(R.string.onboarding_action_grant_permission),
+                onPrimary = { permissionsHelper.requestPermission(context as Activity, PermissionType.USAGE_STATS) },
+                onNext = { viewModel.goToNextStep() },
+                onBack = { viewModel.goToPreviousStep() },
+                canProceed = permissionState.hasUsageStats
+            )
 
-        // Contacts Permission
-        OnboardingStepCard(
-            modifier = Modifier.testTag("onboarding_step_contacts"),
-            icon = Icons.Default.Person,
-            title = "Contacts Permission",
-            description = "Required to access your contact list for calling essentials",
-            isCompleted = permissionState.hasContacts,
-            buttonText = if (permissionState.hasContacts) "Completed" else "Grant Permission",
-            buttonTestTag = "onboarding_step_contacts_button",
-            onButtonClick = {
-                permissionsHelper.requestPermission(context as Activity, PermissionType.CONTACTS)
-            }
-        )
+            
 
-        Spacer(modifier = Modifier.height(16.dp))
+            OnboardingStepId.CONTACTS -> PermissionStep(
+                icon = Icons.Default.Person,
+                title = stringResource(R.string.onboarding_step_contacts_title),
+                description = stringResource(R.string.onboarding_step_contacts_desc),
+                isGranted = permissionState.hasContacts,
+                primaryButtonText = if (permissionState.hasContacts) stringResource(R.string.completed) else stringResource(R.string.onboarding_action_grant_permission),
+                onPrimary = { permissionsHelper.requestPermission(context as Activity, PermissionType.CONTACTS) },
+                onNext = { viewModel.goToNextStep() },
+                onBack = { viewModel.goToPreviousStep() },
+                canProceed = permissionState.hasContacts,
+                allowSkip = true,
+                onSkip = { viewModel.goToNextStep() }
+            )
 
-        // Location Permission
-        OnboardingStepCard(
-            modifier = Modifier.testTag("onboarding_step_location"),
-            icon = Icons.Default.LocationOn,
-            title = "Location Permission",
-            description = "Required for weather information and location-based features",
-            isCompleted = permissionState.hasLocation,
-            buttonText = if (permissionState.hasLocation) "Completed" else "Grant Permission",
-            buttonTestTag = "onboarding_step_location_button",
-            onButtonClick = {
-                permissionsHelper.requestPermission(context as Activity, PermissionType.LOCATION)
-            }
-        )
+            OnboardingStepId.LOCATION -> PermissionStep(
+                icon = Icons.Default.LocationOn,
+                title = stringResource(R.string.onboarding_step_location_title),
+                description = stringResource(R.string.onboarding_step_location_desc),
+                isGranted = permissionState.hasLocation,
+                primaryButtonText = if (permissionState.hasLocation) stringResource(R.string.completed) else stringResource(R.string.onboarding_action_grant_permission),
+                onPrimary = { permissionsHelper.requestPermission(context as Activity, PermissionType.LOCATION) },
+                onNext = { viewModel.goToNextStep() },
+                onBack = { viewModel.goToPreviousStep() },
+                canProceed = permissionState.hasLocation,
+                allowSkip = true,
+                onSkip = { viewModel.goToNextStep() }
+            )
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        if (permissionState.allOnboardingPermissionsGranted && isDefaultLauncher) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("onboarding_success_card"),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Setup Complete!",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "$appName is ready to help you focus",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        textAlign = TextAlign.Center
-                    )
+            OnboardingStepId.APPEARANCE -> AppearanceStep(
+                selectedTheme = uiState.selectedThemeMode,
+                onSelectTheme = viewModel::setThemeMode,
+                selectedIconStyle = uiState.selectedAppIconStyle,
+                onSelectIconStyle = viewModel::setAppIconStyle,
+                showWallpaper = uiState.showWallpaper,
+                onToggleWallpaper = viewModel::setShowWallpaper,
+                onPickWallpaper = { pickWallpaperLauncher.launch(arrayOf("image/*")) },
+                wallpaperBlurAmount = uiState.wallpaperBlurAmount,
+                backgroundOpacity = uiState.backgroundOpacity,
+                backgroundColor = uiState.backgroundColor,
+                customWallpaperPath = uiState.customWallpaperPath,
+                onFinish = {
+                    viewModel.completeOnboarding()
+                    onOnboardingComplete()
+                },
+                onBack = { viewModel.goToPreviousStep() },
+                onSkip = {
+                    viewModel.completeOnboarding()
+                    onOnboardingComplete()
                 }
-            }
-        } else {
-            Text(
-                modifier = Modifier.testTag("onboarding_incomplete_message"),
-                text = "Complete all steps above to continue",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingStepCard(
-    modifier: Modifier = Modifier,
+private fun PermissionStep(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
     description: String,
-    isCompleted: Boolean,
-    buttonText: String,
-    onButtonClick: () -> Unit,
-    buttonTestTag: String? = null,
-    buttonEnabled: Boolean? = null
+    isGranted: Boolean,
+    primaryButtonText: String,
+    onPrimary: () -> Unit,
+    onNext: () -> Unit,
+    onBack: (() -> Unit)? = null,
+    canProceed: Boolean = false,
+    allowSkip: Boolean = false,
+    onSkip: (() -> Unit)? = null
 ) {
+    LaunchedEffect(isGranted) {
+        if (isGranted) onNext()
+    }
     Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isCompleted)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            containerColor = if (isGranted)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
             else
                 MaterialTheme.colorScheme.surface
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Column(Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     icon,
                     contentDescription = null,
-                    tint = if (isCompleted)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    tint = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                if (isCompleted) {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = "Completed",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                Spacer(Modifier.width(12.dp))
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.weight(1f))
+                if (isGranted) {
+                    Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val buttonModifier = Modifier
-                .fillMaxWidth()
-                .let { base ->
-                    if (buttonTestTag != null) {
-                        base.testTag(buttonTestTag)
-                    } else {
-                        base
+            Spacer(Modifier.height(12.dp))
+            Text(description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onPrimary, enabled = !isGranted, modifier = Modifier.fillMaxWidth()) {
+                Text(primaryButtonText)
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                if (onBack != null) {
+                    TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.back)) }
+                } else {
+                    Spacer(Modifier.width(1.dp))
+                }
+                Row {
+                    if (allowSkip && onSkip != null) {
+                        TextButton(onClick = onSkip) { Text(stringResource(R.string.skip_for_now)) }
+                        Spacer(Modifier.width(8.dp))
                     }
+                    Button(onClick = onNext, enabled = canProceed) { Text(stringResource(R.string.next)) }
                 }
-
-            Button(
-                onClick = onButtonClick,
-                enabled = buttonEnabled ?: !isCompleted,
-                modifier = buttonModifier,
-                colors = ButtonDefaults.buttonColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                    disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-                )
-            ) {
-                Text(
-                    text = buttonText,
-                    style = MaterialTheme.typography.labelLarge
-                )
             }
+        }
+    }
+}
+
+@Composable
+private fun AppearanceStep(
+    selectedTheme: ThemeModeOption,
+    onSelectTheme: (ThemeModeOption) -> Unit,
+    selectedIconStyle: AppIconStyleOption,
+    onSelectIconStyle: (AppIconStyleOption) -> Unit,
+    showWallpaper: Boolean,
+    onToggleWallpaper: (Boolean) -> Unit,
+    onPickWallpaper: () -> Unit,
+    wallpaperBlurAmount: Float,
+    backgroundOpacity: Float,
+    backgroundColor: String,
+    customWallpaperPath: String?,
+    onFinish: () -> Unit,
+    onBack: () -> Unit,
+    onSkip: () -> Unit
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.onboarding_appearance_title), style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(12.dp))
+
+        // Theme
+        Text(stringResource(R.string.theme_mode_title), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        FlowRowChipsTheme(selectedTheme, onSelectTheme)
+
+        Spacer(Modifier.height(16.dp))
+
+        // App icon style
+        Text(stringResource(R.string.settings_app_icons), style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = stringResource(R.string.settings_app_icons_subtitle),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+        FlowRowChipsIcon(selectedIconStyle, onSelectIconStyle)
+
+        Spacer(Modifier.height(16.dp))
+
+        // Wallpaper quick pick
+        Text(stringResource(R.string.wallpaper_settings_title), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = stringResource(R.string.settings_show_wallpaper_title), modifier = Modifier.weight(1f))
+            Switch(checked = showWallpaper, onCheckedChange = onToggleWallpaper)
+        }
+        if (showWallpaper) {
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onPickWallpaper, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.custom_wallpaper_choose))
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Text(stringResource(R.string.color_palette_preview_title), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        // Preview with wallpaper backdrop
+        com.talauncher.ui.components.ModernBackdrop(
+            showWallpaper = showWallpaper,
+            blurAmount = wallpaperBlurAmount,
+            backgroundColor = backgroundColor,
+            opacity = backgroundOpacity,
+            customWallpaperPath = customWallpaperPath
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(8.dp)) {
+                ModernAppItem(appName = "Calendar", packageName = "com.android.calendar", onClick = {}, appIconStyle = selectedIconStyle)
+                ModernAppItem(appName = "Messages", packageName = "com.android.messaging", onClick = {}, appIconStyle = selectedIconStyle)
+                ModernAppItem(appName = "Notes", packageName = "com.example.notes", onClick = {}, appIconStyle = selectedIconStyle)
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.back)) }
+            Row {
+                TextButton(onClick = onSkip) { Text(stringResource(R.string.skip_for_now)) }
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = onFinish) { Text(stringResource(R.string.finish)) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FlowRowChipsTheme(selected: ThemeModeOption, onSelect: (ThemeModeOption) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ThemeModeOption.entries.forEach { option ->
+            FilterChip(selected = selected == option, onClick = { onSelect(option) }, label = { Text(option.label) })
+        }
+    }
+}
+
+@Composable
+private fun FlowRowChipsIcon(selected: AppIconStyleOption, onSelect: (AppIconStyleOption) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AppIconStyleOption.entries.forEach { option ->
+            FilterChip(selected = selected == option, onClick = { onSelect(option) }, label = { Text(option.label) })
         }
     }
 }
