@@ -80,3 +80,51 @@ fun Collapsible(
         }
     }
 }
+
+/**
+ * Data class representing a collapsible section with its content.
+ *
+ * @param id Unique identifier for this section
+ * @param title The title to display in the header
+ * @param content The composable content to show when expanded
+ */
+data class CollapsibleSection(
+    val id: String,
+    val title: String,
+    val content: @Composable () -> Unit
+)
+
+/**
+ * A container component that manages a list of collapsible sections,
+ * enforcing that only one section can be expanded at a time.
+ *
+ * @param sections List of collapsible sections to display
+ * @param initialExpandedId The ID of the initially expanded section (default: first section)
+ * @param modifier Modifier for the root component
+ */
+@Composable
+fun CollapsibleSectionContainer(
+    sections: List<CollapsibleSection>,
+    initialExpandedId: String? = sections.firstOrNull()?.id,
+    modifier: Modifier = Modifier
+) {
+    var expandedSectionId by remember { mutableStateOf(initialExpandedId) }
+
+    Column(modifier = modifier) {
+        sections.forEachIndexed { index, section ->
+            if (index > 0) {
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Collapsible(
+                title = section.title,
+                isExpanded = expandedSectionId == section.id,
+                onToggle = {
+                    expandedSectionId = if (expandedSectionId == section.id) null else section.id
+                }
+            ) {
+                section.content()
+            }
+        }
+    }
+}

@@ -14,7 +14,8 @@ import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.ui.components.*
-import com.talauncher.ui.components.Collapsible
+import com.talauncher.ui.components.CollapsibleSection
+import com.talauncher.ui.components.CollapsibleSectionContainer
 
 @Composable
 fun UIThemeSettingsScreen(
@@ -47,118 +48,85 @@ fun UIThemeSettingsScreen(
     enableAnimations: Boolean,
     onToggleAnimations: (Boolean) -> Unit
 ) {
-    var expandedSection by remember { mutableStateOf<String?>("theme_mode") }
+    val sections = listOf(
+        CollapsibleSection(
+            id = "theme_mode",
+            title = stringResource(R.string.theme_mode_title)
+        ) {
+            ThemeModeContent(
+                selectedMode = themeMode,
+                onModeSelected = onUpdateThemeMode
+            )
+        },
+        CollapsibleSection(
+            id = "color_palette",
+            title = stringResource(R.string.color_palette_title)
+        ) {
+            ColorPaletteSelector(
+                selectedPalette = colorPalette,
+                onPaletteSelected = onUpdateColorPalette,
+                currentCustomColor = customColorOption,
+                onCustomColorSelected = onUpdateCustomColorOption,
+                currentCustomPrimaryColor = customPrimaryColor,
+                currentCustomSecondaryColor = customSecondaryColor,
+                onCustomPrimaryColorSelected = onUpdateCustomPrimaryColor,
+                onCustomSecondaryColorSelected = onUpdateCustomSecondaryColor
+            )
+        },
+        CollapsibleSection(
+            id = "app_icons",
+            title = stringResource(R.string.settings_app_icons)
+        ) {
+            AppIconStyleContent(
+                appIconStyle = appIconStyle,
+                onUpdateAppIconStyle = onUpdateAppIconStyle
+            )
+        },
+        CollapsibleSection(
+            id = "wallpaper",
+            title = stringResource(R.string.wallpaper_settings_title)
+        ) {
+            WallpaperBackgroundContent(
+                showWallpaper = showWallpaper,
+                onToggleShowWallpaper = onToggleShowWallpaper,
+                backgroundColor = backgroundColor,
+                onUpdateBackgroundColor = onUpdateBackgroundColor,
+                wallpaperBlurAmount = wallpaperBlurAmount,
+                onUpdateWallpaperBlur = onUpdateWallpaperBlur,
+                backgroundOpacity = backgroundOpacity,
+                onUpdateBackgroundOpacity = onUpdateBackgroundOpacity,
+                customWallpaperPath = customWallpaperPath,
+                onPickCustomWallpaper = onPickCustomWallpaper
+            )
+        },
+        CollapsibleSection(
+            id = "visual_effects",
+            title = stringResource(R.string.visual_effects_title)
+        ) {
+            VisualEffectsContent(
+                enableGlassmorphism = enableGlassmorphism,
+                onToggleGlassmorphism = onToggleGlassmorphism,
+                enableAnimations = enableAnimations,
+                onToggleAnimations = onToggleAnimations
+            )
+        },
+        CollapsibleSection(
+            id = "layout_density",
+            title = stringResource(R.string.layout_density_title)
+        ) {
+            LayoutDensityContent(
+                uiDensity = uiDensity,
+                onUpdateUiDensity = onUpdateUiDensity
+            )
+        }
+    )
 
     SettingsLazyColumn {
         item {
-            Collapsible(
-                title = stringResource(R.string.theme_mode_title),
-                isExpanded = expandedSection == "theme_mode",
-                onToggle = {
-                    expandedSection = if (expandedSection == "theme_mode") null else "theme_mode"
-                }
-            ) {
-                ThemeModeContent(
-                    selectedMode = themeMode,
-                    onModeSelected = onUpdateThemeMode
-                )
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Collapsible(
-                title = stringResource(R.string.color_palette_title),
-                isExpanded = expandedSection == "color_palette",
-                onToggle = {
-                    expandedSection = if (expandedSection == "color_palette") null else "color_palette"
-                }
-            ) {
-                ColorPaletteSelector(
-                    selectedPalette = colorPalette,
-                    onPaletteSelected = onUpdateColorPalette,
-                    currentCustomColor = customColorOption,
-                    onCustomColorSelected = onUpdateCustomColorOption,
-                    currentCustomPrimaryColor = customPrimaryColor,
-                    currentCustomSecondaryColor = customSecondaryColor,
-                    onCustomPrimaryColorSelected = onUpdateCustomPrimaryColor,
-                    onCustomSecondaryColorSelected = onUpdateCustomSecondaryColor
-                )
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Collapsible(
-                title = stringResource(R.string.settings_app_icons),
-                isExpanded = expandedSection == "app_icons",
-                onToggle = {
-                    expandedSection = if (expandedSection == "app_icons") null else "app_icons"
-                }
-            ) {
-                AppIconStyleContent(
-                    appIconStyle = appIconStyle,
-                    onUpdateAppIconStyle = onUpdateAppIconStyle
-                )
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Collapsible(
-                title = stringResource(R.string.wallpaper_settings_title),
-                isExpanded = expandedSection == "wallpaper",
-                onToggle = {
-                    expandedSection = if (expandedSection == "wallpaper") null else "wallpaper"
-                }
-            ) {
-                WallpaperBackgroundContent(
-                    showWallpaper = showWallpaper,
-                    onToggleShowWallpaper = onToggleShowWallpaper,
-                    backgroundColor = backgroundColor,
-                    onUpdateBackgroundColor = onUpdateBackgroundColor,
-                    wallpaperBlurAmount = wallpaperBlurAmount,
-                    onUpdateWallpaperBlur = onUpdateWallpaperBlur,
-                    backgroundOpacity = backgroundOpacity,
-                    onUpdateBackgroundOpacity = onUpdateBackgroundOpacity,
-                    customWallpaperPath = customWallpaperPath,
-                    onPickCustomWallpaper = onPickCustomWallpaper
-                )
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Collapsible(
-                title = stringResource(R.string.visual_effects_title),
-                isExpanded = expandedSection == "visual_effects",
-                onToggle = {
-                    expandedSection = if (expandedSection == "visual_effects") null else "visual_effects"
-                }
-            ) {
-                VisualEffectsContent(
-                    enableGlassmorphism = enableGlassmorphism,
-                    onToggleGlassmorphism = onToggleGlassmorphism,
-                    enableAnimations = enableAnimations,
-                    onToggleAnimations = onToggleAnimations
-                )
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(12.dp))
-            Collapsible(
-                title = stringResource(R.string.layout_density_title),
-                isExpanded = expandedSection == "layout_density",
-                onToggle = {
-                    expandedSection = if (expandedSection == "layout_density") null else "layout_density"
-                }
-            ) {
-                LayoutDensityContent(
-                    uiDensity = uiDensity,
-                    onUpdateUiDensity = onUpdateUiDensity
-                )
-            }
+            CollapsibleSectionContainer(
+                sections = sections,
+                initialExpandedId = "theme_mode"
+            )
         }
     }
 }
