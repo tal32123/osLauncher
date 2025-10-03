@@ -382,7 +382,31 @@ fun HomeScreen(
                         }
                     }
 
-                    // Alphabet Index on the right side
+                    // Enhanced Alphabet Fast Scroller on the right side
+                    if (!uiState.sectionIndex.isEmpty) {
+                        EnhancedAlphabetFastScroller(
+                            sectionIndex = uiState.sectionIndex,
+                            isEnabled = uiState.isAlphabetIndexEnabled,
+                            modifier = Modifier.padding(end = PrimerSpacing.sm).testTag("enhanced_fast_scroller"),
+                            onScrollToIndex = { globalIndex ->
+                                scope.launch {
+                                    // Adjust index to account for recent apps section if present
+                                    val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
+                                        // Add header + recent apps + spacer/title before "All Apps"
+                                        globalIndex + uiState.recentApps.size + 2
+                                    } else {
+                                        globalIndex
+                                    }
+                                    // Instant scroll for smooth per-app targeting
+                                    listState.scrollToItem(adjustedIndex)
+                                }
+                            }
+                        )
+                    }
+
+                    // Legacy Alphabet Index (kept for fallback)
+                    // Uncomment below to use the old alphabet index instead
+                    /*
                     if (uiState.alphabetIndexEntries.isNotEmpty()) {
                         AlphabetIndex(
                             entries = uiState.alphabetIndexEntries,
@@ -397,6 +421,7 @@ fun HomeScreen(
                             }
                         )
                     }
+                    */
                 }
             }
 

@@ -50,6 +50,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.talauncher.BuildConfig
 import com.talauncher.domain.model.AlphabetIndexEntry
+import com.talauncher.domain.model.SectionIndex
 import com.talauncher.domain.usecases.BuildAlphabetIndexUseCase
 import com.talauncher.domain.usecases.FormatTimeUseCase
 import com.talauncher.domain.usecases.GetRecentAppsUseCase
@@ -198,6 +199,8 @@ class HomeViewModel(
                     )
                     // Use BuildAlphabetIndexUseCase for alphabet index
                     val alphabetIndex = buildAlphabetIndexUseCase.execute(allApps, recentApps)
+                    // Build enhanced SectionIndex for per-app fast scrolling
+                    val sectionIndex = buildAlphabetIndexUseCase.buildSectionIndex(allApps, recentApps)
 
                     withContext(Dispatchers.Main.immediate) {
                         val wasExpanded = _uiState.value.isOtherAppsExpanded
@@ -226,6 +229,7 @@ class HomeViewModel(
                             // App drawer functionality moved to home screen
                             recentApps = recentApps,
                             alphabetIndexEntries = alphabetIndex,
+                            sectionIndex = sectionIndex,
                             isAlphabetIndexEnabled = allApps.isNotEmpty()
                         ).let { updated ->
                             val keepExpanded = wasExpanded && hiddenApps.isNotEmpty()
@@ -1008,6 +1012,7 @@ data class HomeUiState(
     // App drawer functionality moved to home screen
     val recentApps: List<AppInfo> = emptyList(),
     val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
+    val sectionIndex: SectionIndex = SectionIndex.EMPTY,
     val alphabetIndexActiveKey: String? = null,
     val isAlphabetIndexEnabled: Boolean = true,
     val showAppActionDialog: Boolean = false,
