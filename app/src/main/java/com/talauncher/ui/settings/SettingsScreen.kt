@@ -30,6 +30,7 @@ fun SettingsScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf(
         stringResource(R.string.settings_tab_general),
+        stringResource(R.string.settings_tab_app_sections),
         stringResource(R.string.settings_tab_ui_theme),
         stringResource(R.string.settings_tab_distracting_apps),
         stringResource(R.string.settings_tab_usage_insights)
@@ -63,7 +64,7 @@ fun SettingsScreen(
     }
 
     LaunchedEffect(selectedTab) {
-        if (selectedTab != 2) {
+        if (selectedTab != 3) {
             viewModel.clearSearchQuery()
         }
     }
@@ -122,7 +123,29 @@ fun SettingsScreen(
                 buildBranch = uiState.buildBranch,
                 buildTime = uiState.buildTime
             )
-            1 -> UIThemeSettingsScreen(
+            1 -> AppSectionsSettingsScreen(
+                pinnedAppsLayout = uiState.pinnedAppsLayout,
+                onUpdatePinnedAppsLayout = viewModel::updatePinnedAppsLayout,
+                pinnedAppsDisplayStyle = uiState.pinnedAppsDisplayStyle,
+                onUpdatePinnedAppsDisplayStyle = viewModel::updatePinnedAppsDisplayStyle,
+                pinnedAppsIconColor = uiState.pinnedAppsIconColor,
+                onUpdatePinnedAppsIconColor = viewModel::updatePinnedAppsIconColor,
+                recentAppsLayout = uiState.recentAppsLayout,
+                onUpdateRecentAppsLayout = viewModel::updateRecentAppsLayout,
+                recentAppsDisplayStyle = uiState.recentAppsDisplayStyle,
+                onUpdateRecentAppsDisplayStyle = viewModel::updateRecentAppsDisplayStyle,
+                recentAppsIconColor = uiState.recentAppsIconColor,
+                onUpdateRecentAppsIconColor = viewModel::updateRecentAppsIconColor,
+                recentAppsLimit = uiState.recentAppsLimit,
+                onUpdateRecentAppsLimit = viewModel::updateRecentAppsLimit,
+                allAppsLayout = uiState.allAppsLayout,
+                onUpdateAllAppsLayout = viewModel::updateAllAppsLayout,
+                allAppsDisplayStyle = uiState.allAppsDisplayStyle,
+                onUpdateAllAppsDisplayStyle = viewModel::updateAllAppsDisplayStyle,
+                allAppsIconColor = uiState.allAppsIconColor,
+                onUpdateAllAppsIconColor = viewModel::updateAllAppsIconColor
+            )
+            2 -> UIThemeSettingsScreen(
                 backgroundColor = uiState.backgroundColor,
                 onUpdateBackgroundColor = viewModel::updateBackgroundColor,
                 showWallpaper = uiState.showWallpaper,
@@ -154,7 +177,7 @@ fun SettingsScreen(
                 enableAnimations = uiState.enableAnimations,
                 onToggleAnimations = viewModel::updateAnimationsEnabled
             )
-            2 -> DistractingAppsSettingsScreen(
+            3 -> DistractingAppsSettingsScreen(
                 uiState = uiState,
                 viewModel = viewModel,
                 onEditApp = { app, timeLimit, usesDefault ->
@@ -163,7 +186,7 @@ fun SettingsScreen(
                     editingUsesDefault = usesDefault
                 }
             )
-            3 -> {
+            4 -> {
                 val insightsViewModel: InsightsViewModel = viewModel {
                     InsightsViewModel(viewModel.usageStatsHelper, viewModel.permissionsHelper)
                 }

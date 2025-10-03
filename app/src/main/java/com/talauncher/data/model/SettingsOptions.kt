@@ -103,3 +103,50 @@ enum class UiDensityOption(val label: String) {
         }
     }
 }
+
+enum class AppSectionLayoutOption(val label: String, val columns: Int) {
+    LIST("List (1 per row)", 1),
+    GRID_3("Grid (3 per row)", 3),
+    GRID_4("Grid (4 per row)", 4);
+
+    val storageValue: String
+        get() = name
+
+    companion object {
+        fun fromStorageValue(value: String?): AppSectionLayoutOption {
+            val normalized = value?.lowercase(Locale.US)
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: LIST
+        }
+    }
+}
+
+enum class AppDisplayStyleOption(val label: String) {
+    ICON_ONLY("Icon only"),
+    ICON_AND_TEXT("Icon and text"),
+    TEXT_ONLY("Text only");
+
+    val storageValue: String
+        get() = name
+
+    companion object {
+        fun fromStorageValue(value: String?): AppDisplayStyleOption {
+            val normalized = value?.lowercase(Locale.US)
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: ICON_AND_TEXT
+        }
+    }
+}
+
+enum class IconColorOption(val label: String) {
+    ORIGINAL("Original colors"),
+    MONOCHROME("Monochrome");
+
+    val storageValue: String
+        get() = name
+
+    companion object {
+        fun fromStorageValue(value: String?): IconColorOption {
+            val normalized = value?.lowercase(Locale.US)
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: ORIGINAL
+        }
+    }
+}

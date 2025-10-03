@@ -46,5 +46,18 @@ data class LauncherSettings(
     val accentColor: String? = null, // Custom accent color override (hex)
     val fontScale: Float = 1.0f, // Text size scaling factor (0.8-1.4)
     val enableAnimations: Boolean = true, // Enable smooth UI animations
-    val cardElevation: Int = 2 // Card elevation in dp (0-8)
+    val cardElevation: Int = 2, // Card elevation in dp (0-8)
+
+    // App section display settings
+    val pinnedAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val pinnedAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val pinnedAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val recentAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val recentAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val recentAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val allAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL
 )
