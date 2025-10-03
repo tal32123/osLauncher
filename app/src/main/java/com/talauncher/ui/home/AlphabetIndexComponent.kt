@@ -407,10 +407,13 @@ private fun SectionBubble(
 ) {
     val displayLetter = letter.ifBlank { "?" }.uppercase()
 
+    val bubbleDiameter = 56.dp
+
     Surface(
         modifier = modifier
             .padding(horizontal = PrimerSpacing.md)
-            .size(56.dp),
+            .size(bubbleDiameter)
+            .aspectRatio(1f),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
