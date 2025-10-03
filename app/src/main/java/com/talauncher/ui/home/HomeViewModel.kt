@@ -50,6 +50,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import com.talauncher.BuildConfig
 import com.talauncher.domain.model.AlphabetIndexEntry
+import com.talauncher.domain.model.SectionIndex
 import com.talauncher.domain.usecases.BuildAlphabetIndexUseCase
 import com.talauncher.domain.usecases.FormatTimeUseCase
 import com.talauncher.domain.usecases.GetRecentAppsUseCase
@@ -161,43 +162,85 @@ class HomeViewModel(
 
     private fun observeData() {
         viewModelScope.launch {
-            combine(
-                appRepository.getAllVisibleApps(),
-                settingsRepository.getSettings()
-            ) { allApps, settings ->
-                withContext(Dispatchers.Default) {
-                    allVisibleApps = allApps
-                    val currentQuery = _uiState.value.searchQuery
+            try {
+                combine(
+                    appRepository.getAllVisibleApps(),
+                    settingsRepository.getSettings()
+                ) { allApps, settings ->
+                    withContext(Dispatchers.Default) {
+                        try {
+                            allVisibleApps = allApps
+                            val currentQuery = _uiState.value.searchQuery
 
-                    // Cache expensive operations
-                    val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
-                    val weatherDisplay = settings?.weatherDisplay ?: WeatherDisplayOption.DAILY
+                            // Cache expensive operations
+                            val isWhatsAppInstalled = contactHelper?.isWhatsAppInstalled() ?: false
+                            val weatherDisplay = settings?.weatherDisplay ?: WeatherDisplayOption.DAILY
 
-                    // Get recent apps and alphabet index for the moved app drawer functionality
-                    val hasUsageStatsPermission = resolvedPermissionsHelper?.permissionState?.value?.hasUsageStats ?: false
-                    val hiddenApps = try {
-                        appRepository.getHiddenApps().first()
-                    } catch (e: Exception) {
-                        emptyList<AppInfo>()
-                    }
-                    allHiddenApps = hiddenApps
-                    val searchableApps = allApps + hiddenApps
-                    // Use SearchAppsUseCase for filtering
-                    val filtered = if (currentQuery.isNotBlank()) {
-                        searchAppsUseCase.execute(currentQuery, searchableApps)
-                    } else {
-                        emptyList()
-                    }
-                    val recentAppsLimit = settings?.recentAppsLimit ?: 10
-                    // Use GetRecentAppsUseCase for recent apps calculation
-                    val recentApps = getRecentAppsUseCase.execute(
-                        allApps,
-                        hiddenApps,
-                        recentAppsLimit,
-                        hasUsageStatsPermission
-                    )
-                    // Use BuildAlphabetIndexUseCase for alphabet index
-                    val alphabetIndex = buildAlphabetIndexUseCase.execute(allApps, recentApps)
+                            // Get recent apps and alphabet index for the moved app drawer functionality
+                            val hasUsageStatsPermission = resolvedPermissionsHelper?.permissionState?.value?.hasUsageStats ?: false
+                            val hiddenApps = try {
+                                appRepository.getHiddenApps().first()
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error getting hidden apps", e)
+                                emptyList<AppInfo>()
+                            }
+                            allHiddenApps = hiddenApps
+                            val searchableApps = allApps + hiddenApps
+                            // Use SearchAppsUseCase for filtering
+                            val filtered = if (currentQuery.isNotBlank()) {
+                                searchAppsUseCase.execute(currentQuery, searchableApps)
+                            } else {
+                                emptyList()
+                            }
+                            val recentAppsLimit = settings?.recentAppsLimit ?: 10
+                            // Use GetRecentAppsUseCase for recent apps calculation
+                            val recentApps = try {
+                                getRecentAppsUseCase.execute(
+                                    allApps,
+                                    hiddenApps,
+                                    recentAppsLimit,
+                                    hasUsageStatsPermission
+                                )
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error getting recent apps", e)
+                                errorHandler?.showError(
+                                    "Recent Apps Error",
+                                    "Failed to load recent apps: ${e.message}",
+                                    e
+                                )
+                                emptyList()
+                            }
+                            // Use BuildAlphabetIndexUseCase for alphabet index
+                            val alphabetIndex = try {
+                                buildAlphabetIndexUseCase.execute(allApps, recentApps)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error building alphabet index", e)
+                                errorHandler?.showError(
+                                    "Alphabet Index Error",
+                                    "Failed to build alphabet index: ${e.message}",
+                                    e
+                                )
+                                emptyList()
+                            }
+                            // Get pinned apps
+                            val pinnedApps = try {
+                                appRepository.getPinnedApps().first()
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error getting pinned apps", e)
+                                emptyList<AppInfo>()
+                            }
+                            // Build enhanced SectionIndex for per-app fast scrolling
+                            val sectionIndex = try {
+                                buildAlphabetIndexUseCase.buildSectionIndex(allApps, recentApps, pinnedApps)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error building section index", e)
+                                errorHandler?.showError(
+                                    "Section Index Error",
+                                    "Failed to build section index: ${e.message}",
+                                    e
+                                )
+                                SectionIndex.EMPTY
+                            }
 
                     withContext(Dispatchers.Main.immediate) {
                         val wasExpanded = _uiState.value.isOtherAppsExpanded
@@ -224,8 +267,10 @@ class HomeViewModel(
                             uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                             enableAnimations = settings?.enableAnimations ?: true,
                             // App drawer functionality moved to home screen
+                            pinnedApps = pinnedApps,
                             recentApps = recentApps,
                             alphabetIndexEntries = alphabetIndex,
+                            sectionIndex = sectionIndex,
                             isAlphabetIndexEnabled = allApps.isNotEmpty(),
                             // Sidebar customization from settings
                             sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
@@ -263,8 +308,24 @@ class HomeViewModel(
                             display = weatherDisplay
                         )
                     }
-                }
-            }.collect { }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error in observeData processing", e)
+                            errorHandler?.showError(
+                                "Data Processing Error",
+                                "Failed to process app data: ${e.message}",
+                                e
+                            )
+                        }
+                    }
+                }.collect { }
+            } catch (e: Exception) {
+                Log.e(TAG, "Critical error in observeData flow", e)
+                errorHandler?.showError(
+                    "Critical Error",
+                    "Failed to initialize home screen: ${e.message}",
+                    e
+                )
+            }
         }
     }
 
@@ -915,6 +976,36 @@ class HomeViewModel(
         }
     }
 
+    fun pinApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.pinApp(packageName)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to pin app",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
+    fun unpinApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.unpinApp(packageName)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to unpin app",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
     fun openAppInfo(packageName: String) {
         try {
             val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -1010,8 +1101,10 @@ data class HomeUiState(
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     // App drawer functionality moved to home screen
+    val pinnedApps: List<AppInfo> = emptyList(),
     val recentApps: List<AppInfo> = emptyList(),
     val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
+    val sectionIndex: SectionIndex = SectionIndex.EMPTY,
     val alphabetIndexActiveKey: String? = null,
     val isAlphabetIndexEnabled: Boolean = true,
     // Sidebar customization

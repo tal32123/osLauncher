@@ -14,6 +14,8 @@ import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.ui.components.*
+import com.talauncher.ui.components.CollapsibleSection
+import com.talauncher.ui.components.CollapsibleSectionContainer
 
 @Composable
 fun UIThemeSettingsScreen(
@@ -53,15 +55,20 @@ fun UIThemeSettingsScreen(
     sidebarWaveSpread: Float,
     onUpdateSidebarWaveSpread: (Float) -> Unit
 ) {
-    SettingsLazyColumn {
-        item {
-            ThemeModeSelector(
+    val sections = listOf(
+        CollapsibleSection(
+            id = "theme_mode",
+            title = stringResource(R.string.theme_mode_title)
+        ) {
+            ThemeModeContent(
                 selectedMode = themeMode,
                 onModeSelected = onUpdateThemeMode
             )
-        }
-
-        item {
+        },
+        CollapsibleSection(
+            id = "color_palette",
+            title = stringResource(R.string.color_palette_title)
+        ) {
             ColorPaletteSelector(
                 selectedPalette = colorPalette,
                 onPaletteSelected = onUpdateColorPalette,
@@ -72,17 +79,21 @@ fun UIThemeSettingsScreen(
                 onCustomPrimaryColorSelected = onUpdateCustomPrimaryColor,
                 onCustomSecondaryColorSelected = onUpdateCustomSecondaryColor
             )
-        }
-
-        item {
-            AppIconStyleSection(
+        },
+        CollapsibleSection(
+            id = "app_icons",
+            title = stringResource(R.string.settings_app_icons)
+        ) {
+            AppIconStyleContent(
                 appIconStyle = appIconStyle,
                 onUpdateAppIconStyle = onUpdateAppIconStyle
             )
-        }
-
-        item {
-            WallpaperBackgroundSection(
+        },
+        CollapsibleSection(
+            id = "wallpaper",
+            title = stringResource(R.string.wallpaper_settings_title)
+        ) {
+            WallpaperBackgroundContent(
                 showWallpaper = showWallpaper,
                 onToggleShowWallpaper = onToggleShowWallpaper,
                 backgroundColor = backgroundColor,
@@ -94,27 +105,32 @@ fun UIThemeSettingsScreen(
                 customWallpaperPath = customWallpaperPath,
                 onPickCustomWallpaper = onPickCustomWallpaper
             )
-        }
-
-        item {
-            VisualEffectsSection(
+        },
+        CollapsibleSection(
+            id = "visual_effects",
+            title = stringResource(R.string.visual_effects_title)
+        ) {
+            VisualEffectsContent(
                 enableGlassmorphism = enableGlassmorphism,
                 onToggleGlassmorphism = onToggleGlassmorphism,
                 enableAnimations = enableAnimations,
                 onToggleAnimations = onToggleAnimations
             )
-        }
-
-        item {
-            LayoutDensitySection(
+        },
+        CollapsibleSection(
+            id = "layout_density",
+            title = stringResource(R.string.layout_density_title)
+        ) {
+            LayoutDensityContent(
                 uiDensity = uiDensity,
                 onUpdateUiDensity = onUpdateUiDensity
             )
-        }
-
-        // Sidebar section
-        item {
-            SidebarSettingsSection(
+        },
+        CollapsibleSection(
+            id = "sidebar",
+            title = stringResource(R.string.settings_sidebar_title)
+        ) {
+            SidebarSettingsContent(
                 activeScale = sidebarActiveScale,
                 onActiveScaleChange = onUpdateSidebarActiveScale,
                 popOutDp = sidebarPopOutDp,
@@ -123,41 +139,75 @@ fun UIThemeSettingsScreen(
                 onWaveSpreadChange = onUpdateSidebarWaveSpread
             )
         }
-    }
-}
+    )
 
-@Composable
-private fun AppIconStyleSection(
-    appIconStyle: AppIconStyleOption,
-    onUpdateAppIconStyle: (AppIconStyleOption) -> Unit
-) {
-    SettingsSectionCard(title = stringResource(R.string.settings_app_icons)) {
-        Text(
-            text = stringResource(R.string.settings_app_icons_subtitle),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        ChipGrid(
-            items = AppIconStyleOption.entries,
-            modifier = Modifier.fillMaxWidth()
-        ) { option ->
-            FilterChip(
-                selected = appIconStyle == option,
-                onClick = { onUpdateAppIconStyle(option) },
-                label = {
-                    Text(
-                        text = option.label,
-                        maxLines = 1
-                    )
-                }
+    SettingsLazyColumn {
+        item {
+            CollapsibleSectionContainer(
+                sections = sections,
+                initialExpandedId = "theme_mode"
             )
         }
     }
 }
 
 @Composable
-private fun WallpaperBackgroundSection(
+private fun ThemeModeContent(
+    selectedMode: ThemeModeOption,
+    onModeSelected: (ThemeModeOption) -> Unit
+) {
+    Text(
+        text = stringResource(R.string.theme_mode_subtitle),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ThemeModeOption.entries.forEach { mode ->
+            FilterChip(
+                selected = selectedMode == mode,
+                onClick = { onModeSelected(mode) },
+                label = { Text(mode.label) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppIconStyleContent(
+    appIconStyle: AppIconStyleOption,
+    onUpdateAppIconStyle: (AppIconStyleOption) -> Unit
+) {
+    Text(
+        text = stringResource(R.string.settings_app_icons_subtitle),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+
+    ChipGrid(
+        items = AppIconStyleOption.entries,
+        modifier = Modifier.fillMaxWidth()
+    ) { option ->
+        FilterChip(
+            selected = appIconStyle == option,
+            onClick = { onUpdateAppIconStyle(option) },
+            label = {
+                Text(
+                    text = option.label,
+                    maxLines = 1
+                )
+            }
+        )
+    }
+}
+
+@Composable
+private fun WallpaperBackgroundContent(
     showWallpaper: Boolean,
     onToggleShowWallpaper: (Boolean) -> Unit,
     backgroundColor: String,
@@ -176,148 +226,91 @@ private fun WallpaperBackgroundSection(
         mutableStateOf(backgroundOpacity)
     }
 
-    SettingsSectionCard(title = stringResource(R.string.wallpaper_settings_title)) {
-        SettingItem(
-            title = stringResource(R.string.settings_show_wallpaper_title),
-            subtitle = stringResource(R.string.settings_show_wallpaper_subtitle),
-            checked = showWallpaper,
-            onCheckedChange = onToggleShowWallpaper,
-            modifier = Modifier.testTag("show_wallpaper_switch")
+    SettingItem(
+        title = stringResource(R.string.settings_show_wallpaper_title),
+        subtitle = stringResource(R.string.settings_show_wallpaper_subtitle),
+        checked = showWallpaper,
+        onCheckedChange = onToggleShowWallpaper,
+        modifier = Modifier.testTag("show_wallpaper_switch")
+    )
+
+    if (showWallpaper) {
+        SliderSetting(
+            label = stringResource(R.string.wallpaper_blur_title),
+            value = blurValue,
+            onValueChange = { blurValue = it },
+            valueRange = 0f..1f,
+            onValueChangeFinished = {
+                onUpdateWallpaperBlur(blurValue)
+            },
+            valueLabel = "${(blurValue * 100).toInt()}% blur",
+            modifier = Modifier.testTag("wallpaper_blur_slider")
         )
 
-        if (showWallpaper) {
-            SliderSetting(
-                label = stringResource(R.string.wallpaper_blur_title),
-                value = blurValue,
-                onValueChange = { blurValue = it },
-                valueRange = 0f..1f,
-                onValueChangeFinished = {
-                    onUpdateWallpaperBlur(blurValue)
-                },
-                valueLabel = "${(blurValue * 100).toInt()}% blur",
-                modifier = Modifier.testTag("wallpaper_blur_slider")
-            )
+        SliderSetting(
+            label = stringResource(R.string.wallpaper_opacity_title),
+            value = opacityValue,
+            onValueChange = { opacityValue = it },
+            valueRange = 0f..1f,
+            onValueChangeFinished = {
+                onUpdateBackgroundOpacity(opacityValue)
+            },
+            valueLabel = "${(opacityValue * 100).toInt()}% opacity"
+        )
 
-            SliderSetting(
-                label = stringResource(R.string.wallpaper_opacity_title),
-                value = opacityValue,
-                onValueChange = { opacityValue = it },
-                valueRange = 0f..1f,
-                onValueChangeFinished = {
-                    onUpdateBackgroundOpacity(opacityValue)
-                },
-                valueLabel = "${(opacityValue * 100).toInt()}% opacity"
-            )
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.custom_wallpaper_title),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    ModernButton(
-                        onClick = onPickCustomWallpaper,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.custom_wallpaper_choose))
-                    }
-                }
-                if (customWallpaperPath != null) {
-                    Text(
-                        text = stringResource(R.string.custom_wallpaper_using),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.custom_wallpaper_system),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
-                text = stringResource(R.string.settings_background_color),
+                text = stringResource(R.string.custom_wallpaper_title),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-
-            ChipGrid(
-                items = listOf(
-                    "system" to stringResource(R.string.settings_background_system),
-                    "black" to stringResource(R.string.settings_background_black),
-                    "white" to stringResource(R.string.settings_background_white)
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) { (value, label) ->
-                FilterChip(
-                    selected = backgroundColor == value,
-                    onClick = { onUpdateBackgroundColor(value) },
-                    label = {
-                        Text(
-                            text = label,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ModernButton(
+                    onClick = onPickCustomWallpaper,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.custom_wallpaper_choose))
+                }
+            }
+            if (customWallpaperPath != null) {
+                Text(
+                    text = stringResource(R.string.custom_wallpaper_using),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.custom_wallpaper_system),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun VisualEffectsSection(
-    enableGlassmorphism: Boolean,
-    onToggleGlassmorphism: (Boolean) -> Unit,
-    enableAnimations: Boolean,
-    onToggleAnimations: (Boolean) -> Unit
-) {
-    SettingsSectionCard(title = stringResource(R.string.visual_effects_title)) {
-        SettingItem(
-            title = stringResource(R.string.glassmorphism_title),
-            subtitle = stringResource(R.string.glassmorphism_subtitle),
-            checked = enableGlassmorphism,
-            onCheckedChange = onToggleGlassmorphism
-        )
-
-        SettingItem(
-            title = stringResource(R.string.animations_title),
-            subtitle = stringResource(R.string.animations_subtitle),
-            checked = enableAnimations,
-            onCheckedChange = onToggleAnimations
-        )
-    }
-}
-
-@Composable
-private fun LayoutDensitySection(
-    uiDensity: UiDensityOption,
-    onUpdateUiDensity: (UiDensityOption) -> Unit
-) {
-    SettingsSectionCard(title = stringResource(R.string.layout_density_title)) {
+    } else {
         Text(
-            text = stringResource(R.string.ui_density_title),
+            text = stringResource(R.string.settings_background_color),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
 
         ChipGrid(
-            items = UiDensityOption.entries,
+            items = listOf(
+                "system" to stringResource(R.string.settings_background_system),
+                "black" to stringResource(R.string.settings_background_black),
+                "white" to stringResource(R.string.settings_background_white)
+            ),
             modifier = Modifier.fillMaxWidth()
-        ) { option ->
+        ) { (value, label) ->
             FilterChip(
-                selected = uiDensity == option,
-                onClick = { onUpdateUiDensity(option) },
+                selected = backgroundColor == value,
+                onClick = { onUpdateBackgroundColor(value) },
                 label = {
                     Text(
-                        text = option.label,
+                        text = label,
                         maxLines = 1,
                         softWrap = false
                     )
@@ -328,7 +321,58 @@ private fun LayoutDensitySection(
 }
 
 @Composable
-private fun SidebarSettingsSection(
+private fun VisualEffectsContent(
+    enableGlassmorphism: Boolean,
+    onToggleGlassmorphism: (Boolean) -> Unit,
+    enableAnimations: Boolean,
+    onToggleAnimations: (Boolean) -> Unit
+) {
+    SettingItem(
+        title = stringResource(R.string.glassmorphism_title),
+        subtitle = stringResource(R.string.glassmorphism_subtitle),
+        checked = enableGlassmorphism,
+        onCheckedChange = onToggleGlassmorphism
+    )
+
+    SettingItem(
+        title = stringResource(R.string.animations_title),
+        subtitle = stringResource(R.string.animations_subtitle),
+        checked = enableAnimations,
+        onCheckedChange = onToggleAnimations
+    )
+}
+
+@Composable
+private fun LayoutDensityContent(
+    uiDensity: UiDensityOption,
+    onUpdateUiDensity: (UiDensityOption) -> Unit
+) {
+    Text(
+        text = stringResource(R.string.ui_density_title),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+
+    ChipGrid(
+        items = UiDensityOption.entries,
+        modifier = Modifier.fillMaxWidth()
+    ) { option ->
+        FilterChip(
+            selected = uiDensity == option,
+            onClick = { onUpdateUiDensity(option) },
+            label = {
+                Text(
+                    text = option.label,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        )
+    }
+}
+
+@Composable
+private fun SidebarSettingsContent(
     activeScale: Float,
     onActiveScaleChange: (Float) -> Unit,
     popOutDp: Int,

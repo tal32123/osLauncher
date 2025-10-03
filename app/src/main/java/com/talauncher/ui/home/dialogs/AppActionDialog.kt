@@ -25,6 +25,8 @@ data class AppActionHandlers(
     val onUnhide: (String) -> Unit,
     val onMarkDistracting: (String) -> Unit,
     val onUnmarkDistracting: (String) -> Unit,
+    val onPin: (String) -> Unit,
+    val onUnpin: (String) -> Unit,
     val onAppInfo: (String) -> Unit,
     val onUninstall: (String) -> Unit
 )
@@ -47,6 +49,8 @@ fun AppActionDialog(
         onUnhide = handlers.onUnhide,
         onMarkDistracting = handlers.onMarkDistracting,
         onUnmarkDistracting = handlers.onUnmarkDistracting,
+        onPin = handlers.onPin,
+        onUnpin = handlers.onUnpin,
         onAppInfo = handlers.onAppInfo,
         onUninstall = handlers.onUninstall
     )
@@ -62,6 +66,8 @@ fun AppActionDialog(
     onUnhide: (String) -> Unit,
     onMarkDistracting: (String) -> Unit,
     onUnmarkDistracting: (String) -> Unit,
+    onPin: (String) -> Unit,
+    onUnpin: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
 ) {
@@ -69,6 +75,7 @@ fun AppActionDialog(
 
     val isHidden = app.isHidden
     val isDistracting = app.isDistracting
+    val isPinned = app.isPinned
 
     BaseActionDialog(
         title = app.appName,
@@ -101,6 +108,28 @@ fun AppActionDialog(
                     onDismiss()
                 }
             )
+
+            if (isPinned) {
+                ActionButton(
+                    label = "Unpin",
+                    description = "Remove app from pinned section",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        onUnpin(app.packageName)
+                        onDismiss()
+                    }
+                )
+            } else {
+                ActionButton(
+                    label = "Pin",
+                    description = "Pin app to top of list",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        onPin(app.packageName)
+                        onDismiss()
+                    }
+                )
+            }
 
             if (isDistracting) {
                 ActionButton(

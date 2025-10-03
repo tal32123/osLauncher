@@ -267,6 +267,11 @@ abstract class LauncherDatabase : RoomDatabase() {
 
         private val MIGRATION_18_19 = object : Migration(18, 19) {
             override fun migrate(database: SupportSQLiteDatabase) {
+                // From master: introduce pinned state on app_info
+                database.execSQL(
+                    "ALTER TABLE app_info ADD COLUMN isPinned INTEGER NOT NULL DEFAULT 0"
+                )
+                // From feature: sidebar customization columns
                 database.execSQL(
                     "ALTER TABLE launcher_settings ADD COLUMN sidebarActiveScale REAL NOT NULL DEFAULT 1.4"
                 )

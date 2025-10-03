@@ -554,7 +554,6 @@ fun ModernBackdrop(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
             .background(backgroundColorValue)
     ) {
         if (showWallpaper && wallpaperPainter != null) {

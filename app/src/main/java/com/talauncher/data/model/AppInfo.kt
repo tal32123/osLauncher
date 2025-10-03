@@ -9,7 +9,8 @@ data class AppInfo(
     val appName: String,
     val isHidden: Boolean = false,
     val isDistracting: Boolean = false,
-    val timeLimitMinutes: Int? = null
+    val timeLimitMinutes: Int? = null,
+    val isPinned: Boolean = false
 )
 
 data class InstalledApp(

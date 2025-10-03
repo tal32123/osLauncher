@@ -59,10 +59,15 @@ class GetRecentAppsUseCase(
         }
 
         // Get usage statistics
-        val usageStats = usageStatsHelper
-            .getPast48HoursUsageStats(hasPermission)
-            .filter { it.timeInForeground > 0 }
-            .sortedByDescending { it.timeInForeground }
+        val usageStats = try {
+            usageStatsHelper
+                .getPast48HoursUsageStats(hasPermission)
+                .filter { it.timeInForeground > 0 }
+                .sortedByDescending { it.timeInForeground }
+        } catch (e: Exception) {
+            // If there's any error getting usage stats, return empty list
+            return@withContext emptyList()
+        }
 
         // Build lookup structures for efficient filtering
         val hiddenPackages = hiddenApps.mapTo(mutableSetOf()) { it.packageName }
