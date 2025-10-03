@@ -137,7 +137,9 @@ fun HomeScreen(
         backgroundColor = uiState.backgroundColor,
         opacity = uiState.backgroundOpacity,
         customWallpaperPath = uiState.customWallpaperPath,
-        modifier = Modifier.systemBarsPadding()
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding()
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
