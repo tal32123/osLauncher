@@ -6,6 +6,11 @@ package com.talauncher.domain.model
 const val RECENT_APPS_INDEX_KEY = "*"
 
 /**
+ * Constant for the "Pinned Apps" index key.
+ */
+const val PINNED_APPS_INDEX_KEY = "📌"
+
+/**
  * Represents a single entry in the alphabet index.
  *
  * Architecture:

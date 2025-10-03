@@ -354,9 +354,15 @@ private fun EnhancedAlphabetItem(
     isEnabled: Boolean
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (isActive) 1.2f else 1f,
-        animationSpec = tween(100),
+        targetValue = if (isActive) 1.5f else 1f,
+        animationSpec = tween(150),
         label = "letter_scale"
+    )
+
+    val offsetX by animateFloatAsState(
+        targetValue = if (isActive) -8f else 0f,
+        animationSpec = tween(150),
+        label = "letter_offset"
     )
 
     val alpha by animateFloatAsState(
@@ -371,9 +377,10 @@ private fun EnhancedAlphabetItem(
 
     Text(
         text = section.displayLabel,
-        style = MaterialTheme.typography.labelSmall,
+        style = if (isActive) MaterialTheme.typography.titleMedium else MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
+            .offset(x = offsetX.dp)
             .scale(scale)
             .alpha(alpha)
             .testTag("enhanced_alphabet_item_${section.key}")
@@ -407,29 +414,21 @@ private fun SectionBubble(
     Card(
         modifier = modifier
             .padding(horizontal = PrimerSpacing.md),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Letter indicator
+            // Letter indicator - made large and prominent
             Text(
                 text = letter,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            // App name
-            Text(
-                text = appName,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                maxLines = 1
+                style = MaterialTheme.typography.displayMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }

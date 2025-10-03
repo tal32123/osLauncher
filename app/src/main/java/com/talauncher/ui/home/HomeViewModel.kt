@@ -222,9 +222,16 @@ class HomeViewModel(
                                 )
                                 emptyList()
                             }
+                            // Get pinned apps
+                            val pinnedApps = try {
+                                appRepository.getPinnedApps().first()
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error getting pinned apps", e)
+                                emptyList<AppInfo>()
+                            }
                             // Build enhanced SectionIndex for per-app fast scrolling
                             val sectionIndex = try {
-                                buildAlphabetIndexUseCase.buildSectionIndex(allApps, recentApps)
+                                buildAlphabetIndexUseCase.buildSectionIndex(allApps, recentApps, pinnedApps)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error building section index", e)
                                 errorHandler?.showError(
@@ -260,6 +267,7 @@ class HomeViewModel(
                             uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                             enableAnimations = settings?.enableAnimations ?: true,
                             // App drawer functionality moved to home screen
+                            pinnedApps = pinnedApps,
                             recentApps = recentApps,
                             alphabetIndexEntries = alphabetIndex,
                             sectionIndex = sectionIndex,
@@ -964,6 +972,36 @@ class HomeViewModel(
         }
     }
 
+    fun pinApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.pinApp(packageName)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to pin app",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
+    fun unpinApp(packageName: String) {
+        viewModelScope.launch {
+            try {
+                appRepository.unpinApp(packageName)
+                dismissAppActionDialog()
+            } catch (e: Exception) {
+                errorHandler?.showError(
+                    "Failed to unpin app",
+                    e.message ?: "Unknown error",
+                    e
+                )
+            }
+        }
+    }
+
     fun openAppInfo(packageName: String) {
         try {
             val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -1059,6 +1097,7 @@ data class HomeUiState(
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     // App drawer functionality moved to home screen
+    val pinnedApps: List<AppInfo> = emptyList(),
     val recentApps: List<AppInfo> = emptyList(),
     val alphabetIndexEntries: List<AlphabetIndexEntry> = emptyList(),
     val sectionIndex: SectionIndex = SectionIndex.EMPTY,

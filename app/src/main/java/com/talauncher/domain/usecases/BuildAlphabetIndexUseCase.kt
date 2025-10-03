@@ -2,6 +2,7 @@ package com.talauncher.domain.usecases
 
 import com.talauncher.data.model.AppInfo
 import com.talauncher.domain.model.AlphabetIndexEntry
+import com.talauncher.domain.model.PINNED_APPS_INDEX_KEY
 import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
 import com.talauncher.domain.model.Section
 import com.talauncher.domain.model.SectionIndex
@@ -86,12 +87,44 @@ class BuildAlphabetIndexUseCase {
      * - Enables O(1) touch-to-app mapping during scrubbing
      *
      * @param apps Sorted list of all apps
-     * @param recentApps List of recently used apps (not included in sections yet)
+     * @param recentApps List of recently used apps (included as second section)
+     * @param pinnedApps List of pinned apps (included as first section)
      * @return SectionIndex with complete section metadata and prefix sums
      */
-    fun buildSectionIndex(apps: List<AppInfo>, recentApps: List<AppInfo>): SectionIndex {
-        if (apps.isEmpty()) {
+    fun buildSectionIndex(apps: List<AppInfo>, recentApps: List<AppInfo>, pinnedApps: List<AppInfo> = emptyList()): SectionIndex {
+        if (apps.isEmpty() && recentApps.isEmpty() && pinnedApps.isEmpty()) {
             return SectionIndex.EMPTY
+        }
+
+        val sections = mutableListOf<Section>()
+        var currentPosition = 0
+
+        // Add pinned apps section if present (first section)
+        if (pinnedApps.isNotEmpty()) {
+            sections.add(
+                Section(
+                    key = PINNED_APPS_INDEX_KEY,
+                    displayLabel = "📌",
+                    firstPosition = currentPosition,
+                    count = pinnedApps.size,
+                    appNames = pinnedApps.map { it.appName }
+                )
+            )
+            currentPosition += pinnedApps.size
+        }
+
+        // Add recent apps section if present (second section)
+        if (recentApps.isNotEmpty()) {
+            sections.add(
+                Section(
+                    key = RECENT_APPS_INDEX_KEY,
+                    displayLabel = "⭐",
+                    firstPosition = currentPosition,
+                    count = recentApps.size,
+                    appNames = recentApps.map { it.appName }
+                )
+            )
+            currentPosition += recentApps.size
         }
 
         // Group apps by first character
@@ -99,8 +132,6 @@ class BuildAlphabetIndexUseCase {
 
         // Build sections for A-Z and #
         val alphabet = ('A'..'Z').map { it.toString() } + listOf("#")
-        val sections = mutableListOf<Section>()
-        var currentPosition = 0
 
         alphabet.forEach { char ->
             val appsForChar = appsByFirstChar[char] ?: emptyList()
@@ -120,7 +151,7 @@ class BuildAlphabetIndexUseCase {
 
         return SectionIndex(
             sections = sections,
-            totalCount = apps.size
+            totalCount = currentPosition
         )
     }
 

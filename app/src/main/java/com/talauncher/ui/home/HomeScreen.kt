@@ -301,6 +301,39 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(PrimerSpacing.xs),
                         contentPadding = PaddingValues(bottom = 80.dp), // Extra bottom padding for accessibility
                     ) {
+                        // Pinned Apps Section
+                        if (uiState.pinnedApps.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = "📌 Pinned",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(
+                                        start = PrimerSpacing.md,
+                                        top = PrimerSpacing.md,
+                                        bottom = PrimerSpacing.sm
+                                    )
+                                )
+                            }
+
+                            items(uiState.pinnedApps, key = { "pinned_${it.packageName}" }) { app ->
+                                ModernAppItem(
+                                    appName = app.appName,
+                                    packageName = app.packageName,
+                                    onClick = { viewModel.launchApp(app.packageName) },
+                                    onLongClick = {
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.showAppActionDialog(app)
+                                    },
+                                    appIconStyle = uiState.appIconStyle
+                                )
+                            }
+
+                            item {
+                                Spacer(modifier = Modifier.height(PrimerSpacing.lg))
+                            }
+                        }
+
                         // Recently Used Apps Section
                         if (uiState.recentApps.isNotEmpty()) {
                             item {
@@ -397,15 +430,9 @@ fun HomeScreen(
                             onScrollToIndex = { globalIndex ->
                                 scope.launch {
                                     try {
-                                        // Adjust index to account for recent apps section if present
-                                        val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                            // Add header + recent apps + spacer/title before "All Apps"
-                                            globalIndex + uiState.recentApps.size + 2
-                                        } else {
-                                            globalIndex
-                                        }
+                                        // globalIndex already accounts for recent apps section
                                         // Instant scroll for smooth per-app targeting
-                                        listState.scrollToItem(adjustedIndex)
+                                        listState.scrollToItem(globalIndex)
                                     } catch (e: Exception) {
                                         Log.e("HomeScreen", "Error scrolling to index $globalIndex", e)
                                     }
@@ -476,6 +503,8 @@ fun HomeScreen(
                 onUnhide = { packageName -> viewModel.unhideApp(packageName) },
                 onMarkDistracting = { packageName -> viewModel.markAppAsDistracting(packageName) },
                 onUnmarkDistracting = { packageName -> viewModel.unmarkAppAsDistracting(packageName) },
+                onPin = { packageName -> viewModel.pinApp(packageName) },
+                onUnpin = { packageName -> viewModel.unpinApp(packageName) },
                 onAppInfo = { packageName -> viewModel.openAppInfo(packageName) },
                 onUninstall = { packageName -> viewModel.uninstallApp(packageName) }
             )

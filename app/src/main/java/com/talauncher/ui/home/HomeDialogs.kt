@@ -13,6 +13,8 @@ fun AppActionDialog(
     onUnhide: (String) -> Unit,
     onMarkDistracting: (String) -> Unit,
     onUnmarkDistracting: (String) -> Unit,
+    onPin: (String) -> Unit,
+    onUnpin: (String) -> Unit,
     onAppInfo: (String) -> Unit,
     onUninstall: (String) -> Unit
 ) = com.talauncher.ui.home.dialogs.AppActionDialog(
@@ -24,6 +26,8 @@ fun AppActionDialog(
     onUnhide = onUnhide,
     onMarkDistracting = onMarkDistracting,
     onUnmarkDistracting = onUnmarkDistracting,
+    onPin = onPin,
+    onUnpin = onUnpin,
     onAppInfo = onAppInfo,
     onUninstall = onUninstall
 )
