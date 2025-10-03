@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.layout.width
 import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import com.talauncher.R
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.UiDensityOption
@@ -259,28 +260,33 @@ fun HomeScreen(
             } else {
                 // Apps Section with Recent Apps and Alphabet Index
                 val listState = rememberLazyListState()
+                val scope = rememberCoroutineScope()
 
                 // Handle alphabet index scrolling
                 LaunchedEffect(uiState.alphabetIndexActiveKey) {
-                    val activeKey = uiState.alphabetIndexActiveKey
-                    if (activeKey != null) {
-                        val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
-                        if (entry != null) {
-                            if (entry.key == RECENT_APPS_INDEX_KEY) {
-                                listState.animateScrollToItem(0)
-                            } else {
-                                entry.targetIndex?.let { targetIndex ->
-                                    // Adjust index to account for recent apps section
-                                    val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                        // Add header + recent apps + spacer/title before "All Apps"
-                                        targetIndex + uiState.recentApps.size + 2
-                                    } else {
-                                        targetIndex
+                    try {
+                        val activeKey = uiState.alphabetIndexActiveKey
+                        if (activeKey != null) {
+                            val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
+                            if (entry != null) {
+                                if (entry.key == RECENT_APPS_INDEX_KEY) {
+                                    listState.animateScrollToItem(0)
+                                } else {
+                                    entry.targetIndex?.let { targetIndex ->
+                                        // Adjust index to account for recent apps section
+                                        val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
+                                            // Add header + recent apps + spacer/title before "All Apps"
+                                            targetIndex + uiState.recentApps.size + 2
+                                        } else {
+                                            targetIndex
+                                        }
+                                        listState.animateScrollToItem(adjustedIndex)
                                     }
-                                    listState.animateScrollToItem(adjustedIndex)
                                 }
                             }
                         }
+                    } catch (e: Exception) {
+                        Log.e("HomeScreen", "Error in alphabet index scrolling", e)
                     }
                 }
 
@@ -382,7 +388,35 @@ fun HomeScreen(
                         }
                     }
 
-                    // Alphabet Index on the right side
+                    // Enhanced Alphabet Fast Scroller on the right side
+                    if (!uiState.sectionIndex.isEmpty) {
+                        EnhancedAlphabetFastScroller(
+                            sectionIndex = uiState.sectionIndex,
+                            isEnabled = uiState.isAlphabetIndexEnabled,
+                            modifier = Modifier.padding(end = PrimerSpacing.sm).testTag("enhanced_fast_scroller"),
+                            onScrollToIndex = { globalIndex ->
+                                scope.launch {
+                                    try {
+                                        // Adjust index to account for recent apps section if present
+                                        val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
+                                            // Add header + recent apps + spacer/title before "All Apps"
+                                            globalIndex + uiState.recentApps.size + 2
+                                        } else {
+                                            globalIndex
+                                        }
+                                        // Instant scroll for smooth per-app targeting
+                                        listState.scrollToItem(adjustedIndex)
+                                    } catch (e: Exception) {
+                                        Log.e("HomeScreen", "Error scrolling to index $globalIndex", e)
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    // Legacy Alphabet Index (kept for fallback)
+                    // Uncomment below to use the old alphabet index instead
+                    /*
                     if (uiState.alphabetIndexEntries.isNotEmpty()) {
                         AlphabetIndex(
                             entries = uiState.alphabetIndexEntries,
@@ -397,6 +431,7 @@ fun HomeScreen(
                             }
                         )
                     }
+                    */
                 }
             }
 

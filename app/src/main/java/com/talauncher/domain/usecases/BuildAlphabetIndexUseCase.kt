@@ -3,6 +3,8 @@ package com.talauncher.domain.usecases
 import com.talauncher.data.model.AppInfo
 import com.talauncher.domain.model.AlphabetIndexEntry
 import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
+import com.talauncher.domain.model.Section
+import com.talauncher.domain.model.SectionIndex
 
 /**
  * Use case for building the alphabet index for app lists.
@@ -33,7 +35,7 @@ class BuildAlphabetIndexUseCase {
      *
      * @param apps Sorted list of all apps
      * @param recentApps List of recently used apps
-     * @return List of alphabet index entries
+     * @return List of alphabet index entries (for backward compatibility)
      */
     fun execute(apps: List<AppInfo>, recentApps: List<AppInfo>): List<AlphabetIndexEntry> {
         val entries = mutableListOf<AlphabetIndexEntry>()
@@ -69,6 +71,57 @@ class BuildAlphabetIndexUseCase {
         }
 
         return entries
+    }
+
+    /**
+     * Builds an enhanced SectionIndex with cumulative prefix sums for O(1) per-app mapping.
+     *
+     * Architecture:
+     * - Returns immutable SectionIndex with precomputed data structures
+     * - All app names are stored for preview bubble support
+     * - Zero allocations during touch mapping (all data precomputed)
+     *
+     * Performance:
+     * - O(n) construction where n = number of apps
+     * - Enables O(1) touch-to-app mapping during scrubbing
+     *
+     * @param apps Sorted list of all apps
+     * @param recentApps List of recently used apps (not included in sections yet)
+     * @return SectionIndex with complete section metadata and prefix sums
+     */
+    fun buildSectionIndex(apps: List<AppInfo>, recentApps: List<AppInfo>): SectionIndex {
+        if (apps.isEmpty()) {
+            return SectionIndex.EMPTY
+        }
+
+        // Group apps by first character
+        val appsByFirstChar = groupAppsByFirstCharacter(apps)
+
+        // Build sections for A-Z and #
+        val alphabet = ('A'..'Z').map { it.toString() } + listOf("#")
+        val sections = mutableListOf<Section>()
+        var currentPosition = 0
+
+        alphabet.forEach { char ->
+            val appsForChar = appsByFirstChar[char] ?: emptyList()
+            if (appsForChar.isNotEmpty()) {
+                sections.add(
+                    Section(
+                        key = char,
+                        displayLabel = char,
+                        firstPosition = currentPosition,
+                        count = appsForChar.size,
+                        appNames = appsForChar.map { it.appName }
+                    )
+                )
+                currentPosition += appsForChar.size
+            }
+        }
+
+        return SectionIndex(
+            sections = sections,
+            totalCount = apps.size
+        )
     }
 
     /**
