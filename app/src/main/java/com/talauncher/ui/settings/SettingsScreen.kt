@@ -106,8 +106,6 @@ fun SettingsScreen(
             0 -> GeneralSettingsScreen(
                 enableTimeLimitPrompt = uiState.enableTimeLimitPrompt,
                 onToggleTimeLimitPrompt = viewModel::toggleTimeLimitPrompt,
-                recentAppsLimit = uiState.recentAppsLimit,
-                onUpdateRecentAppsLimit = viewModel::updateRecentAppsLimit,
                 showPhoneAction = uiState.showPhoneAction,
                 onToggleShowPhoneAction = viewModel::toggleShowPhoneAction,
                 showMessageAction = uiState.showMessageAction,
