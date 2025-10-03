@@ -317,15 +317,14 @@ fun HomeScreen(
                             }
 
                             items(uiState.pinnedApps, key = { "pinned_${it.packageName}" }) { app ->
-                                ModernAppItem(
-                                    appName = app.appName,
-                                    packageName = app.packageName,
+                                PinnedAppItem(
+                                    appInfo = app,
                                     onClick = { viewModel.launchApp(app.packageName) },
                                     onLongClick = {
                                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                         viewModel.showAppActionDialog(app)
                                     },
-                                    appIconStyle = uiState.appIconStyle
+                                    iconStyle = uiState.appIconStyle
                                 )
                             }
 

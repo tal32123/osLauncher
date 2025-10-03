@@ -193,6 +193,7 @@
     <string name="home_other_apps_summary_plural">%1$d apps hidden from the main list.</string>
     <string name="home_other_apps_hint">Tap to reveal these hidden apps.</string>
     <string name="home_recent_badge">Recent</string>
+    <string name="home_pinned_badge">Pinned</string>
 
     <!-- App Action Dialog -->
     <string name="app_action_dialog_choose">Choose an action:</string>
