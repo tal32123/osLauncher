@@ -66,6 +66,7 @@ fun AppGridItemWithText(
 ) {
     Surface(
         modifier = modifier
+            .aspectRatio(1f)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -75,7 +76,7 @@ fun AppGridItemWithText(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -112,7 +113,7 @@ fun AppGridItemTextOnly(
 ) {
     Surface(
         modifier = modifier
-            .fillMaxWidth()
+            .aspectRatio(1f)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -122,7 +123,7 @@ fun AppGridItemTextOnly(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(12.dp),
             contentAlignment = Alignment.Center
         ) {
