@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">TALauncher</string>
     <string name="focus_mode">Focus Mode</string>
     <string name="usage_insights">Usage Insights</string>
@@ -31,7 +31,7 @@
     <string name="contact_permission_missing_hint">Grant contact access to call or message contacts from search.</string>
     <string name="onboarding_default_launcher_settings_unavailable">Unable to open launcher settings on this device. Please set TALauncher as your default home app from system settings.</string>
     <string-array name="motivational_quotes">
-        <item>Every tap is a choiceâ€”make it count.</item>
+        <item>Every tap is a choice—make it count.</item>
         <item>Stay focused on what truly matters right now.</item>
         <item>Small mindful actions create lasting change.</item>
         <item>Progress is made one focused moment at a time.</item>
@@ -235,6 +235,15 @@
     <string name="app_action_uninstall_label">Uninstall app</string>
     <string name="app_action_uninstall_description">Remove this app from your device.</string>
 
+    
+    <!-- Sidebar (Alphabet Index) Settings -->
+    <string name="settings_sidebar_title">Sidebar</string>
+    <string name="settings_sidebar_subtitle">Control how the alphabetical sidebar feels</string>
+    <string name="settings_sidebar_active_scale">Active letter size</string>
+    <string name="settings_sidebar_popout">Active letter pop-out</string>
+    <string name="settings_sidebar_wave_spread">Wave effect size</string>
+
+
     <!-- Onboarding (revamped wizard) -->
     <string name="onboarding_title_welcome">Welcome to %1$s</string>
     <string name="onboarding_subtitle_tagline">A minimalist launcher for calmer, more intentional use</string>
@@ -255,5 +264,6 @@
     <string name="next">Next</string>
     <string name="back">Back</string>
     <string name="finish">Finish</string>
+
 </resources>
 

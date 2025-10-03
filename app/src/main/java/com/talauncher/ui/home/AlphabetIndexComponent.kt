@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,7 +52,11 @@ fun AlphabetIndex(
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
     onEntryFocused: (AlphabetIndexEntry, Float) -> Unit,
-    onScrubbingChanged: (Boolean) -> Unit
+    onScrubbingChanged: (Boolean) -> Unit,
+    // Sidebar styling controls
+    activeScale: Float = 1.4f,
+    popOutDp: Float = 16f,
+    waveSpread: Float = 1.5f
 ) {
     var componentSize by remember { mutableStateOf(IntSize.Zero) }
     val entryBounds = remember(entries) {
@@ -129,11 +135,20 @@ fun AlphabetIndex(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            entries.forEach { entry ->
+            val activeIndex = remember(activeKey, entries) {
+                entries.indexOfFirst { it.key == activeKey }.takeIf { it >= 0 }
+            }
+
+            entries.forEachIndexed { index, entry ->
                 AlphabetIndexItem(
                     entry = entry,
                     isActive = isEnabled && entry.hasApps && entry.key == activeKey,
                     isEnabled = isEnabled,
+                    index = index,
+                    activeIndex = activeIndex,
+                    activeScale = activeScale,
+                    popOutDp = popOutDp,
+                    waveSpread = waveSpread,
                     onPositioned = { bounds ->
                         entryBounds[entry.key] = bounds
                     }
@@ -148,20 +163,49 @@ private fun AlphabetIndexItem(
     entry: AlphabetIndexEntry,
     isActive: Boolean,
     isEnabled: Boolean,
+    index: Int,
+    activeIndex: Int?,
+    activeScale: Float,
+    popOutDp: Float,
+    waveSpread: Float,
     onPositioned: (ClosedFloatingPointRange<Float>) -> Unit
 ) {
-    val color = when {
-        !isEnabled -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-        entry.hasApps && isActive -> MaterialTheme.colorScheme.onSurface
-        entry.hasApps -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+    val baseColorEnabled = MaterialTheme.colorScheme.onSurfaceVariant
+    val baseColorDisabled = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+
+    // Wave influence based on distance from active index
+    val distance = remember(activeIndex, index) {
+        activeIndex?.let { kotlin.math.abs(index - it) } ?: Int.MAX_VALUE
     }
+    val influence = remember(distance, waveSpread) {
+        if (activeIndex == null || distance == Int.MAX_VALUE) 0f
+        else if (waveSpread <= 0f) {
+            if (distance == 0) 1f else 0f
+        } else {
+            // Smooth exponential falloff
+            kotlin.math.exp(-distance / waveSpread)
+        }
+    }
+
+    val scale = 1f + (activeScale - 1f) * influence
+
+    val density = LocalDensity.current
+    val translationX = with(density) { (-popOutDp * influence).dp.toPx() }
+
+    // Fade entries based on influence for a calm effect
+    val alpha = if (!isEnabled) 0.3f else 0.4f + 0.6f * influence
+    val color = if (!entry.hasApps) baseColorDisabled else baseColorEnabled.copy(alpha = alpha)
 
     Text(
         text = entry.displayLabel,
         style = MaterialTheme.typography.labelSmall,
         color = color,
         modifier = Modifier
+            .graphicsLayer(
+                scaleX = scale,
+                scaleY = scale,
+                translationX = translationX
+            )
             .testTag("alphabet_index_entry_${entry.key}")
             .onGloballyPositioned { coordinates ->
                 val position = coordinates.positionInParent()
@@ -204,7 +248,11 @@ fun EnhancedAlphabetFastScroller(
     sectionIndex: SectionIndex,
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
-    onScrollToIndex: (Int) -> Unit = {}
+    onScrollToIndex: (Int) -> Unit = {},
+    // Sidebar styling controls
+    activeScale: Float = 1.4f,
+    popOutDp: Float = 16f,
+    waveSpread: Float = 1.5f
 ) {
     val context = LocalContext.current
     val view = LocalView.current
@@ -302,6 +350,11 @@ fun EnhancedAlphabetFastScroller(
             }
     ) {
         // Letter rail
+        // Determine active letter index for wave effect
+        val activeIndex = remember(state.currentLetter, sectionIndex) {
+            sectionIndex.sections.indexOfFirst { it.key == state.currentLetter }.takeIf { it >= 0 }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -309,11 +362,16 @@ fun EnhancedAlphabetFastScroller(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            sectionIndex.sections.forEach { section ->
+            sectionIndex.sections.forEachIndexed { idx, section ->
                 EnhancedAlphabetItem(
                     section = section,
                     isActive = isEnabled && state.currentLetter == section.key,
-                    isEnabled = isEnabled
+                    isEnabled = isEnabled,
+                    index = idx,
+                    activeIndex = activeIndex,
+                    activeScale = activeScale,
+                    popOutDp = popOutDp,
+                    waveSpread = waveSpread
                 )
             }
         }
@@ -351,26 +409,44 @@ fun EnhancedAlphabetFastScroller(
 private fun EnhancedAlphabetItem(
     section: com.talauncher.domain.model.Section,
     isActive: Boolean,
-    isEnabled: Boolean
+    isEnabled: Boolean,
+    index: Int,
+    activeIndex: Int?,
+    activeScale: Float,
+    popOutDp: Float,
+    waveSpread: Float
 ) {
+    // Wave influence based on distance from active index
+    val distance = remember(activeIndex, index) {
+        activeIndex?.let { kotlin.math.abs(index - it) } ?: Int.MAX_VALUE
+    }
+    val influenceBase = remember(distance, waveSpread) {
+        if (activeIndex == null || distance == Int.MAX_VALUE) 0f
+        else if (waveSpread <= 0f) {
+            if (distance == 0) 1f else 0f
+        } else {
+            kotlin.math.exp(-distance / waveSpread)
+        }
+    }
+    val influence = if (!isEnabled) 0f else influenceBase
+
     val scale by animateFloatAsState(
-        targetValue = if (isActive) 1.5f else 1f,
-        animationSpec = tween(150),
+        targetValue = 1f + (activeScale - 1f) * influence,
+        animationSpec = tween(120),
         label = "letter_scale"
     )
 
     val offsetX by animateFloatAsState(
-        targetValue = if (isActive) -8f else 0f,
-        animationSpec = tween(150),
+        targetValue = -popOutDp * influence,
+        animationSpec = tween(120),
         label = "letter_offset"
     )
 
     val alpha by animateFloatAsState(
         targetValue = when {
             !isEnabled -> 0.3f
-            isActive -> 1f
-            else -> 0.6f
-        },
+            else -> 0.4f + 0.6f * influence
+        }.coerceIn(0.3f, 1f),
         animationSpec = tween(100),
         label = "letter_alpha"
     )

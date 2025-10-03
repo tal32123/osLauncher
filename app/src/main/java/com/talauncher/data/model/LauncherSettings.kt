@@ -59,5 +59,13 @@ data class LauncherSettings(
 
     val allAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
     val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
-    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL
+    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    // Sidebar (Alphabet Index) customization
+    // How large the active letter scales (1.0 = no scale)
+    val sidebarActiveScale: Float = 1.4f,
+    // How far the active letter pops out in dp (0 = no offset)
+    val sidebarPopOutDp: Int = 16,
+    // Controls how far the wave effect spreads to neighbor letters (higher = farther)
+    val sidebarWaveSpread: Float = 1.5f
 )

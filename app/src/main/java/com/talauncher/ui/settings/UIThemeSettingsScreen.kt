@@ -43,7 +43,14 @@ fun UIThemeSettingsScreen(
     uiDensity: UiDensityOption,
     onUpdateUiDensity: (UiDensityOption) -> Unit,
     enableAnimations: Boolean,
-    onToggleAnimations: (Boolean) -> Unit
+    onToggleAnimations: (Boolean) -> Unit,
+    // Sidebar (Alphabet index) customization
+    sidebarActiveScale: Float,
+    onUpdateSidebarActiveScale: (Float) -> Unit,
+    sidebarPopOutDp: Int,
+    onUpdateSidebarPopOutDp: (Int) -> Unit,
+    sidebarWaveSpread: Float,
+    onUpdateSidebarWaveSpread: (Float) -> Unit
 ) {
     val sections = listOf(
         CollapsibleSection(
@@ -105,6 +112,19 @@ fun UIThemeSettingsScreen(
             LayoutDensityContent(
                 uiDensity = uiDensity,
                 onUpdateUiDensity = onUpdateUiDensity
+            )
+        },
+        CollapsibleSection(
+            id = "sidebar",
+            title = stringResource(R.string.settings_sidebar_title)
+        ) {
+            SidebarSettingsContent(
+                activeScale = sidebarActiveScale,
+                onActiveScaleChange = onUpdateSidebarActiveScale,
+                popOutDp = sidebarPopOutDp,
+                onPopOutDpChange = onUpdateSidebarPopOutDp,
+                waveSpread = sidebarWaveSpread,
+                onWaveSpreadChange = onUpdateSidebarWaveSpread
             )
         }
     )
@@ -307,6 +327,54 @@ private fun LayoutDensityContent(
                     softWrap = false
                 )
             }
+        )
+    }
+}
+
+@Composable
+private fun SidebarSettingsContent(
+    activeScale: Float,
+    onActiveScaleChange: (Float) -> Unit,
+    popOutDp: Int,
+    onPopOutDpChange: (Int) -> Unit,
+    waveSpread: Float,
+    onWaveSpreadChange: (Float) -> Unit
+) {
+    SettingsSectionCard(title = stringResource(R.string.settings_sidebar_title)) {
+        Text(
+            text = stringResource(R.string.settings_sidebar_subtitle),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        var scale by remember { mutableStateOf(activeScale) }
+        SliderSetting(
+            label = stringResource(R.string.settings_sidebar_active_scale),
+            value = scale,
+            onValueChange = { scale = it },
+            valueRange = 1.0f..2.5f,
+            onValueChangeFinished = { onActiveScaleChange(scale) },
+            valueLabel = String.format("%.2fx", scale)
+        )
+
+        var popOut by remember { mutableStateOf(popOutDp.toFloat()) }
+        SliderSetting(
+            label = stringResource(R.string.settings_sidebar_popout),
+            value = popOut,
+            onValueChange = { popOut = it },
+            valueRange = 0f..48f,
+            onValueChangeFinished = { onPopOutDpChange(popOut.toInt()) },
+            valueLabel = "${popOut.toInt()} dp"
+        )
+
+        var spread by remember { mutableStateOf(waveSpread) }
+        SliderSetting(
+            label = stringResource(R.string.settings_sidebar_wave_spread),
+            value = spread,
+            onValueChange = { spread = it },
+            valueRange = 0.0f..4.0f,
+            onValueChangeFinished = { onWaveSpreadChange(spread) },
+            valueLabel = String.format("%.2f", spread)
         )
     }
 }
