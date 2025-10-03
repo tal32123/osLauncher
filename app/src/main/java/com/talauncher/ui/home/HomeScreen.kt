@@ -438,7 +438,10 @@ fun HomeScreen(
                                         Log.e("HomeScreen", "Error scrolling to index $globalIndex", e)
                                     }
                                 }
-                            }
+                            },
+                            activeScale = uiState.sidebarActiveScale,
+                            popOutDp = uiState.sidebarPopOutDp.toFloat(),
+                            waveSpread = uiState.sidebarWaveSpread
                         )
                     }
 
@@ -456,7 +459,10 @@ fun HomeScreen(
                             },
                             onScrubbingChanged = { isScrubbing ->
                                 viewModel.onAlphabetScrubbingChanged(isScrubbing)
-                            }
+                            },
+                            activeScale = uiState.sidebarActiveScale,
+                            popOutDp = uiState.sidebarPopOutDp.toFloat(),
+                            waveSpread = uiState.sidebarWaveSpread
                         )
                     }
                     */

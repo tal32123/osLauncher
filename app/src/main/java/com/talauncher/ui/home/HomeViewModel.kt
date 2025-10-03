@@ -271,7 +271,11 @@ class HomeViewModel(
                             recentApps = recentApps,
                             alphabetIndexEntries = alphabetIndex,
                             sectionIndex = sectionIndex,
-                            isAlphabetIndexEnabled = allApps.isNotEmpty()
+                            isAlphabetIndexEnabled = allApps.isNotEmpty(),
+                            // Sidebar customization from settings
+                            sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
+                            sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
+                            sidebarWaveSpread = settings?.sidebarWaveSpread ?: 1.5f
                         ).let { updated ->
                             val keepExpanded = wasExpanded && hiddenApps.isNotEmpty()
                             if (updated.isOtherAppsExpanded != keepExpanded) {
@@ -1103,6 +1107,10 @@ data class HomeUiState(
     val sectionIndex: SectionIndex = SectionIndex.EMPTY,
     val alphabetIndexActiveKey: String? = null,
     val isAlphabetIndexEnabled: Boolean = true,
+    // Sidebar customization
+    val sidebarActiveScale: Float = 1.4f,
+    val sidebarPopOutDp: Int = 16,
+    val sidebarWaveSpread: Float = 1.5f,
     val showAppActionDialog: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val selectedAppSupportsUninstall: Boolean = false,
