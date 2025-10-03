@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">TALauncher</string>
     <string name="focus_mode">Focus Mode</string>
     <string name="usage_insights">Usage Insights</string>
@@ -31,7 +31,7 @@
     <string name="contact_permission_missing_hint">Grant contact access to call or message contacts from search.</string>
     <string name="onboarding_default_launcher_settings_unavailable">Unable to open launcher settings on this device. Please set TALauncher as your default home app from system settings.</string>
     <string-array name="motivational_quotes">
-        <item>Every tap is a choice—make it count.</item>
+        <item>Every tap is a choiceâ€”make it count.</item>
         <item>Stay focused on what truly matters right now.</item>
         <item>Small mindful actions create lasting change.</item>
         <item>Progress is made one focused moment at a time.</item>
@@ -218,8 +218,6 @@
     <string name="onboarding_step_default_desc">Make %1$s your default home screen</string>
     <string name="onboarding_step_usage_title">Usage Statistics Permission</string>
     <string name="onboarding_step_usage_desc">Allow access to usage stats to show insights and mindful nudges</string>
-    <string name="onboarding_step_notifications_title">Allow Notifications</string>
-    <string name="onboarding_step_notifications_desc">Enable gentle reminders when time limits expire</string>
     <string name="onboarding_step_contacts_title">Contacts Permission</string>
     <string name="onboarding_step_contacts_desc">Let TALauncher access your contacts for quick calling</string>
     <string name="onboarding_step_location_title">Location Permission</string>
@@ -229,7 +227,6 @@
     <string name="completed">Completed</string>
     <string name="onboarding_action_set_default">Set as Default</string>
     <string name="onboarding_action_grant_permission">Grant Permission</string>
-    <string name="onboarding_action_allow_notifications">Allow Notifications</string>
     <string name="skip_for_now">Skip for now</string>
     <string name="next">Next</string>
     <string name="back">Back</string>

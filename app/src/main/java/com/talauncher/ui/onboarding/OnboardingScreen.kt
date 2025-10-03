@@ -1,18 +1,18 @@
-package com.talauncher.ui.onboarding
+﻿package com.talauncher.ui.onboarding
 
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -45,6 +45,10 @@ private enum class OnboardingStepId {
     LOCATION,
     APPEARANCE
 }
+
+private enum class AppearanceSection { THEME_MODE, ICON_STYLE, THEME_OPTIONS, WALLPAPER }
+
+
 
 @Composable
 fun OnboardingScreen(
@@ -256,7 +260,7 @@ private fun PermissionStep(
             Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 if (onBack != null) {
-                    TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.back)) }
+                    TextButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.back)) }
                 } else {
                     Spacer(Modifier.width(1.dp))
                 }
@@ -266,6 +270,47 @@ private fun PermissionStep(
                         Spacer(Modifier.width(8.dp))
                     }
                     Button(onClick = onNext, enabled = canProceed) { Text(stringResource(R.string.next)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccordionSection(
+    title: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            tonalElevation = 1.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).clickable { onToggle() },
+                verticalAlignment = Alignment.CenterVertically) {
+
+
+
+                Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Icon(
+                    imageVector = if (isExpanded) Icons.Filled.Check else Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (isExpanded) {
+            Spacer(Modifier.height(8.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                tonalElevation = 0.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(12.dp)) {
+                    content()
                 }
             }
         }
@@ -289,47 +334,76 @@ private fun AppearanceStep(
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
+    var expandedSection by remember { mutableStateOf<AppearanceSection>(AppearanceSection.THEME_MODE) }
+
     Column(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.onboarding_appearance_title), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(12.dp))
 
-        // Theme
-        Text(stringResource(R.string.theme_mode_title), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        FlowRowChipsTheme(selectedTheme, onSelectTheme)
-
-        Spacer(Modifier.height(16.dp))
-
-        // App icon style
-        Text(stringResource(R.string.settings_app_icons), style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = stringResource(R.string.settings_app_icons_subtitle),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(8.dp))
-        FlowRowChipsIcon(selectedIconStyle, onSelectIconStyle)
-
-        Spacer(Modifier.height(16.dp))
-
-        // Wallpaper quick pick
-        Text(stringResource(R.string.wallpaper_settings_title), style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = stringResource(R.string.settings_show_wallpaper_title), modifier = Modifier.weight(1f))
-            Switch(checked = showWallpaper, onCheckedChange = onToggleWallpaper)
+        AccordionSection(
+            title = stringResource(R.string.theme_mode_title),
+            isExpanded = expandedSection == AppearanceSection.THEME_MODE,
+            onToggle = { expandedSection = AppearanceSection.THEME_MODE }
+        ) {
+            FlowRowChipsTheme(selectedTheme, onSelectTheme)
         }
-        if (showWallpaper) {
+
+        Spacer(Modifier.height(12.dp))
+
+        AccordionSection(
+            title = stringResource(R.string.settings_app_icons),
+            isExpanded = expandedSection == AppearanceSection.ICON_STYLE,
+            onToggle = { expandedSection = AppearanceSection.ICON_STYLE }
+        ) {
+            Text(
+                text = stringResource(R.string.settings_app_icons_subtitle),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onPickWallpaper, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.custom_wallpaper_choose))
+            FlowRowChipsIcon(selectedIconStyle, onSelectIconStyle)
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        AccordionSection(
+            title = stringResource(R.string.color_palette_title),
+            isExpanded = expandedSection == AppearanceSection.THEME_OPTIONS,
+            onToggle = { expandedSection = AppearanceSection.THEME_OPTIONS }
+        ) {
+            val obVm: OnboardingViewModel = viewModel()
+            val obState by obVm.uiState.collectAsState()
+            com.talauncher.ui.components.ColorPaletteSelector(
+                selectedPalette = obState.selectedColorPalette,
+                onPaletteSelected = { obVm.setColorPalette(it) },
+                currentCustomColor = obState.customColorOption,
+                onCustomColorSelected = { colorName -> obVm.setCustomPalette(colorName) }
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        AccordionSection(
+            title = stringResource(R.string.wallpaper_settings_title),
+            isExpanded = expandedSection == AppearanceSection.WALLPAPER,
+            onToggle = { expandedSection = AppearanceSection.WALLPAPER }
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = stringResource(R.string.settings_show_wallpaper_title), modifier = Modifier.weight(1f))
+                Switch(checked = showWallpaper, onCheckedChange = onToggleWallpaper)
+            }
+            if (showWallpaper) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = onPickWallpaper, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.custom_wallpaper_choose))
+                }
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.color_palette_preview_title), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        // Preview with wallpaper backdrop (constrained size, maintained aspect ratio)
+
         com.talauncher.ui.components.ModernBackdrop(
             showWallpaper = showWallpaper,
             blurAmount = wallpaperBlurAmount,
@@ -337,20 +411,20 @@ private fun AppearanceStep(
             opacity = backgroundOpacity,
             customWallpaperPath = customWallpaperPath,
             modifier = Modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth(0.72f)
                 .aspectRatio(9f / 19.5f)
                 .clip(RoundedCornerShape(16.dp))
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(8.dp)) {
-                ModernAppItem(appName = "Calendar", packageName = "com.android.calendar", onClick = {}, appIconStyle = selectedIconStyle)
-                ModernAppItem(appName = "Messages", packageName = "com.android.messaging", onClick = {}, appIconStyle = selectedIconStyle)
-                ModernAppItem(appName = "Notes", packageName = "com.example.notes", onClick = {}, appIconStyle = selectedIconStyle)
+                ModernAppItem(appName = "Calendar", packageName = "com.android.calendar", onClick = {}, appIconStyle = selectedIconStyle, enableGlassmorphism = true)
+                ModernAppItem(appName = "Messages", packageName = "com.android.messaging", onClick = {}, appIconStyle = selectedIconStyle, enableGlassmorphism = true)
+                ModernAppItem(appName = "Notes", packageName = "com.example.notes", onClick = {}, appIconStyle = selectedIconStyle, enableGlassmorphism = true)
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            TextButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.back)) }
+            TextButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.back)) }
             Row {
                 TextButton(onClick = onSkip) { Text(stringResource(R.string.skip_for_now)) }
                 Spacer(Modifier.width(8.dp))
@@ -359,7 +433,6 @@ private fun AppearanceStep(
         }
     }
 }
-
 @Composable
 private fun FlowRowChipsTheme(selected: ThemeModeOption, onSelect: (ThemeModeOption) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -377,3 +450,13 @@ private fun FlowRowChipsIcon(selected: AppIconStyleOption, onSelect: (AppIconSty
         }
     }
 }
+
+
+
+
+
+
+
+
+
+

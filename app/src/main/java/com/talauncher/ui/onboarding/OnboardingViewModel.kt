@@ -1,8 +1,9 @@
-package com.talauncher.ui.onboarding
+﻿package com.talauncher.ui.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.talauncher.data.model.AppIconStyleOption
+import com.talauncher.data.model.ColorPaletteOption
 import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,34 @@ class OnboardingViewModel(
         viewModelScope.launch {
             settingsRepository.updateAppIconStyle(style)
             _uiState.value = _uiState.value.copy(selectedAppIconStyle = style)
+        }
+    }
+
+    fun setColorPalette(palette: ColorPaletteOption) {
+        viewModelScope.launch {
+            settingsRepository.updateColorPalette(palette)
+            _uiState.value = _uiState.value.copy(selectedColorPalette = palette)
+        }
+    }
+
+    fun setCustomPalette(
+        customColorOption: String?,
+        customPrimaryColor: String? = null,
+        customSecondaryColor: String? = null
+    ) {
+        viewModelScope.launch {
+            settingsRepository.setCustomPalette(
+                palette = ColorPaletteOption.CUSTOM,
+                customColorOption = customColorOption,
+                customPrimaryColor = customPrimaryColor,
+                customSecondaryColor = customSecondaryColor
+            )
+            _uiState.value = _uiState.value.copy(
+                selectedColorPalette = ColorPaletteOption.CUSTOM,
+                customColorOption = customColorOption,
+                customPrimaryColor = customPrimaryColor,
+                customSecondaryColor = customSecondaryColor
+            )
         }
     }
 
@@ -82,11 +111,16 @@ class OnboardingViewModel(
     }
 }
 
+
 data class OnboardingUiState(
     val currentStepIndex: Int = 0,
     val isOnboardingCompleted: Boolean = false,
     val selectedThemeMode: ThemeModeOption = ThemeModeOption.SYSTEM,
     val selectedAppIconStyle: AppIconStyleOption = AppIconStyleOption.ORIGINAL,
+    val selectedColorPalette: ColorPaletteOption = ColorPaletteOption.DEFAULT,
+    val customColorOption: String? = null,
+    val customPrimaryColor: String? = null,
+    val customSecondaryColor: String? = null,
     val showWallpaper: Boolean = true,
     val wallpaperBlurAmount: Float = 0f,
     val backgroundOpacity: Float = 1f,
