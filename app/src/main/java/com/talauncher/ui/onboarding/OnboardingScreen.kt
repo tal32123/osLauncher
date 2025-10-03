@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.talauncher.R
 import com.talauncher.data.model.AppIconStyleOption
 import com.talauncher.data.model.ThemeModeOption
+import com.talauncher.ui.components.Collapsible
 import com.talauncher.ui.components.ModernAppItem
 import com.talauncher.ui.components.PermissionManager
 import com.talauncher.utils.PermissionType
@@ -276,46 +277,6 @@ private fun PermissionStep(
     }
 }
 
-@Composable
-private fun AccordionSection(
-    title: String,
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    Column(Modifier.fillMaxWidth()) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            tonalElevation = 1.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).clickable { onToggle() },
-                verticalAlignment = Alignment.CenterVertically) {
-
-
-
-                Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Icon(
-                    imageVector = if (isExpanded) Icons.Filled.Check else Icons.Filled.Info,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        if (isExpanded) {
-            Spacer(Modifier.height(8.dp))
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                tonalElevation = 0.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(12.dp)) {
-                    content()
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun AppearanceStep(
@@ -334,26 +295,30 @@ private fun AppearanceStep(
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
-    var expandedSection by remember { mutableStateOf<AppearanceSection>(AppearanceSection.THEME_MODE) }
+    var expandedSection by remember { mutableStateOf<AppearanceSection?>(AppearanceSection.THEME_MODE) }
 
     Column(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.onboarding_appearance_title), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(12.dp))
 
-        AccordionSection(
+        Collapsible(
             title = stringResource(R.string.theme_mode_title),
             isExpanded = expandedSection == AppearanceSection.THEME_MODE,
-            onToggle = { expandedSection = AppearanceSection.THEME_MODE }
+            onToggle = {
+                expandedSection = if (expandedSection == AppearanceSection.THEME_MODE) null else AppearanceSection.THEME_MODE
+            }
         ) {
             FlowRowChipsTheme(selectedTheme, onSelectTheme)
         }
 
         Spacer(Modifier.height(12.dp))
 
-        AccordionSection(
+        Collapsible(
             title = stringResource(R.string.settings_app_icons),
             isExpanded = expandedSection == AppearanceSection.ICON_STYLE,
-            onToggle = { expandedSection = AppearanceSection.ICON_STYLE }
+            onToggle = {
+                expandedSection = if (expandedSection == AppearanceSection.ICON_STYLE) null else AppearanceSection.ICON_STYLE
+            }
         ) {
             Text(
                 text = stringResource(R.string.settings_app_icons_subtitle),
@@ -366,10 +331,12 @@ private fun AppearanceStep(
 
         Spacer(Modifier.height(12.dp))
 
-        AccordionSection(
+        Collapsible(
             title = stringResource(R.string.color_palette_title),
             isExpanded = expandedSection == AppearanceSection.THEME_OPTIONS,
-            onToggle = { expandedSection = AppearanceSection.THEME_OPTIONS }
+            onToggle = {
+                expandedSection = if (expandedSection == AppearanceSection.THEME_OPTIONS) null else AppearanceSection.THEME_OPTIONS
+            }
         ) {
             val obVm: OnboardingViewModel = viewModel()
             val obState by obVm.uiState.collectAsState()
@@ -383,10 +350,12 @@ private fun AppearanceStep(
 
         Spacer(Modifier.height(12.dp))
 
-        AccordionSection(
+        Collapsible(
             title = stringResource(R.string.wallpaper_settings_title),
             isExpanded = expandedSection == AppearanceSection.WALLPAPER,
-            onToggle = { expandedSection = AppearanceSection.WALLPAPER }
+            onToggle = {
+                expandedSection = if (expandedSection == AppearanceSection.WALLPAPER) null else AppearanceSection.WALLPAPER
+            }
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = stringResource(R.string.settings_show_wallpaper_title), modifier = Modifier.weight(1f))
