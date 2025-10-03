@@ -51,13 +51,3 @@ dependencyResolutionManagement {
 rootProject.name = "TALauncher"
 include(":app")
 include(":uitests")
-include(":core:common")
-include(":core:testing")
-include(":core:ui")
-include(":data:apps")
-include(":data:sessions")
-include(":data:weather")
-include(":domain:model")
-include(":domain:repository")
-include(":domain:usecase")
-include(":ui-components")
