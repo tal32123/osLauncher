@@ -7,6 +7,8 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -327,13 +329,17 @@ private fun AppearanceStep(
         Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.color_palette_preview_title), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        // Preview with wallpaper backdrop
+        // Preview with wallpaper backdrop (constrained size, maintained aspect ratio)
         com.talauncher.ui.components.ModernBackdrop(
             showWallpaper = showWallpaper,
             blurAmount = wallpaperBlurAmount,
             backgroundColor = backgroundColor,
             opacity = backgroundOpacity,
-            customWallpaperPath = customWallpaperPath
+            customWallpaperPath = customWallpaperPath,
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .aspectRatio(9f / 19.5f)
+                .clip(RoundedCornerShape(16.dp))
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(8.dp)) {
                 ModernAppItem(appName = "Calendar", packageName = "com.android.calendar", onClick = {}, appIconStyle = selectedIconStyle)
