@@ -553,9 +553,7 @@ fun ModernBackdrop(
     val wallpaperAlpha = if (showWallpaper) opacity.coerceIn(0f, 1f) else 1f
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .then(modifier)
+        modifier = modifier
             .background(backgroundColorValue)
     ) {
         if (showWallpaper && wallpaperPainter != null) {
