@@ -384,7 +384,7 @@ private fun SectionBubble(
 ) {
     Card(
         modifier = modifier
-            .padding(horizontal = PrimerSpacing.md)
+            .padding(horizontal = PrimerSpacing.md),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
