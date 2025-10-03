@@ -21,8 +21,6 @@ import kotlin.math.roundToInt
 fun GeneralSettingsScreen(
     enableTimeLimitPrompt: Boolean,
     onToggleTimeLimitPrompt: () -> Unit,
-    recentAppsLimit: Int,
-    onUpdateRecentAppsLimit: (Int) -> Unit,
     showPhoneAction: Boolean,
     onToggleShowPhoneAction: () -> Unit,
     showMessageAction: Boolean,
@@ -46,9 +44,7 @@ fun GeneralSettingsScreen(
             ) {
                 FocusProductivityContent(
                     enableTimeLimitPrompt = enableTimeLimitPrompt,
-                    onToggleTimeLimitPrompt = onToggleTimeLimitPrompt,
-                    recentAppsLimit = recentAppsLimit,
-                    onUpdateRecentAppsLimit = onUpdateRecentAppsLimit
+                    onToggleTimeLimitPrompt = onToggleTimeLimitPrompt
                 )
             }
         )
@@ -110,38 +106,13 @@ fun GeneralSettingsScreen(
 @Composable
 private fun FocusProductivityContent(
     enableTimeLimitPrompt: Boolean,
-    onToggleTimeLimitPrompt: () -> Unit,
-    recentAppsLimit: Int,
-    onUpdateRecentAppsLimit: (Int) -> Unit
+    onToggleTimeLimitPrompt: () -> Unit
 ) {
-    var recentAppsValue by remember(recentAppsLimit) {
-        mutableStateOf(recentAppsLimit.toFloat())
-    }
-
     SettingItem(
         title = stringResource(R.string.settings_time_limit_dialog_title),
         subtitle = stringResource(R.string.settings_time_limit_dialog_subtitle),
         checked = enableTimeLimitPrompt,
         onCheckedChange = { onToggleTimeLimitPrompt() }
-    )
-
-    val recentCount = recentAppsValue.roundToInt()
-    val recentSummary = when {
-        recentCount == 0 -> stringResource(R.string.settings_recent_apps_limit_hidden)
-        recentCount == 1 -> stringResource(R.string.settings_recent_apps_limit_summary_single)
-        else -> stringResource(R.string.settings_recent_apps_limit_summary_plural, recentCount)
-    }
-
-    SliderSetting(
-        label = stringResource(R.string.settings_recent_apps_limit_title),
-        value = recentAppsValue,
-        onValueChange = { recentAppsValue = it },
-        valueRange = 0f..10f,
-        steps = 9,
-        onValueChangeFinished = {
-            onUpdateRecentAppsLimit(recentAppsValue.roundToInt())
-        },
-        valueLabel = recentSummary
     )
 }
 

@@ -62,6 +62,7 @@ import com.talauncher.ui.components.AppIcon
 import com.talauncher.ui.components.ModernBackdrop
 import com.talauncher.ui.components.UiDensity
 import com.talauncher.ui.components.UnifiedSearchResults
+import com.talauncher.ui.components.appSectionItems
 import com.talauncher.ui.theme.UiSettings
 import com.talauncher.ui.theme.*
 import com.talauncher.ui.components.TimeLimitDialog
@@ -318,17 +319,20 @@ fun HomeScreen(
                                 )
                             }
 
-                            items(uiState.pinnedApps, key = { "pinned_${it.packageName}" }) { app ->
-                                PinnedAppItem(
-                                    appInfo = app,
-                                    onClick = { viewModel.launchApp(app.packageName) },
-                                    onLongClick = {
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.showAppActionDialog(app)
-                                    },
-                                    iconStyle = uiState.appIconStyle
-                                )
-                            }
+                            appSectionItems(
+                                apps = uiState.pinnedApps,
+                                layout = uiState.pinnedAppsLayout,
+                                displayStyle = uiState.pinnedAppsDisplayStyle,
+                                iconColor = uiState.pinnedAppsIconColor,
+                                enableGlassmorphism = uiState.enableGlassmorphism,
+                                uiDensity = uiState.uiDensity.toUiDensity(),
+                                onClick = { app: AppInfo -> viewModel.launchApp(app.packageName) },
+                                onLongClick = { app: AppInfo ->
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.showAppActionDialog(app)
+                                },
+                                keyPrefix = "pinned"
+                            )
 
                             item {
                                 Spacer(modifier = Modifier.height(PrimerSpacing.lg))
@@ -350,17 +354,20 @@ fun HomeScreen(
                                 )
                             }
 
-                            items(uiState.recentApps, key = { "recent_${it.packageName}" }) { app ->
-                            RecentAppItem(
-                                appInfo = app,
-                                onClick = { viewModel.launchApp(app.packageName) },
-                                onLongClick = {
+                            appSectionItems(
+                                apps = uiState.recentApps,
+                                layout = uiState.recentAppsLayout,
+                                displayStyle = uiState.recentAppsDisplayStyle,
+                                iconColor = uiState.recentAppsIconColor,
+                                enableGlassmorphism = uiState.enableGlassmorphism,
+                                uiDensity = uiState.uiDensity.toUiDensity(),
+                                onClick = { app: AppInfo -> viewModel.launchApp(app.packageName) },
+                                onLongClick = { app: AppInfo ->
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.showAppActionDialog(app)
                                 },
-                                iconStyle = uiState.appIconStyle
+                                keyPrefix = "recent"
                             )
-                            }
 
                             item {
                                 Spacer(modifier = Modifier.height(PrimerSpacing.lg))
@@ -377,20 +384,20 @@ fun HomeScreen(
                         }
 
                         // All Apps Section
-                        items(uiState.allVisibleApps, key = { it.packageName }) { app ->
-                            ModernAppItem(
-                                appName = app.appName,
-                                packageName = app.packageName,
-                                onClick = { viewModel.launchApp(app.packageName) },
-                                onLongClick = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    viewModel.showAppActionDialog(app)
-                                },
-                                appIconStyle = uiState.appIconStyle,
-                                enableGlassmorphism = uiState.enableGlassmorphism,
-                                uiDensity = uiState.uiDensity.toUiDensity()
-                            )
-                        }
+                        appSectionItems(
+                            apps = uiState.allVisibleApps,
+                            layout = uiState.allAppsLayout,
+                            displayStyle = uiState.allAppsDisplayStyle,
+                            iconColor = uiState.allAppsIconColor,
+                            enableGlassmorphism = uiState.enableGlassmorphism,
+                            uiDensity = uiState.uiDensity.toUiDensity(),
+                            onClick = { app: AppInfo -> viewModel.launchApp(app.packageName) },
+                            onLongClick = { app: AppInfo ->
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.showAppActionDialog(app)
+                            },
+                            keyPrefix = "all"
+                        )
 
                         if (uiState.hiddenApps.isNotEmpty()) {
                             item {

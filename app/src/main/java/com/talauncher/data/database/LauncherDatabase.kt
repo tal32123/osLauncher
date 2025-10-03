@@ -13,7 +13,7 @@ import com.talauncher.data.model.SearchInteractionEntity
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {

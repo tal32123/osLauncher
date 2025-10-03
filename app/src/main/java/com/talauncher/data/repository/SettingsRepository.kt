@@ -8,6 +8,9 @@ import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
+import com.talauncher.data.model.AppSectionLayoutOption
+import com.talauncher.data.model.AppDisplayStyleOption
+import com.talauncher.data.model.IconColorOption
 import kotlinx.coroutines.flow.Flow
 
 class SettingsRepository(private val settingsDao: SettingsDao) {
@@ -171,6 +174,52 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
     suspend fun updateAnimationsEnabled(enabled: Boolean) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(enableAnimations = enabled))
+    }
+
+    // App section display settings update methods
+    suspend fun updatePinnedAppsLayout(layout: AppSectionLayoutOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(pinnedAppsLayout = layout))
+    }
+
+    suspend fun updatePinnedAppsDisplayStyle(style: AppDisplayStyleOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(pinnedAppsDisplayStyle = style))
+    }
+
+    suspend fun updatePinnedAppsIconColor(color: IconColorOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(pinnedAppsIconColor = color))
+    }
+
+    suspend fun updateRecentAppsLayout(layout: AppSectionLayoutOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(recentAppsLayout = layout))
+    }
+
+    suspend fun updateRecentAppsDisplayStyle(style: AppDisplayStyleOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(recentAppsDisplayStyle = style))
+    }
+
+    suspend fun updateRecentAppsIconColor(color: IconColorOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(recentAppsIconColor = color))
+    }
+
+    suspend fun updateAllAppsLayout(layout: AppSectionLayoutOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(allAppsLayout = layout))
+    }
+
+    suspend fun updateAllAppsDisplayStyle(style: AppDisplayStyleOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(allAppsDisplayStyle = style))
+    }
+
+    suspend fun updateAllAppsIconColor(color: IconColorOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(allAppsIconColor = color))
     }
 
     // Sidebar / Alphabet Index customization

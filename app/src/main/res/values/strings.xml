@@ -123,6 +123,7 @@
 
     <!-- Settings General -->
     <string name="settings_tab_general">General</string>
+    <string name="settings_tab_app_sections">App Sections</string>
     <string name="settings_tab_ui_theme">UI &amp; Theme</string>
     <string name="settings_tab_distracting_apps">Distracting Apps</string>
     <string name="settings_tab_usage_insights">Usage Insights</string>
@@ -148,6 +149,29 @@
     <string name="settings_build_commit">Commit: %1$s</string>
     <string name="settings_build_branch">Branch: %1$s</string>
     <string name="settings_build_time">Built: %1$s</string>
+
+    <!-- App Section Display Settings -->
+    <string name="settings_app_sections">App Sections</string>
+    <string name="settings_pinned_apps">Pinned Apps</string>
+    <string name="settings_recent_apps">Recent Apps</string>
+    <string name="settings_all_apps">All Apps</string>
+
+    <string name="settings_section_layout">Layout</string>
+    <string name="settings_section_layout_subtitle">Choose how apps are arranged</string>
+    <string name="settings_layout_list">List (1 per row)</string>
+    <string name="settings_layout_grid_3">Grid (3 per row)</string>
+    <string name="settings_layout_grid_4">Grid (4 per row)</string>
+
+    <string name="settings_display_style">Display Style</string>
+    <string name="settings_display_style_subtitle">Choose what to show for each app</string>
+    <string name="settings_display_icon_only">Icon only</string>
+    <string name="settings_display_icon_and_text">Icon and text</string>
+    <string name="settings_display_text_only">Text only</string>
+
+    <string name="settings_icon_color">Icon Color</string>
+    <string name="settings_icon_color_subtitle">Choose icon color style</string>
+    <string name="settings_icon_color_original">Original colors</string>
+    <string name="settings_icon_color_monochrome">Monochrome</string>
 
     <!-- Distracting Apps Settings -->
     <string name="settings_default_time_limit">Default Time Limit</string>

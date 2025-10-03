@@ -10,6 +10,9 @@ import com.talauncher.data.model.ThemeModeOption
 import com.talauncher.data.model.UiDensityOption
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
+import com.talauncher.data.model.AppSectionLayoutOption
+import com.talauncher.data.model.AppDisplayStyleOption
+import com.talauncher.data.model.IconColorOption
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
@@ -84,6 +87,20 @@ class SettingsViewModel(
                     uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                     enableAnimations = settings?.enableAnimations ?: true,
                     customWallpaperPath = settings?.customWallpaperPath,
+
+                    // App section display settings
+                    pinnedAppsLayout = settings?.pinnedAppsLayout ?: AppSectionLayoutOption.LIST,
+                    pinnedAppsDisplayStyle = settings?.pinnedAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                    pinnedAppsIconColor = settings?.pinnedAppsIconColor ?: IconColorOption.ORIGINAL,
+
+                    recentAppsLayout = settings?.recentAppsLayout ?: AppSectionLayoutOption.LIST,
+                    recentAppsDisplayStyle = settings?.recentAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                    recentAppsIconColor = settings?.recentAppsIconColor ?: IconColorOption.ORIGINAL,
+
+                    allAppsLayout = settings?.allAppsLayout ?: AppSectionLayoutOption.LIST,
+                    allAppsDisplayStyle = settings?.allAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                    allAppsIconColor = settings?.allAppsIconColor ?: IconColorOption.ORIGINAL,
+
                     // Sidebar settings
                     sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
                     sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
@@ -309,6 +326,60 @@ class SettingsViewModel(
         }
     }
 
+    // App section display settings update methods
+    fun updatePinnedAppsLayout(layout: AppSectionLayoutOption) {
+        viewModelScope.launch {
+            settingsRepository.updatePinnedAppsLayout(layout)
+        }
+    }
+
+    fun updatePinnedAppsDisplayStyle(style: AppDisplayStyleOption) {
+        viewModelScope.launch {
+            settingsRepository.updatePinnedAppsDisplayStyle(style)
+        }
+    }
+
+    fun updatePinnedAppsIconColor(color: IconColorOption) {
+        viewModelScope.launch {
+            settingsRepository.updatePinnedAppsIconColor(color)
+        }
+    }
+
+    fun updateRecentAppsLayout(layout: AppSectionLayoutOption) {
+        viewModelScope.launch {
+            settingsRepository.updateRecentAppsLayout(layout)
+        }
+    }
+
+    fun updateRecentAppsDisplayStyle(style: AppDisplayStyleOption) {
+        viewModelScope.launch {
+            settingsRepository.updateRecentAppsDisplayStyle(style)
+        }
+    }
+
+    fun updateRecentAppsIconColor(color: IconColorOption) {
+        viewModelScope.launch {
+            settingsRepository.updateRecentAppsIconColor(color)
+        }
+    }
+
+    fun updateAllAppsLayout(layout: AppSectionLayoutOption) {
+        viewModelScope.launch {
+            settingsRepository.updateAllAppsLayout(layout)
+        }
+    }
+
+    fun updateAllAppsDisplayStyle(style: AppDisplayStyleOption) {
+        viewModelScope.launch {
+            settingsRepository.updateAllAppsDisplayStyle(style)
+        }
+    }
+
+    fun updateAllAppsIconColor(color: IconColorOption) {
+        viewModelScope.launch {
+            settingsRepository.updateAllAppsIconColor(color)
+        }
+    }
 
 
     fun updateSearchQuery(query: String) {
@@ -368,8 +439,21 @@ data class SettingsUiState(
     val enableGlassmorphism: Boolean = true,
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
-    val customWallpaperPath: String? = null
-    ,
+    val customWallpaperPath: String? = null,
+
+    // App section display settings
+    val pinnedAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val pinnedAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val pinnedAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val recentAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val recentAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val recentAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val allAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
     // Sidebar customization
     val sidebarActiveScale: Float = 1.4f,
     val sidebarPopOutDp: Int = 16,
