@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntSize
@@ -207,6 +208,7 @@ fun EnhancedAlphabetFastScroller(
 ) {
     val context = LocalContext.current
     val view = LocalView.current
+    val density = LocalDensity.current
 
     // Initialize controller with haptics and accessibility
     val controller = remember {
@@ -226,6 +228,16 @@ fun EnhancedAlphabetFastScroller(
 
     var railSize by remember { mutableStateOf(IntSize.Zero) }
     var bubblePositionY by remember { mutableStateOf(0f) }
+    var bubbleHeightPx by remember { mutableStateOf(0) }
+
+    val bubbleOffsetDp = with(density) {
+        val railHeightPx = railSize.height.toFloat()
+        val bubbleHeight = bubbleHeightPx.toFloat()
+        val halfBubble = bubbleHeight / 2f
+        val maxOffset = max(0f, railHeightPx - bubbleHeight)
+        val rawOffset = bubblePositionY - halfBubble
+        rawOffset.coerceIn(0f, maxOffset).toDp()
+    }
 
     Box(
         modifier = modifier
@@ -295,14 +307,15 @@ fun EnhancedAlphabetFastScroller(
                 targetScale = 0.8f,
                 animationSpec = tween(150)
             ),
-            modifier = Modifier.align(Alignment.CenterStart)
+            modifier = Modifier.align(Alignment.TopStart)
         ) {
             state.currentAppName?.let { appName ->
                 SectionBubble(
                     appName = appName,
                     letter = state.currentLetter ?: "",
-                    positionY = bubblePositionY,
-                    modifier = Modifier.offset(x = (-80).dp)
+                    modifier = Modifier
+                        .offset(x = (-80).dp, y = bubbleOffsetDp)
+                        .onSizeChanged { bubbleHeightPx = it.height }
                 )
             }
         }
@@ -361,20 +374,17 @@ private fun EnhancedAlphabetItem(
  *
  * @param appName Current app name to display
  * @param letter Current section letter
- * @param positionY Y position to align the bubble
- * @param modifier Modifier for the bubble
+ * @param modifier Modifier for the bubble (used to position and size the bubble)
  */
 @Composable
 private fun SectionBubble(
     appName: String,
     letter: String,
-    positionY: Float,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .padding(horizontal = PrimerSpacing.md)
-            .offset(y = positionY.toDp() - 40.dp), // Center on touch point
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
@@ -403,10 +413,3 @@ private fun SectionBubble(
     }
 }
 
-/**
- * Extension function to convert Float pixels to Dp.
- */
-@Composable
-private fun Float.toDp() = with(androidx.compose.ui.platform.LocalDensity.current) {
-    this@toDp.toDp()
-}
