@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +45,10 @@ private enum class OnboardingStepId {
     LOCATION,
     APPEARANCE
 }
+
+private enum class AppearanceSection { THEME_MODE, ICON_STYLE, THEME_OPTIONS, WALLPAPER }
+
+
 
 @Composable
 fun OnboardingScreen(
@@ -280,17 +285,15 @@ private fun AccordionSection(
 ) {
     Column(Modifier.fillMaxWidth()) {
         Surface(
-            onClick = onToggle,
             shape = RoundedCornerShape(12.dp),
             tonalElevation = 1.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).clickable { onToggle() },
+                verticalAlignment = Alignment.CenterVertically) {
+
+
+
                 Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Icon(
                     imageVector = if (isExpanded) Icons.Filled.Check else Icons.Filled.Info,
@@ -331,8 +334,7 @@ private fun AppearanceStep(
     onBack: () -> Unit,
     onSkip: () -> Unit
 ) {
-    enum class AppearanceSection { THEME_MODE, ICON_STYLE, THEME_OPTIONS, WALLPAPER }
-    var expandedSection by remember { mutableStateOf(AppearanceSection.THEME_MODE) }
+    var expandedSection by remember { mutableStateOf<AppearanceSection>(AppearanceSection.THEME_MODE) }
 
     Column(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.onboarding_appearance_title), style = MaterialTheme.typography.titleLarge)
@@ -448,5 +450,13 @@ private fun FlowRowChipsIcon(selected: AppIconStyleOption, onSelect: (AppIconSty
         }
     }
 }
+
+
+
+
+
+
+
+
 
 
