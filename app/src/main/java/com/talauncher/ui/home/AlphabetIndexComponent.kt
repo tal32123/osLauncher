@@ -354,9 +354,15 @@ private fun EnhancedAlphabetItem(
     isEnabled: Boolean
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (isActive) 1.2f else 1f,
-        animationSpec = tween(100),
+        targetValue = if (isActive) 1.5f else 1f,
+        animationSpec = tween(150),
         label = "letter_scale"
+    )
+
+    val offsetX by animateFloatAsState(
+        targetValue = if (isActive) -8f else 0f,
+        animationSpec = tween(150),
+        label = "letter_offset"
     )
 
     val alpha by animateFloatAsState(
@@ -371,9 +377,10 @@ private fun EnhancedAlphabetItem(
 
     Text(
         text = section.displayLabel,
-        style = MaterialTheme.typography.labelSmall,
+        style = if (isActive) MaterialTheme.typography.titleMedium else MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
+            .offset(x = offsetX.dp)
             .scale(scale)
             .alpha(alpha)
             .testTag("enhanced_alphabet_item_${section.key}")

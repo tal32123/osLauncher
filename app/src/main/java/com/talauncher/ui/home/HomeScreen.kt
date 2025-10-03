@@ -397,15 +397,9 @@ fun HomeScreen(
                             onScrollToIndex = { globalIndex ->
                                 scope.launch {
                                     try {
-                                        // Adjust index to account for recent apps section if present
-                                        val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                            // Add header + recent apps + spacer/title before "All Apps"
-                                            globalIndex + uiState.recentApps.size + 2
-                                        } else {
-                                            globalIndex
-                                        }
+                                        // globalIndex already accounts for recent apps section
                                         // Instant scroll for smooth per-app targeting
-                                        listState.scrollToItem(adjustedIndex)
+                                        listState.scrollToItem(globalIndex)
                                     } catch (e: Exception) {
                                         Log.e("HomeScreen", "Error scrolling to index $globalIndex", e)
                                     }

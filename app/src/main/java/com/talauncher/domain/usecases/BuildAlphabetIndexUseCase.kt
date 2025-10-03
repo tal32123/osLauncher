@@ -86,12 +86,29 @@ class BuildAlphabetIndexUseCase {
      * - Enables O(1) touch-to-app mapping during scrubbing
      *
      * @param apps Sorted list of all apps
-     * @param recentApps List of recently used apps (not included in sections yet)
+     * @param recentApps List of recently used apps (included as first section)
      * @return SectionIndex with complete section metadata and prefix sums
      */
     fun buildSectionIndex(apps: List<AppInfo>, recentApps: List<AppInfo>): SectionIndex {
-        if (apps.isEmpty()) {
+        if (apps.isEmpty() && recentApps.isEmpty()) {
             return SectionIndex.EMPTY
+        }
+
+        val sections = mutableListOf<Section>()
+        var currentPosition = 0
+
+        // Add recent apps section if present
+        if (recentApps.isNotEmpty()) {
+            sections.add(
+                Section(
+                    key = RECENT_APPS_INDEX_KEY,
+                    displayLabel = "⭐",
+                    firstPosition = currentPosition,
+                    count = recentApps.size,
+                    appNames = recentApps.map { it.appName }
+                )
+            )
+            currentPosition += recentApps.size
         }
 
         // Group apps by first character
@@ -99,8 +116,6 @@ class BuildAlphabetIndexUseCase {
 
         // Build sections for A-Z and #
         val alphabet = ('A'..'Z').map { it.toString() } + listOf("#")
-        val sections = mutableListOf<Section>()
-        var currentPosition = 0
 
         alphabet.forEach { char ->
             val appsForChar = appsByFirstChar[char] ?: emptyList()
@@ -120,7 +135,7 @@ class BuildAlphabetIndexUseCase {
 
         return SectionIndex(
             sections = sections,
-            totalCount = apps.size
+            totalCount = currentPosition
         )
     }
 

@@ -192,7 +192,7 @@ class AppRepository(
 
                 InstalledApp(packageName, appName, isSystemApp)
             }.distinctBy { it.packageName }
-                .sortedBy { it.appName }
+                .sortedBy { it.appName.lowercase() }
         } catch (e: SecurityException) {
             Log.e(TAG, "Security exception getting installed apps", e)
             errorHandler?.showError(
