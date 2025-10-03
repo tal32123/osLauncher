@@ -209,5 +209,29 @@
     <string name="app_action_info_description">Open the system settings page for this app.</string>
     <string name="app_action_uninstall_label">Uninstall app</string>
     <string name="app_action_uninstall_description">Remove this app from your device.</string>
+
+    <!-- Onboarding (revamped wizard) -->
+    <string name="onboarding_title_welcome">Welcome to %1$s</string>
+    <string name="onboarding_subtitle_tagline">A minimalist launcher for calmer, more intentional use</string>
+    <string name="onboarding_step_default_title">Set as Default Launcher</string>
+    <string name="onboarding_step_default_desc">Make %1$s your default home screen</string>
+    <string name="onboarding_step_usage_title">Usage Statistics Permission</string>
+    <string name="onboarding_step_usage_desc">Allow access to usage stats to show insights and mindful nudges</string>
+    <string name="onboarding_step_notifications_title">Allow Notifications</string>
+    <string name="onboarding_step_notifications_desc">Enable gentle reminders when time limits expire</string>
+    <string name="onboarding_step_contacts_title">Contacts Permission</string>
+    <string name="onboarding_step_contacts_desc">Let TALauncher access your contacts for quick calling</string>
+    <string name="onboarding_step_location_title">Location Permission</string>
+    <string name="onboarding_step_location_desc">Enable weather details on your home screen</string>
+
+    <string name="onboarding_appearance_title">Appearance</string>
+    <string name="completed">Completed</string>
+    <string name="onboarding_action_set_default">Set as Default</string>
+    <string name="onboarding_action_grant_permission">Grant Permission</string>
+    <string name="onboarding_action_allow_notifications">Allow Notifications</string>
+    <string name="skip_for_now">Skip for now</string>
+    <string name="next">Next</string>
+    <string name="back">Back</string>
+    <string name="finish">Finish</string>
 </resources>
 
