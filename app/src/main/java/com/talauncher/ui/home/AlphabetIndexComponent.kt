@@ -182,8 +182,10 @@ private fun AlphabetIndexItem(
         else if (waveSpread <= 0f) {
             if (distance == 0) 1f else 0f
         } else {
-            // Smooth exponential falloff
-            kotlin.math.exp(-distance / waveSpread)
+            val rawInfluence = kotlin.math.exp(-distance / waveSpread)
+            // Apply minimum threshold to prevent too many items from being affected
+            // This is especially important for high waveSpread values (3.0+)
+            if (rawInfluence < 0.1f) 0f else rawInfluence
         }
     }
 
@@ -425,7 +427,10 @@ private fun EnhancedAlphabetItem(
         else if (waveSpread <= 0f) {
             if (distance == 0) 1f else 0f
         } else {
-            kotlin.math.exp(-distance / waveSpread)
+            val rawInfluence = kotlin.math.exp(-distance / waveSpread)
+            // Apply minimum threshold to prevent too many items from being affected
+            // This is especially important for high waveSpread values (3.0+)
+            if (rawInfluence < 0.1f) 0f else rawInfluence
         }
     }
     val influence = if (!isEnabled) 0f else influenceBase
