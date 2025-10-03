@@ -112,10 +112,14 @@ class FastScrollController(
      * Activates the fast scroll state and shows the preview bubble.
      */
     fun onTouchStart() {
-        _state.value = _state.value.copy(isActive = true)
-        lastScrolledGlobalIndex = null
-        lastSectionKey = null
-        lastAppName = null
+        try {
+            _state.value = _state.value.copy(isActive = true)
+            lastScrolledGlobalIndex = null
+            lastSectionKey = null
+            lastAppName = null
+        } catch (e: Exception) {
+            android.util.Log.e("FastScrollController", "Error in onTouchStart", e)
+        }
     }
 
     /**
@@ -139,37 +143,58 @@ class FastScrollController(
         railBottomPadding: Float,
         onScrollToIndex: (Int) -> Unit
     ) {
-        // Throttle scroll updates to maintain 60fps
-        val now = System.currentTimeMillis()
-        if (now - lastScrollUpdateTime < scrollThrottleMs) {
-            return
+        try {
+            // Throttle scroll updates to maintain 60fps
+            val now = System.currentTimeMillis()
+            if (now - lastScrollUpdateTime < scrollThrottleMs) {
+                return
+            }
+            lastScrollUpdateTime = now
+
+            // Map touch to target using O(1) prefix sum computation
+            val target = try {
+                mapTouchToTargetUseCase.execute(
+                    touchY = touchY,
+                    railHeight = railHeight,
+                    railTopPadding = railTopPadding,
+                    railBottomPadding = railBottomPadding,
+                    sectionIndex = sectionIndex
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("FastScrollController", "Error mapping touch to target", e)
+                null
+            } ?: return
+
+            // Update state with current target
+            try {
+                _state.value = _state.value.copy(
+                    currentTarget = target,
+                    currentLetter = target.section.key,
+                    currentAppName = target.appName
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("FastScrollController", "Error updating state", e)
+            }
+
+            // Scroll to target if different from last position (coalesce redundant scrolls)
+            if (target.globalIndex != lastScrolledGlobalIndex) {
+                try {
+                    onScrollToIndex(target.globalIndex)
+                    lastScrolledGlobalIndex = target.globalIndex
+                } catch (e: Exception) {
+                    android.util.Log.e("FastScrollController", "Error scrolling to index ${target.globalIndex}", e)
+                }
+            }
+
+            // Haptic and accessibility feedback on changes
+            try {
+                handleFeedback(target)
+            } catch (e: Exception) {
+                android.util.Log.e("FastScrollController", "Error handling feedback", e)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FastScrollController", "Critical error in onTouch", e)
         }
-        lastScrollUpdateTime = now
-
-        // Map touch to target using O(1) prefix sum computation
-        val target = mapTouchToTargetUseCase.execute(
-            touchY = touchY,
-            railHeight = railHeight,
-            railTopPadding = railTopPadding,
-            railBottomPadding = railBottomPadding,
-            sectionIndex = sectionIndex
-        ) ?: return
-
-        // Update state with current target
-        _state.value = _state.value.copy(
-            currentTarget = target,
-            currentLetter = target.section.key,
-            currentAppName = target.appName
-        )
-
-        // Scroll to target if different from last position (coalesce redundant scrolls)
-        if (target.globalIndex != lastScrolledGlobalIndex) {
-            onScrollToIndex(target.globalIndex)
-            lastScrolledGlobalIndex = target.globalIndex
-        }
-
-        // Haptic and accessibility feedback on changes
-        handleFeedback(target)
     }
 
     /**
@@ -177,15 +202,19 @@ class FastScrollController(
      * Deactivates the fast scroll state and hides the preview bubble.
      */
     fun onTouchEnd() {
-        _state.value = _state.value.copy(
-            isActive = false,
-            currentTarget = null,
-            currentLetter = null,
-            currentAppName = null
-        )
-        lastScrolledGlobalIndex = null
-        lastSectionKey = null
-        lastAppName = null
+        try {
+            _state.value = _state.value.copy(
+                isActive = false,
+                currentTarget = null,
+                currentLetter = null,
+                currentAppName = null
+            )
+            lastScrolledGlobalIndex = null
+            lastSectionKey = null
+            lastAppName = null
+        } catch (e: Exception) {
+            android.util.Log.e("FastScrollController", "Error in onTouchEnd", e)
+        }
     }
 
     /**

@@ -264,25 +264,29 @@ fun HomeScreen(
 
                 // Handle alphabet index scrolling
                 LaunchedEffect(uiState.alphabetIndexActiveKey) {
-                    val activeKey = uiState.alphabetIndexActiveKey
-                    if (activeKey != null) {
-                        val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
-                        if (entry != null) {
-                            if (entry.key == RECENT_APPS_INDEX_KEY) {
-                                listState.animateScrollToItem(0)
-                            } else {
-                                entry.targetIndex?.let { targetIndex ->
-                                    // Adjust index to account for recent apps section
-                                    val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                        // Add header + recent apps + spacer/title before "All Apps"
-                                        targetIndex + uiState.recentApps.size + 2
-                                    } else {
-                                        targetIndex
+                    try {
+                        val activeKey = uiState.alphabetIndexActiveKey
+                        if (activeKey != null) {
+                            val entry = uiState.alphabetIndexEntries.find { it.key == activeKey }
+                            if (entry != null) {
+                                if (entry.key == RECENT_APPS_INDEX_KEY) {
+                                    listState.animateScrollToItem(0)
+                                } else {
+                                    entry.targetIndex?.let { targetIndex ->
+                                        // Adjust index to account for recent apps section
+                                        val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
+                                            // Add header + recent apps + spacer/title before "All Apps"
+                                            targetIndex + uiState.recentApps.size + 2
+                                        } else {
+                                            targetIndex
+                                        }
+                                        listState.animateScrollToItem(adjustedIndex)
                                     }
-                                    listState.animateScrollToItem(adjustedIndex)
                                 }
                             }
                         }
+                    } catch (e: Exception) {
+                        Log.e("HomeScreen", "Error in alphabet index scrolling", e)
                     }
                 }
 
@@ -392,15 +396,19 @@ fun HomeScreen(
                             modifier = Modifier.padding(end = PrimerSpacing.sm).testTag("enhanced_fast_scroller"),
                             onScrollToIndex = { globalIndex ->
                                 scope.launch {
-                                    // Adjust index to account for recent apps section if present
-                                    val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
-                                        // Add header + recent apps + spacer/title before "All Apps"
-                                        globalIndex + uiState.recentApps.size + 2
-                                    } else {
-                                        globalIndex
+                                    try {
+                                        // Adjust index to account for recent apps section if present
+                                        val adjustedIndex = if (uiState.recentApps.isNotEmpty()) {
+                                            // Add header + recent apps + spacer/title before "All Apps"
+                                            globalIndex + uiState.recentApps.size + 2
+                                        } else {
+                                            globalIndex
+                                        }
+                                        // Instant scroll for smooth per-app targeting
+                                        listState.scrollToItem(adjustedIndex)
+                                    } catch (e: Exception) {
+                                        Log.e("HomeScreen", "Error scrolling to index $globalIndex", e)
                                     }
-                                    // Instant scroll for smooth per-app targeting
-                                    listState.scrollToItem(adjustedIndex)
                                 }
                             }
                         )

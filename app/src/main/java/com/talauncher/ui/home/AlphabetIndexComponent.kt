@@ -247,35 +247,57 @@ fun EnhancedAlphabetFastScroller(
             .pointerInput(sectionIndex, isEnabled) {
                 if (!isEnabled || sectionIndex.isEmpty) return@pointerInput
 
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    controller.onTouchStart()
-                    bubblePositionY = down.position.y
+                try {
+                    awaitEachGesture {
+                        try {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            controller.onTouchStart()
+                            bubblePositionY = down.position.y
 
-                    // Handle initial touch
-                    controller.onTouch(
-                        touchY = down.position.y,
-                        railHeight = railSize.height.toFloat(),
-                        railTopPadding = PrimerSpacing.md.toPx(),
-                        railBottomPadding = PrimerSpacing.md.toPx(),
-                        onScrollToIndex = onScrollToIndex
-                    )
+                            // Handle initial touch
+                            try {
+                                controller.onTouch(
+                                    touchY = down.position.y,
+                                    railHeight = railSize.height.toFloat(),
+                                    railTopPadding = PrimerSpacing.md.toPx(),
+                                    railBottomPadding = PrimerSpacing.md.toPx(),
+                                    onScrollToIndex = onScrollToIndex
+                                )
+                            } catch (e: Exception) {
+                                android.util.Log.e("EnhancedFastScroller", "Error handling initial touch", e)
+                            }
 
-                    try {
-                        drag(down.id) { change ->
-                            bubblePositionY = change.position.y
-                            controller.onTouch(
-                                touchY = change.position.y,
-                                railHeight = railSize.height.toFloat(),
-                                railTopPadding = PrimerSpacing.md.toPx(),
-                                railBottomPadding = PrimerSpacing.md.toPx(),
-                                onScrollToIndex = onScrollToIndex
-                            )
-                            change.consume()
+                            try {
+                                drag(down.id) { change ->
+                                    try {
+                                        bubblePositionY = change.position.y
+                                        controller.onTouch(
+                                            touchY = change.position.y,
+                                            railHeight = railSize.height.toFloat(),
+                                            railTopPadding = PrimerSpacing.md.toPx(),
+                                            railBottomPadding = PrimerSpacing.md.toPx(),
+                                            onScrollToIndex = onScrollToIndex
+                                        )
+                                        change.consume()
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("EnhancedFastScroller", "Error during drag", e)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("EnhancedFastScroller", "Error in drag gesture", e)
+                            } finally {
+                                try {
+                                    controller.onTouchEnd()
+                                } catch (e: Exception) {
+                                    android.util.Log.e("EnhancedFastScroller", "Error in onTouchEnd", e)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("EnhancedFastScroller", "Error in gesture handling", e)
                         }
-                    } finally {
-                        controller.onTouchEnd()
                     }
+                } catch (e: Exception) {
+                    android.util.Log.e("EnhancedFastScroller", "Critical error in pointerInput", e)
                 }
             }
     ) {

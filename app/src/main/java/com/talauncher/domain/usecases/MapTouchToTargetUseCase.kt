@@ -72,72 +72,85 @@ class MapTouchToTargetUseCase {
         railBottomPadding: Float,
         sectionIndex: SectionIndex
     ): TouchTarget? {
-        // Early return for empty or invalid state
-        if (sectionIndex.isEmpty || railHeight <= 0f) {
-            return null
-        }
+        return try {
+            // Early return for empty or invalid state
+            if (sectionIndex.isEmpty || railHeight <= 0f) {
+                return null
+            }
 
-        // Step 1: Normalize touch Y to [0..1] accounting for padding
-        val contentHeight = railHeight - railTopPadding - railBottomPadding
-        if (contentHeight <= 0f) {
-            return null
-        }
+            // Step 1: Normalize touch Y to [0..1] accounting for padding
+            val contentHeight = railHeight - railTopPadding - railBottomPadding
+            if (contentHeight <= 0f) {
+                return null
+            }
 
-        val normalizedY = ((touchY - railTopPadding) / contentHeight).coerceIn(0f, 1f)
+            val normalizedY = ((touchY - railTopPadding) / contentHeight).coerceIn(0f, 1f)
 
-        // Step 2: Map normalized Y to section index
-        val sections = sectionIndex.sections
-        val totalSections = sections.size
+            // Step 2: Map normalized Y to section index
+            val sections = sectionIndex.sections
+            val totalSections = sections.size
 
-        // Compute which section the touch falls into
-        val sectionIndexFloat = normalizedY * totalSections
-        val targetSectionIndex = sectionIndexFloat.toInt().coerceIn(0, totalSections - 1)
+            if (totalSections == 0) {
+                return null
+            }
 
-        val section = sections[targetSectionIndex]
+            // Compute which section the touch falls into
+            val sectionIndexFloat = normalizedY * totalSections
+            val targetSectionIndex = sectionIndexFloat.toInt().coerceIn(0, totalSections - 1)
 
-        // If section has no apps, return the first position
-        if (section.count == 0) {
-            return TouchTarget(
+            val section = sections.getOrNull(targetSectionIndex) ?: return null
+
+            // If section has no apps, return the first position
+            if (section.count == 0) {
+                return TouchTarget(
+                    sectionIndex = targetSectionIndex,
+                    section = section,
+                    intraOffset = 0,
+                    globalIndex = section.firstPosition,
+                    appName = section.appNames.firstOrNull() ?: ""
+                )
+            }
+
+            // Step 3: Compute intra-section fraction
+            // Each section occupies a fractional portion: 1.0 / totalSections
+            val sectionFraction = 1.0f / totalSections
+            val sectionStart = targetSectionIndex * sectionFraction
+            val sectionEnd = sectionStart + sectionFraction
+
+            // Local position within this section's range [0..1]
+            val intraSectionFraction = if (sectionFraction > 0f) {
+                ((normalizedY - sectionStart) / sectionFraction).coerceIn(0f, 1f)
+            } else {
+                0f
+            }
+
+            // Step 4: Convert fraction to intraOffset
+            // For a section with N apps, we want indices [0..N-1]
+            val intraOffset = floor(intraSectionFraction * section.count).toInt()
+                .coerceIn(0, section.count - 1)
+
+            // Step 5: Compute global index using prefix sums
+            val globalIndex = try {
+                sectionIndex.computeGlobalIndex(targetSectionIndex, intraOffset)
+            } catch (e: Exception) {
+                android.util.Log.e("MapTouchToTargetUseCase", "Error computing global index", e)
+                null
+            } ?: return null
+
+            // Get app name for preview (with bounds checking)
+            val appName = section.appNames.getOrNull(intraOffset) ?: section.appNames.firstOrNull() ?: ""
+
+            TouchTarget(
                 sectionIndex = targetSectionIndex,
                 section = section,
-                intraOffset = 0,
-                globalIndex = section.firstPosition,
-                appName = section.appNames.firstOrNull() ?: ""
+                intraOffset = intraOffset,
+                globalIndex = globalIndex,
+                appName = appName
             )
+        } catch (e: Exception) {
+            android.util.Log.e("MapTouchToTargetUseCase", "Error in execute", e)
+            null
         }
-
-        // Step 3: Compute intra-section fraction
-        // Each section occupies a fractional portion: 1.0 / totalSections
-        val sectionFraction = 1.0f / totalSections
-        val sectionStart = targetSectionIndex * sectionFraction
-        val sectionEnd = sectionStart + sectionFraction
-
-        // Local position within this section's range [0..1]
-        val intraSectionFraction = if (sectionFraction > 0f) {
-            ((normalizedY - sectionStart) / sectionFraction).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
-
-        // Step 4: Convert fraction to intraOffset
-        // For a section with N apps, we want indices [0..N-1]
-        val intraOffset = floor(intraSectionFraction * section.count).toInt()
-            .coerceIn(0, section.count - 1)
-
-        // Step 5: Compute global index using prefix sums
-        val globalIndex = sectionIndex.computeGlobalIndex(targetSectionIndex, intraOffset)
-            ?: return null
-
-        // Get app name for preview (with bounds checking)
-        val appName = section.appNames.getOrNull(intraOffset) ?: section.appNames.firstOrNull() ?: ""
-
-        return TouchTarget(
-            sectionIndex = targetSectionIndex,
-            section = section,
-            intraOffset = intraOffset,
-            globalIndex = globalIndex,
-            appName = appName
-        )
     }
 
     /**
@@ -152,22 +165,27 @@ class MapTouchToTargetUseCase {
         sectionKey: String,
         sectionIndex: SectionIndex
     ): TouchTarget? {
-        val targetSectionIndex = sectionIndex.sectionKeyToIndex[sectionKey] ?: return null
-        val section = sectionIndex.sections[targetSectionIndex]
+        return try {
+            val targetSectionIndex = sectionIndex.sectionKeyToIndex[sectionKey] ?: return null
+            val section = sectionIndex.sections.getOrNull(targetSectionIndex) ?: return null
 
-        if (section.count == 0) {
-            return null
+            if (section.count == 0) {
+                return null
+            }
+
+            val globalIndex = section.firstPosition
+            val appName = section.appNames.firstOrNull() ?: ""
+
+            TouchTarget(
+                sectionIndex = targetSectionIndex,
+                section = section,
+                intraOffset = 0,
+                globalIndex = globalIndex,
+                appName = appName
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("MapTouchToTargetUseCase", "Error in executeForSectionStart", e)
+            null
         }
-
-        val globalIndex = section.firstPosition
-        val appName = section.appNames.firstOrNull() ?: ""
-
-        return TouchTarget(
-            sectionIndex = targetSectionIndex,
-            section = section,
-            intraOffset = 0,
-            globalIndex = globalIndex,
-            appName = appName
-        )
     }
 }
