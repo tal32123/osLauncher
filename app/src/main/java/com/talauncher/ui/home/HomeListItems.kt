@@ -117,7 +117,8 @@ fun SearchResultItem(
 fun PinnedAppItem(
     appInfo: AppInfo,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    iconStyle: AppIconStyleOption
 ) {
     PrimerCard(
         modifier = Modifier
@@ -127,9 +128,9 @@ fun PinnedAppItem(
                 onLongClick = onLongClick
             ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
     ) {
         Row(
             modifier = Modifier
@@ -138,12 +139,38 @@ fun PinnedAppItem(
                 .heightIn(min = PrimerListItemDefaults.minHeight),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (iconStyle != AppIconStyleOption.HIDDEN) {
+                AppIcon(
+                    packageName = appInfo.packageName,
+                    appName = appInfo.appName,
+                    iconStyle = iconStyle
+                )
+                Spacer(modifier = Modifier.width(PrimerSpacing.md))
+            }
+
             Text(
                 text = appInfo.appName,
+                modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
+                color = MaterialTheme.colorScheme.onSurface
             )
+
+            // Pinned indicator badge
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                shape = PrimerShapes.small,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+            ) {
+                Text(
+                    text = stringResource(R.string.home_pinned_badge),
+                    modifier = Modifier.padding(
+                        horizontal = PrimerSpacing.xs,
+                        vertical = 2.dp
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
