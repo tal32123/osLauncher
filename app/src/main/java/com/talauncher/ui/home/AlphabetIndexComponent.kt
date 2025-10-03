@@ -7,14 +7,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -22,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -33,7 +30,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.talauncher.ui.theme.PrimerSpacing
 import com.talauncher.domain.model.AlphabetIndexEntry
 import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
@@ -319,8 +315,10 @@ fun EnhancedAlphabetFastScroller(
         }
 
         // Floating preview bubble
+        val bubbleLetter = state.currentLetter?.ifBlank { null }
+
         AnimatedVisibility(
-            visible = state.isActive && state.currentAppName != null,
+            visible = state.isActive && bubbleLetter != null,
             enter = fadeIn(animationSpec = tween(100)) + scaleIn(
                 initialScale = 0.8f,
                 animationSpec = tween(100)
@@ -331,10 +329,9 @@ fun EnhancedAlphabetFastScroller(
             ),
             modifier = Modifier.align(Alignment.TopStart)
         ) {
-            state.currentAppName?.let { appName ->
+            bubbleLetter?.let { letter ->
                 SectionBubble(
-                    appName = appName,
-                    letter = state.currentLetter ?: "",
+                    letter = letter,
                     modifier = Modifier
                         .offset(x = (-80).dp, y = bubbleOffsetDp)
                         .onSizeChanged { bubbleHeightPx = it.height }
@@ -388,47 +385,46 @@ private fun EnhancedAlphabetItem(
 }
 
 /**
- * Floating preview bubble showing current app name.
+ * Floating preview bubble showing the current section letter.
  *
  * Architecture:
- * - Composable following Material Design 3 elevated card style
+ * - Composable following Material Design 3 surface styling
  * - Animated appearance/disappearance
- * - Shows both letter and app name for context
  *
  * Design:
- * - Rounded elevated card
- * - Large readable text
+ * - Circular elevated bubble
+ * - Large readable letter in the user's theme color
  * - Positioned to the left of the rail
  * - Follows finger Y position
  *
- * @param appName Current app name to display
  * @param letter Current section letter
  * @param modifier Modifier for the bubble (used to position and size the bubble)
  */
 @Composable
 private fun SectionBubble(
-    appName: String,
     letter: String,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    val displayLetter = letter.ifBlank { "?" }.uppercase()
+
+    Surface(
         modifier = modifier
-            .padding(horizontal = PrimerSpacing.md),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+            .padding(horizontal = PrimerSpacing.md)
+            .size(56.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        shadowElevation = 12.dp,
+        tonalElevation = 6.dp
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            // Letter indicator - made large and prominent
             Text(
-                text = letter,
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                text = displayLetter,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
     }
