@@ -325,7 +325,7 @@ fun HomeScreen(
                                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                         viewModel.showAppActionDialog(app)
                                     },
-                                    iconStyle = uiState.appIconStyle
+                                    appIconStyle = uiState.appIconStyle
                                 )
                             }
 
