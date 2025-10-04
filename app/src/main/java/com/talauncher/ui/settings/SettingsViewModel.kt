@@ -308,19 +308,31 @@ class SettingsViewModel(
 
     // Widget background toggles
     fun updateShowTimeBackground(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.updateShowTimeBackground(enabled) }
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showTimeBackground = enabled))
+        }
     }
 
     fun updateShowDateBackground(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.updateShowDateBackground(enabled) }
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showDateBackground = enabled))
+        }
     }
 
     fun updateShowWeatherBackground(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.updateShowWeatherBackground(enabled) }
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showWeatherBackground = enabled))
+        }
     }
 
     fun updateShowMusicBackground(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.updateShowMusicBackground(enabled) }
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showMusicBackground = enabled))
+        }
     }
 
     // Sidebar settings
