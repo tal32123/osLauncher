@@ -22,15 +22,22 @@ class NewsService {
 
     suspend fun fetchArticles(categories: Set<NewsCategory>): List<NewsArticle> = withContext(Dispatchers.IO) {
         val articles = mutableListOf<NewsArticle>()
+        val errors = mutableListOf<String>()
+
         for (category in categories) {
             val url = feedUrlFor(category) ?: continue
             runCatching {
-                val stream = open(url)
+                val (stream, connection) = open(url)
                 stream.use {
-                    articles += parseRss(it, category)
+                    connection.use {
+                        articles += parseRss(stream, category)
+                    }
                 }
+            }.onFailure { error ->
+                errors.add("Failed to fetch ${category.name}: ${error.message}")
             }
         }
+
         // Sort by published desc and cap
         articles.sortedByDescending { it.publishedAtMillis }.take(100)
     }
@@ -49,14 +56,21 @@ class NewsService {
         }
     }
 
-    private fun open(urlString: String): InputStream {
+    private fun open(urlString: String): Pair<InputStream, HttpURLConnection> {
         val url = URL(urlString)
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "GET"
         conn.connectTimeout = 10000
         conn.readTimeout = 10000
         conn.connect()
-        return conn.inputStream
+
+        val responseCode = conn.responseCode
+        if (responseCode !in 200..299) {
+            conn.disconnect()
+            throw IllegalStateException("HTTP error code: $responseCode")
+        }
+
+        return Pair(conn.inputStream, conn)
     }
 
     private fun parseRss(input: InputStream, category: NewsCategory): List<NewsArticle> {
@@ -91,12 +105,15 @@ class NewsService {
                         val l = link?.trim()
                         if (!t.isNullOrEmpty() && !l.isNullOrEmpty()) {
                             val published = parseDate(pubDate)
-                            results += NewsArticle(
-                                title = t,
-                                link = l,
-                                category = category.name,
-                                publishedAtMillis = published ?: System.currentTimeMillis()
-                            )
+                            // Only include articles with valid dates to avoid sorting issues
+                            if (published != null) {
+                                results += NewsArticle(
+                                    title = t,
+                                    link = l,
+                                    category = category.name,
+                                    publishedAtMillis = published
+                                )
+                            }
                         }
                         insideItem = false
                     }
