@@ -21,12 +21,6 @@ import kotlin.math.roundToInt
 fun GeneralSettingsScreen(
     enableTimeLimitPrompt: Boolean,
     onToggleTimeLimitPrompt: () -> Unit,
-    showPhoneAction: Boolean,
-    onToggleShowPhoneAction: () -> Unit,
-    showMessageAction: Boolean,
-    onToggleShowMessageAction: () -> Unit,
-    showWhatsAppAction: Boolean,
-    onToggleShowWhatsAppAction: () -> Unit,
     weatherDisplay: WeatherDisplayOption,
     onUpdateWeatherDisplay: (WeatherDisplayOption) -> Unit,
     weatherTemperatureUnit: WeatherTemperatureUnit,
@@ -45,21 +39,6 @@ fun GeneralSettingsScreen(
                 FocusProductivityContent(
                     enableTimeLimitPrompt = enableTimeLimitPrompt,
                     onToggleTimeLimitPrompt = onToggleTimeLimitPrompt
-                )
-            }
-        )
-        add(
-            CollapsibleSection(
-                id = "contact_actions",
-                title = stringResource(R.string.settings_contact_actions)
-            ) {
-                ContactActionsContent(
-                    showPhoneAction = showPhoneAction,
-                    onToggleShowPhoneAction = onToggleShowPhoneAction,
-                    showMessageAction = showMessageAction,
-                    onToggleShowMessageAction = onToggleShowMessageAction,
-                    showWhatsAppAction = showWhatsAppAction,
-                    onToggleShowWhatsAppAction = onToggleShowWhatsAppAction
                 )
             }
         )
@@ -113,37 +92,6 @@ private fun FocusProductivityContent(
         subtitle = stringResource(R.string.settings_time_limit_dialog_subtitle),
         checked = enableTimeLimitPrompt,
         onCheckedChange = { onToggleTimeLimitPrompt() }
-    )
-}
-
-@Composable
-private fun ContactActionsContent(
-    showPhoneAction: Boolean,
-    onToggleShowPhoneAction: () -> Unit,
-    showMessageAction: Boolean,
-    onToggleShowMessageAction: () -> Unit,
-    showWhatsAppAction: Boolean,
-    onToggleShowWhatsAppAction: () -> Unit
-) {
-    SettingItem(
-        title = stringResource(R.string.settings_show_phone_action_title),
-        subtitle = stringResource(R.string.settings_show_phone_action_subtitle),
-        checked = showPhoneAction,
-        onCheckedChange = { onToggleShowPhoneAction() }
-    )
-
-    SettingItem(
-        title = stringResource(R.string.settings_show_message_action_title),
-        subtitle = stringResource(R.string.settings_show_message_action_subtitle),
-        checked = showMessageAction,
-        onCheckedChange = { onToggleShowMessageAction() }
-    )
-
-    SettingItem(
-        title = stringResource(R.string.settings_show_whatsapp_action_title),
-        subtitle = stringResource(R.string.settings_show_whatsapp_action_subtitle),
-        checked = showWhatsAppAction,
-        onCheckedChange = { onToggleShowWhatsAppAction() }
     )
 }
 

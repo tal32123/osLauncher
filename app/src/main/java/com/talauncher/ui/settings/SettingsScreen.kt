@@ -105,12 +105,6 @@ fun SettingsScreen(
             0 -> GeneralSettingsScreen(
                 enableTimeLimitPrompt = uiState.enableTimeLimitPrompt,
                 onToggleTimeLimitPrompt = viewModel::toggleTimeLimitPrompt,
-                showPhoneAction = uiState.showPhoneAction,
-                onToggleShowPhoneAction = viewModel::toggleShowPhoneAction,
-                showMessageAction = uiState.showMessageAction,
-                onToggleShowMessageAction = viewModel::toggleShowMessageAction,
-                showWhatsAppAction = uiState.showWhatsAppAction,
-                onToggleShowWhatsAppAction = viewModel::toggleShowWhatsAppAction,
                 weatherDisplay = uiState.weatherDisplay,
                 onUpdateWeatherDisplay = viewModel::updateWeatherDisplay,
                 weatherTemperatureUnit = uiState.weatherTemperatureUnit,
@@ -184,7 +178,13 @@ fun SettingsScreen(
                 searchDisplayStyle = uiState.searchDisplayStyle,
                 onUpdateSearchDisplayStyle = viewModel::updateSearchDisplayStyle,
                 searchIconColor = uiState.searchIconColor,
-                onUpdateSearchIconColor = viewModel::updateSearchIconColor
+                onUpdateSearchIconColor = viewModel::updateSearchIconColor,
+                showPhoneAction = uiState.showPhoneAction,
+                onToggleShowPhoneAction = viewModel::toggleShowPhoneAction,
+                showMessageAction = uiState.showMessageAction,
+                onToggleShowMessageAction = viewModel::toggleShowMessageAction,
+                showWhatsAppAction = uiState.showWhatsAppAction,
+                onToggleShowWhatsAppAction = viewModel::toggleShowWhatsAppAction
             )
             2 -> DistractingAppsSettingsScreen(
                 uiState = uiState,

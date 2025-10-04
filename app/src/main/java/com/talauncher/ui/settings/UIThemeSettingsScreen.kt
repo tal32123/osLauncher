@@ -86,7 +86,13 @@ fun UIThemeSettingsScreen(
     searchDisplayStyle: AppDisplayStyleOption,
     onUpdateSearchDisplayStyle: (AppDisplayStyleOption) -> Unit,
     searchIconColor: IconColorOption,
-    onUpdateSearchIconColor: (IconColorOption) -> Unit
+    onUpdateSearchIconColor: (IconColorOption) -> Unit,
+    showPhoneAction: Boolean,
+    onToggleShowPhoneAction: () -> Unit,
+    showMessageAction: Boolean,
+    onToggleShowMessageAction: () -> Unit,
+    showWhatsAppAction: Boolean,
+    onToggleShowWhatsAppAction: () -> Unit
 ) {
     val sections = listOf(
         CollapsibleSection(
@@ -218,6 +224,36 @@ fun UIThemeSettingsScreen(
                 onUpdateDisplayStyle = onUpdateSearchDisplayStyle,
                 iconColor = searchIconColor,
                 onUpdateIconColor = onUpdateSearchIconColor
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = stringResource(R.string.settings_contact_actions),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            SettingItem(
+                title = stringResource(R.string.settings_show_phone_action_title),
+                subtitle = stringResource(R.string.settings_show_phone_action_subtitle),
+                checked = showPhoneAction,
+                onCheckedChange = { onToggleShowPhoneAction() }
+            )
+
+            SettingItem(
+                title = stringResource(R.string.settings_show_message_action_title),
+                subtitle = stringResource(R.string.settings_show_message_action_subtitle),
+                checked = showMessageAction,
+                onCheckedChange = { onToggleShowMessageAction() }
+            )
+
+            SettingItem(
+                title = stringResource(R.string.settings_show_whatsapp_action_title),
+                subtitle = stringResource(R.string.settings_show_whatsapp_action_subtitle),
+                checked = showWhatsAppAction,
+                onCheckedChange = { onToggleShowWhatsAppAction() }
             )
         }
     )
