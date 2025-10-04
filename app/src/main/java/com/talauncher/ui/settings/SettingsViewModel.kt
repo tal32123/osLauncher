@@ -88,6 +88,11 @@ class SettingsViewModel(
                     enableGlassmorphism = settings?.enableGlassmorphism ?: true,
                     uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                     enableAnimations = settings?.enableAnimations ?: true,
+                    // Widget background toggles
+                    showTimeBackground = settings?.showTimeBackground ?: false,
+                    showDateBackground = settings?.showDateBackground ?: false,
+                    showWeatherBackground = settings?.showWeatherBackground ?: false,
+                    showMusicBackground = settings?.showMusicBackground ?: false,
                     customWallpaperPath = settings?.customWallpaperPath,
 
                     // App section display settings
@@ -496,6 +501,11 @@ data class SettingsUiState(
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     val customWallpaperPath: String? = null,
+    // Widget background toggles
+    val showTimeBackground: Boolean = false,
+    val showDateBackground: Boolean = false,
+    val showWeatherBackground: Boolean = false,
+    val showMusicBackground: Boolean = false,
 
     // App section display settings
     val pinnedAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
