@@ -126,32 +126,24 @@ private fun FocusProductivityContent(
     Spacer(modifier = Modifier.height(16.dp))
 
     // Music Widget Notification Listener Permission
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Music Widget",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = if (permissionState.hasNotificationListener) {
-                        "Notification listener enabled - music widget will display when audio is playing"
-                    } else {
-                        "Requires notification listener permission to show music playback"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Music Widget",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = if (permissionState.hasNotificationListener) {
+                "Notification listener enabled - music widget will display when audio is playing"
+            } else {
+                "Requires notification listener permission to show music playback"
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         if (!permissionState.hasNotificationListener) {
+            Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = {
                     if (context is androidx.activity.ComponentActivity) {
@@ -160,8 +152,7 @@ private fun FocusProductivityContent(
                             com.talauncher.utils.PermissionType.NOTIFICATION_LISTENER
                         )
                     }
-                },
-                modifier = Modifier.padding(top = 8.dp)
+                }
             ) {
                 Text("Enable Notification Listener")
             }
