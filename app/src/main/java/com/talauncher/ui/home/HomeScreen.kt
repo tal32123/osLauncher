@@ -167,7 +167,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
 
-                        // Weather display next to time; date shows under weather
+                        // Weather display next to time
                         if (uiState.weatherDisplay != WeatherDisplayOption.OFF && uiState.weatherData != null) {
                             Spacer(modifier = Modifier.width(12.dp))
                             val shouldShowTemperature = uiState.weatherDisplay != WeatherDisplayOption.DAILY ||
@@ -180,18 +180,22 @@ fun HomeScreen(
                                     dailyHigh = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyHigh else null,
                                     dailyLow = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyLow else null
                                 )
-                                if (uiState.showDate) {
-                                    Spacer(modifier = Modifier.height(PrimerSpacing.xs))
-                                    Text(
-                                        text = uiState.currentDate,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        textAlign = TextAlign.Start,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
                             }
                         }
                     }
+                }
+
+                if (uiState.showDate) {
+                    if (uiState.showTime) {
+                        Spacer(modifier = Modifier.height(PrimerSpacing.xs))
+                    }
+                    Text(
+                        text = uiState.currentDate,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 
