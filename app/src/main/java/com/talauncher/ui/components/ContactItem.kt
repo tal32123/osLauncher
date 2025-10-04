@@ -165,28 +165,7 @@ fun ContactGridItem(
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Contact initial in a circle
-        Surface(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape),
-            color = PrimerGreen.copy(alpha = 0.1f),
-            border = BorderStroke(2.dp, PrimerGreen.copy(alpha = 0.3f))
-        ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = contact.name.firstOrNull()?.uppercase() ?: "?",
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                    color = PrimerGreen
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Contact name
+        // Grid mode: show only the contact name (no icon or phone number)
         Text(
             text = contact.name,
             style = MaterialTheme.typography.bodyMedium,
