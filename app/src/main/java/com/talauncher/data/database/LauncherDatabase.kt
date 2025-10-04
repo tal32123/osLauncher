@@ -13,7 +13,7 @@ import com.talauncher.data.model.SearchInteractionEntity
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class],
-    version = 21,
+    version = 22,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -292,6 +292,20 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN searchLayout TEXT NOT NULL DEFAULT 'LIST'"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN searchDisplayStyle TEXT NOT NULL DEFAULT 'ICON_AND_TEXT'"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN searchIconColor TEXT NOT NULL DEFAULT 'ORIGINAL'"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -317,7 +331,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_16_17,
                     MIGRATION_17_18,
                     MIGRATION_18_19,
-                    MIGRATION_20_21
+                    MIGRATION_20_21,
+                    MIGRATION_21_22
                 ).build()
                 INSTANCE = instance
                 instance

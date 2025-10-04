@@ -45,9 +45,11 @@ Modern launchers are designed to keep you engaged—often at the cost of your at
 - **Tooling:** Gradle, ktlint, and a growing automated test suite (unit + instrumentation)
 ## Roadmap
 - **Grid Layout**
-- **Widgets** 
+- **Widgets** music, calendar, news headlines, weather
 - **PWA** 
 - **Distracting app features** 
+- ** AI app suggestions**
+- ** Recent apps ** recently installed (past 2 days) on/off in suggestions
 
 ## Getting Started
 1. **Install prerequisites**

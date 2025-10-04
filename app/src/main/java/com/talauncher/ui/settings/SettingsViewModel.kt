@@ -101,6 +101,10 @@ class SettingsViewModel(
                     allAppsDisplayStyle = settings?.allAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
                     allAppsIconColor = settings?.allAppsIconColor ?: IconColorOption.ORIGINAL,
 
+                    searchLayout = settings?.searchLayout ?: AppSectionLayoutOption.LIST,
+                    searchDisplayStyle = settings?.searchDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                    searchIconColor = settings?.searchIconColor ?: IconColorOption.ORIGINAL,
+
                     // Sidebar settings
                     sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
                     sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
@@ -388,6 +392,24 @@ class SettingsViewModel(
         }
     }
 
+    fun updateSearchLayout(layout: AppSectionLayoutOption) {
+        viewModelScope.launch {
+            settingsRepository.updateSearchLayout(layout)
+        }
+    }
+
+    fun updateSearchDisplayStyle(style: AppDisplayStyleOption) {
+        viewModelScope.launch {
+            settingsRepository.updateSearchDisplayStyle(style)
+        }
+    }
+
+    fun updateSearchIconColor(color: IconColorOption) {
+        viewModelScope.launch {
+            settingsRepository.updateSearchIconColor(color)
+        }
+    }
+
 
     fun updateSearchQuery(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
@@ -460,6 +482,10 @@ data class SettingsUiState(
     val allAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
     val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
     val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val searchLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val searchDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val searchIconColor: IconColorOption = IconColorOption.ORIGINAL,
 
     // Sidebar customization
     val sidebarActiveScale: Float = 1.4f,

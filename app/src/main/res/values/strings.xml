@@ -154,7 +154,8 @@
     <string name="settings_app_sections">App Sections</string>
     <string name="settings_pinned_apps">Pinned Apps</string>
     <string name="settings_recent_apps">Recent Apps</string>
-    <string name="settings_all_apps">All Apps</string>
+    <string name="settings_all_apps_list">All Apps List</string>
+    <string name="settings_search">Search</string>
 
     <string name="settings_section_layout">Layout</string>
     <string name="settings_section_layout_subtitle">Choose how apps are arranged</string>

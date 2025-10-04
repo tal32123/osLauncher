@@ -61,6 +61,10 @@ data class LauncherSettings(
     val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
     val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
 
+    val searchLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val searchDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val searchIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
     // Sidebar (Alphabet Index) customization
     // How large the active letter scales (1.0 = no scale)
     val sidebarActiveScale: Float = 1.4f,

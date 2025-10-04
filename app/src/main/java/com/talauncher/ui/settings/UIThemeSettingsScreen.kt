@@ -79,7 +79,14 @@ fun UIThemeSettingsScreen(
     allAppsDisplayStyle: AppDisplayStyleOption,
     onUpdateAllAppsDisplayStyle: (AppDisplayStyleOption) -> Unit,
     allAppsIconColor: IconColorOption,
-    onUpdateAllAppsIconColor: (IconColorOption) -> Unit
+    onUpdateAllAppsIconColor: (IconColorOption) -> Unit,
+    // App Sections settings - Search
+    searchLayout: AppSectionLayoutOption,
+    onUpdateSearchLayout: (AppSectionLayoutOption) -> Unit,
+    searchDisplayStyle: AppDisplayStyleOption,
+    onUpdateSearchDisplayStyle: (AppDisplayStyleOption) -> Unit,
+    searchIconColor: IconColorOption,
+    onUpdateSearchIconColor: (IconColorOption) -> Unit
 ) {
     val sections = listOf(
         CollapsibleSection(
@@ -189,7 +196,7 @@ fun UIThemeSettingsScreen(
         },
         CollapsibleSection(
             id = "all_apps",
-            title = stringResource(R.string.settings_all_apps)
+            title = stringResource(R.string.settings_all_apps_list)
         ) {
             AppSectionContent(
                 layout = allAppsLayout,
@@ -198,6 +205,19 @@ fun UIThemeSettingsScreen(
                 onUpdateDisplayStyle = onUpdateAllAppsDisplayStyle,
                 iconColor = allAppsIconColor,
                 onUpdateIconColor = onUpdateAllAppsIconColor
+            )
+        },
+        CollapsibleSection(
+            id = "search",
+            title = stringResource(R.string.settings_search)
+        ) {
+            AppSectionContent(
+                layout = searchLayout,
+                onUpdateLayout = onUpdateSearchLayout,
+                displayStyle = searchDisplayStyle,
+                onUpdateDisplayStyle = onUpdateSearchDisplayStyle,
+                iconColor = searchIconColor,
+                onUpdateIconColor = onUpdateSearchIconColor
             )
         }
     )

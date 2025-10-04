@@ -222,6 +222,21 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         updateSettings(settings.copy(allAppsIconColor = color))
     }
 
+    suspend fun updateSearchLayout(layout: AppSectionLayoutOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(searchLayout = layout))
+    }
+
+    suspend fun updateSearchDisplayStyle(style: AppDisplayStyleOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(searchDisplayStyle = style))
+    }
+
+    suspend fun updateSearchIconColor(color: IconColorOption) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(searchIconColor = color))
+    }
+
     // Sidebar / Alphabet Index customization
     suspend fun updateSidebarActiveScale(scale: Float) {
         val settings = getSettingsSync()

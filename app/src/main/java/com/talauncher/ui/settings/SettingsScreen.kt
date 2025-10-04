@@ -178,7 +178,13 @@ fun SettingsScreen(
                 allAppsDisplayStyle = uiState.allAppsDisplayStyle,
                 onUpdateAllAppsDisplayStyle = viewModel::updateAllAppsDisplayStyle,
                 allAppsIconColor = uiState.allAppsIconColor,
-                onUpdateAllAppsIconColor = viewModel::updateAllAppsIconColor
+                onUpdateAllAppsIconColor = viewModel::updateAllAppsIconColor,
+                searchLayout = uiState.searchLayout,
+                onUpdateSearchLayout = viewModel::updateSearchLayout,
+                searchDisplayStyle = uiState.searchDisplayStyle,
+                onUpdateSearchDisplayStyle = viewModel::updateSearchDisplayStyle,
+                searchIconColor = uiState.searchIconColor,
+                onUpdateSearchIconColor = viewModel::updateSearchIconColor
             )
             2 -> DistractingAppsSettingsScreen(
                 uiState = uiState,
