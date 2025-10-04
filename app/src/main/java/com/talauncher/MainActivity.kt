@@ -52,6 +52,8 @@ import com.talauncher.utils.CommitInfoReader
 import com.talauncher.utils.IdlingResourceHelper
 import com.talauncher.ui.components.ErrorDialog
 import com.talauncher.receivers.PackageChangeReceiver
+import com.talauncher.data.repository.NewsRepository
+import com.talauncher.service.NewsService
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -367,6 +369,8 @@ fun LauncherNavigationPager(
                     val context = LocalContext.current
                     val applicationContext = context.applicationContext
                     val homeViewModel: HomeViewModel = viewModel {
+                        val db = LauncherDatabase.getDatabase(applicationContext)
+                        val newsRepository = NewsRepository(db.newsDao(), settingsRepository, NewsService())
                         HomeViewModel(
                             appRepository = appRepository,
                             searchInteractionRepository = searchInteractionRepository,
@@ -376,7 +380,8 @@ fun LauncherNavigationPager(
                             initialContactHelper = contactHelper,
                             permissionsHelper = permissionsHelper,
                             usageStatsHelper = usageStatsHelper,
-                            errorHandler = errorHandler
+                            errorHandler = errorHandler,
+                            newsRepository = newsRepository
                         )
                     }
                     LaunchedEffect(homeViewModel) {
@@ -487,4 +492,3 @@ private fun StartupErrorScreen(error: Throwable) {
 }
 
 private const val TAG = "MainActivity"
-

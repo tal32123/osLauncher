@@ -13,6 +13,8 @@ import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.data.model.AppSectionLayoutOption
 import com.talauncher.data.model.AppDisplayStyleOption
 import com.talauncher.data.model.IconColorOption
+import com.talauncher.data.model.NewsCategory
+import com.talauncher.data.model.NewsRefreshInterval
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.utils.PermissionsHelper
@@ -101,11 +103,18 @@ class SettingsViewModel(
                     allAppsDisplayStyle = settings?.allAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
                     allAppsIconColor = settings?.allAppsIconColor ?: IconColorOption.ORIGINAL,
 
+                    searchLayout = settings?.searchLayout ?: AppSectionLayoutOption.LIST,
+                    searchDisplayStyle = settings?.searchDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                    searchIconColor = settings?.searchIconColor ?: IconColorOption.ORIGINAL,
+
                     // Sidebar settings
                     sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
                     sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
                     sidebarWaveSpread = settings?.sidebarWaveSpread ?: 1.5f,
                     fastScrollerActiveItemScale = settings?.fastScrollerActiveItemScale ?: 1.06f,
+                    // News settings
+                    newsRefreshInterval = settings?.newsRefreshInterval ?: NewsRefreshInterval.DAILY,
+                    newsSelectedCategories = parseNewsCategories(settings?.newsCategoriesCsv),
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -316,6 +325,21 @@ class SettingsViewModel(
         }
     }
 
+    // News settings
+    fun updateNewsRefreshInterval(interval: NewsRefreshInterval) {
+        viewModelScope.launch {
+            settingsRepository.updateNewsRefreshInterval(interval)
+        }
+    }
+
+    fun toggleNewsCategory(category: NewsCategory) {
+        val current = _uiState.value.newsSelectedCategories.toMutableSet()
+        if (current.contains(category)) current.remove(category) else current.add(category)
+        viewModelScope.launch {
+            settingsRepository.updateNewsCategories(current)
+        }
+    }
+
     fun updateWeatherDisplay(display: WeatherDisplayOption) {
         viewModelScope.launch {
             settingsRepository.updateWeatherDisplay(display)
@@ -385,6 +409,24 @@ class SettingsViewModel(
     fun updateAllAppsIconColor(color: IconColorOption) {
         viewModelScope.launch {
             settingsRepository.updateAllAppsIconColor(color)
+        }
+    }
+
+    fun updateSearchLayout(layout: AppSectionLayoutOption) {
+        viewModelScope.launch {
+            settingsRepository.updateSearchLayout(layout)
+        }
+    }
+
+    fun updateSearchDisplayStyle(style: AppDisplayStyleOption) {
+        viewModelScope.launch {
+            settingsRepository.updateSearchDisplayStyle(style)
+        }
+    }
+
+    fun updateSearchIconColor(color: IconColorOption) {
+        viewModelScope.launch {
+            settingsRepository.updateSearchIconColor(color)
         }
     }
 
@@ -461,9 +503,23 @@ data class SettingsUiState(
     val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
     val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
 
+    val searchLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val searchDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val searchIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
     // Sidebar customization
     val sidebarActiveScale: Float = 1.4f,
     val sidebarPopOutDp: Int = 16,
     val sidebarWaveSpread: Float = 1.5f,
-    val fastScrollerActiveItemScale: Float = 1.06f
+    val fastScrollerActiveItemScale: Float = 1.06f,
+    // News
+    val newsRefreshInterval: NewsRefreshInterval = NewsRefreshInterval.DAILY,
+    val newsSelectedCategories: Set<NewsCategory> = emptySet()
 )
+
+private fun parseNewsCategories(csv: String?): Set<NewsCategory> {
+    if (csv.isNullOrBlank()) return emptySet()
+    return csv.split(',')
+        .mapNotNull { name -> runCatching { NewsCategory.valueOf(name) }.getOrNull() }
+        .toSet()
+}
