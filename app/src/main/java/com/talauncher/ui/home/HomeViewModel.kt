@@ -50,6 +50,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
+import java.text.Collator
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -240,9 +241,16 @@ class HomeViewModel(
                                 )
                                 emptyList()
                             }
+                            // Ensure case-insensitive, locale-aware sorting for the All Apps list (list + grid)
+                            val locale = Locale.getDefault()
+                            val collator = Collator.getInstance(locale).apply { strength = Collator.PRIMARY }
+                            val allAppsSorted = allApps.sortedWith { a, b ->
+                                collator.compare(a.appName, b.appName)
+                            }
+
                             // Use BuildAlphabetIndexUseCase for alphabet index
                             val alphabetIndex = try {
-                                buildAlphabetIndexUseCase.execute(allApps, recentApps)
+                                buildAlphabetIndexUseCase.execute(allAppsSorted, recentApps)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error building alphabet index", e)
                                 errorHandler?.showError(
@@ -261,7 +269,7 @@ class HomeViewModel(
                             }
                             // Build enhanced SectionIndex for per-app fast scrolling
                             val sectionIndex = try {
-                                buildAlphabetIndexUseCase.buildSectionIndex(allApps, recentApps, pinnedApps)
+                                buildAlphabetIndexUseCase.buildSectionIndex(allAppsSorted, recentApps, pinnedApps)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error building section index", e)
                                 errorHandler?.showError(
@@ -275,7 +283,7 @@ class HomeViewModel(
                     withContext(Dispatchers.Main.immediate) {
                         val wasExpanded = _uiState.value.isOtherAppsExpanded
                         _uiState.value = _uiState.value.copy(
-                            allVisibleApps = allApps,
+                            allVisibleApps = allAppsSorted,
                             hiddenApps = hiddenApps,
                             showTime = settings?.showTimeOnHomeScreen ?: true,
                             showDate = settings?.showDateOnHomeScreen ?: true,
