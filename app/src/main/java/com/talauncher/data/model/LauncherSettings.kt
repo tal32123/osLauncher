@@ -78,5 +78,6 @@ data class LauncherSettings(
     // News settings
     val newsRefreshInterval: NewsRefreshInterval = NewsRefreshInterval.DAILY,
     val newsCategoriesCsv: String? = null, // Comma-separated NewsCategory names
-    val newsLastFetchedAt: Long? = null
+    val newsLastFetchedAt: Long? = null,
+    val showNewsWidget: Boolean = true // Whether to show news widget on home screen
 )

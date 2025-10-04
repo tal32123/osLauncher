@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -45,6 +46,7 @@ private enum class OnboardingStepId {
     USAGE_STATS,
     CONTACTS,
     LOCATION,
+    NOTIFICATION_LISTENER,
     APPEARANCE
 }
 
@@ -77,6 +79,7 @@ fun OnboardingScreen(
             add(OnboardingStepId.USAGE_STATS)
             add(OnboardingStepId.CONTACTS)
             add(OnboardingStepId.LOCATION)
+            add(OnboardingStepId.NOTIFICATION_LISTENER)
             add(OnboardingStepId.APPEARANCE)
         }
     }
@@ -179,6 +182,20 @@ fun OnboardingScreen(
                 onNext = { viewModel.goToNextStep() },
                 onBack = { viewModel.goToPreviousStep() },
                 canProceed = permissionState.hasLocation,
+                allowSkip = true,
+                onSkip = { viewModel.goToNextStep() }
+            )
+
+            OnboardingStepId.NOTIFICATION_LISTENER -> PermissionStep(
+                icon = Icons.Default.Notifications,
+                title = "Music Widget Access",
+                description = "Allow notification listener access to display music playback controls when you're listening to music from apps like Spotify, YouTube Music, or other media players.",
+                isGranted = permissionState.hasNotificationListener,
+                primaryButtonText = if (permissionState.hasNotificationListener) stringResource(R.string.completed) else stringResource(R.string.onboarding_action_grant_permission),
+                onPrimary = { permissionsHelper.requestPermission(context as Activity, PermissionType.NOTIFICATION_LISTENER) },
+                onNext = { viewModel.goToNextStep() },
+                onBack = { viewModel.goToPreviousStep() },
+                canProceed = permissionState.hasNotificationListener,
                 allowSkip = true,
                 onSkip = { viewModel.goToNextStep() }
             )

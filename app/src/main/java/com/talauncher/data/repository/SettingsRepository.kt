@@ -275,4 +275,9 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val csv = categories.joinToString(",") { it.name }
         updateSettings(settings.copy(newsCategoriesCsv = csv))
     }
+
+    suspend fun updateShowNewsWidget(enabled: Boolean) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(showNewsWidget = enabled))
+    }
 }

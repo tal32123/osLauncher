@@ -32,8 +32,7 @@ fun SettingsScreen(
         stringResource(R.string.settings_tab_general),
         stringResource(R.string.settings_tab_ui_theme),
         stringResource(R.string.settings_tab_distracting_apps),
-        stringResource(R.string.settings_tab_usage_insights),
-        "News"
+        stringResource(R.string.settings_tab_usage_insights)
     )
     var editingApp by remember { mutableStateOf<com.talauncher.data.model.InstalledApp?>(null) }
     var editingTimeLimit by remember { mutableStateOf(uiState.defaultTimeLimitMinutes) }
@@ -110,6 +109,12 @@ fun SettingsScreen(
                 onUpdateWeatherDisplay = viewModel::updateWeatherDisplay,
                 weatherTemperatureUnit = uiState.weatherTemperatureUnit,
                 onUpdateWeatherTemperatureUnit = viewModel::updateWeatherTemperatureUnit,
+                showNewsWidget = uiState.showNewsWidget,
+                onToggleNewsWidget = viewModel::toggleNewsWidget,
+                newsRefreshInterval = uiState.newsRefreshInterval,
+                onUpdateNewsRefreshInterval = viewModel::updateNewsRefreshInterval,
+                newsSelectedCategories = uiState.newsSelectedCategories,
+                onToggleNewsCategory = viewModel::toggleNewsCategory,
                 permissionsHelper = viewModel.permissionsHelper,
                 buildCommitHash = uiState.buildCommitHash,
                 buildBranch = uiState.buildBranch,
@@ -205,12 +210,6 @@ fun SettingsScreen(
                     viewModel = insightsViewModel
                 )
             }
-            4 -> NewsSettingsScreen(
-                selectedCategories = uiState.newsSelectedCategories,
-                onToggleCategory = viewModel::toggleNewsCategory,
-                refreshInterval = uiState.newsRefreshInterval,
-                onUpdateRefreshInterval = viewModel::updateNewsRefreshInterval
-            )
         }
 
         editingApp?.let { app ->

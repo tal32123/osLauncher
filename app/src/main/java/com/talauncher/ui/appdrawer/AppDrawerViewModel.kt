@@ -162,7 +162,10 @@ class AppDrawerViewModel(
 
                     val updatedState = newState
                     val locale = updatedState.locale ?: Locale.getDefault()
-                    val collator = updatedState.collator ?: Collator.getInstance()
+                    // Ensure case-insensitive, locale-aware sorting for the apps screen
+                    val collator = (updatedState.collator ?: Collator.getInstance(locale)).apply {
+                        strength = Collator.PRIMARY
+                    }
                     val searchQuery = updatedState.searchQuery
                     buildSectionsAndIndex(
                         visibleApps,
@@ -528,13 +531,15 @@ class AppDrawerViewModel(
     }
 
     fun onLocaleChanged(locale: Locale, collator: Collator) {
-        _uiState.value = _uiState.value.copy(locale = locale, collator = collator)
+        // Normalize to case-insensitive collation for consistent A/a grouping
+        val normalized = Collator.getInstance(locale).apply { strength = Collator.PRIMARY }
+        _uiState.value = _uiState.value.copy(locale = locale, collator = normalized)
         buildSectionsAndIndex(
             _uiState.value.allApps,
             _uiState.value.recentApps,
             _uiState.value.searchQuery,
             locale,
-            collator
+            normalized
         )
     }
 

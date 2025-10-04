@@ -115,6 +115,7 @@ class SettingsViewModel(
                     // News settings
                     newsRefreshInterval = settings?.newsRefreshInterval ?: NewsRefreshInterval.DAILY,
                     newsSelectedCategories = parseNewsCategories(settings?.newsCategoriesCsv),
+                    showNewsWidget = settings?.showNewsWidget ?: true,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -340,6 +341,12 @@ class SettingsViewModel(
         }
     }
 
+    fun toggleNewsWidget() {
+        viewModelScope.launch {
+            settingsRepository.updateShowNewsWidget(!_uiState.value.showNewsWidget)
+        }
+    }
+
     fun updateWeatherDisplay(display: WeatherDisplayOption) {
         viewModelScope.launch {
             settingsRepository.updateWeatherDisplay(display)
@@ -514,7 +521,8 @@ data class SettingsUiState(
     val fastScrollerActiveItemScale: Float = 1.06f,
     // News
     val newsRefreshInterval: NewsRefreshInterval = NewsRefreshInterval.DAILY,
-    val newsSelectedCategories: Set<NewsCategory> = emptySet()
+    val newsSelectedCategories: Set<NewsCategory> = emptySet(),
+    val showNewsWidget: Boolean = true
 )
 
 private fun parseNewsCategories(csv: String?): Set<NewsCategory> {

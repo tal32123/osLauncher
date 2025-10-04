@@ -22,7 +22,8 @@ data class PermissionState(
     val hasNotifications: Boolean = false,
     val hasContacts: Boolean = false,
     val hasCallPhone: Boolean = false,
-    val hasLocation: Boolean = false
+    val hasLocation: Boolean = false,
+    val hasNotificationListener: Boolean = false
 ) {
     val allOnboardingPermissionsGranted: Boolean
         get() =
@@ -38,7 +39,8 @@ enum class PermissionType {
     CONTACTS,
     CALL_PHONE,
     DEFAULT_LAUNCHER,
-    LOCATION
+    LOCATION,
+    NOTIFICATION_LISTENER
 }
 
 open class PermissionsHelper(
@@ -58,7 +60,8 @@ open class PermissionsHelper(
             hasNotifications = hasNotificationPermission(),
             hasContacts = hasContactsPermission(),
             hasCallPhone = hasCallPhonePermission(),
-            hasLocation = hasLocationPermission()
+            hasLocation = hasLocationPermission(),
+            hasNotificationListener = hasNotificationListenerPermission()
         )
     }
 
@@ -70,6 +73,7 @@ open class PermissionsHelper(
             PermissionType.CALL_PHONE -> requestCallPhonePermission(activity)
             PermissionType.DEFAULT_LAUNCHER -> openDefaultLauncherSettings()
             PermissionType.LOCATION -> requestLocationPermission(activity)
+            PermissionType.NOTIFICATION_LISTENER -> openNotificationListenerSettings()
         }
     }
 
@@ -198,6 +202,21 @@ open class PermissionsHelper(
             arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
             LOCATION_PERMISSION_REQUEST_CODE
         )
+    }
+
+    fun hasNotificationListenerPermission(): Boolean {
+        val enabledListeners = Settings.Secure.getString(
+            context.contentResolver,
+            "enabled_notification_listeners"
+        )
+        return enabledListeners?.contains(context.packageName) == true
+    }
+
+    private fun openNotificationListenerSettings() {
+        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
     }
 
     companion object {
