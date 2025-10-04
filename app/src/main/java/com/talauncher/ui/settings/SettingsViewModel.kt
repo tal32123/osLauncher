@@ -88,6 +88,11 @@ class SettingsViewModel(
                     enableGlassmorphism = settings?.enableGlassmorphism ?: true,
                     uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                     enableAnimations = settings?.enableAnimations ?: true,
+                    // Widget background toggles
+                    showTimeBackground = settings?.showTimeBackground ?: false,
+                    showDateBackground = settings?.showDateBackground ?: false,
+                    showWeatherBackground = settings?.showWeatherBackground ?: false,
+                    showMusicBackground = settings?.showMusicBackground ?: false,
                     customWallpaperPath = settings?.customWallpaperPath,
 
                     // App section display settings
@@ -301,6 +306,35 @@ class SettingsViewModel(
         }
     }
 
+    // Widget background toggles
+    fun updateShowTimeBackground(enabled: Boolean) {
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showTimeBackground = enabled))
+        }
+    }
+
+    fun updateShowDateBackground(enabled: Boolean) {
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showDateBackground = enabled))
+        }
+    }
+
+    fun updateShowWeatherBackground(enabled: Boolean) {
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showWeatherBackground = enabled))
+        }
+    }
+
+    fun updateShowMusicBackground(enabled: Boolean) {
+        viewModelScope.launch {
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(showMusicBackground = enabled))
+        }
+    }
+
     // Sidebar settings
     fun updateSidebarActiveScale(scale: Float) {
         viewModelScope.launch {
@@ -496,6 +530,11 @@ data class SettingsUiState(
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
     val customWallpaperPath: String? = null,
+    // Widget background toggles
+    val showTimeBackground: Boolean = false,
+    val showDateBackground: Boolean = false,
+    val showWeatherBackground: Boolean = false,
+    val showMusicBackground: Boolean = false,
 
     // App section display settings
     val pinnedAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,

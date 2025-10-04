@@ -48,6 +48,12 @@ data class LauncherSettings(
     val enableAnimations: Boolean = true, // Enable smooth UI animations
     val cardElevation: Int = 2, // Card elevation in dp (0-8)
 
+    // Widget background toggles
+    val showTimeBackground: Boolean = false,
+    val showDateBackground: Boolean = false,
+    val showWeatherBackground: Boolean = false,
+    val showMusicBackground: Boolean = false,
+
     // App section display settings
     val pinnedAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
     val pinnedAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
