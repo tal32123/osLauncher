@@ -13,7 +13,7 @@ import com.talauncher.data.model.SearchInteractionEntity
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class],
-    version = 19,
+    version = 21,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -267,8 +267,27 @@ abstract class LauncherDatabase : RoomDatabase() {
 
         private val MIGRATION_18_19 = object : Migration(18, 19) {
             override fun migrate(database: SupportSQLiteDatabase) {
+                // From master: introduce pinned state on app_info
                 database.execSQL(
                     "ALTER TABLE app_info ADD COLUMN isPinned INTEGER NOT NULL DEFAULT 0"
+                )
+                // From feature: sidebar customization columns
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN sidebarActiveScale REAL NOT NULL DEFAULT 1.4"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN sidebarPopOutDp INTEGER NOT NULL DEFAULT 16"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN sidebarWaveSpread REAL NOT NULL DEFAULT 1.5"
+                )
+            }
+        }
+
+        private val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN fastScrollerActiveItemScale REAL NOT NULL DEFAULT 1.06"
                 )
             }
         }
@@ -297,7 +316,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_15_16,
                     MIGRATION_16_17,
                     MIGRATION_17_18,
-                    MIGRATION_18_19
+                    MIGRATION_18_19,
+                    MIGRATION_20_21
                 ).build()
                 INSTANCE = instance
                 instance

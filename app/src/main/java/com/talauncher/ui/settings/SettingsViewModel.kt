@@ -101,6 +101,11 @@ class SettingsViewModel(
                     allAppsDisplayStyle = settings?.allAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
                     allAppsIconColor = settings?.allAppsIconColor ?: IconColorOption.ORIGINAL,
 
+                    // Sidebar settings
+                    sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
+                    sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
+                    sidebarWaveSpread = settings?.sidebarWaveSpread ?: 1.5f,
+                    fastScrollerActiveItemScale = settings?.fastScrollerActiveItemScale ?: 1.06f,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -286,6 +291,31 @@ class SettingsViewModel(
         }
     }
 
+    // Sidebar settings
+    fun updateSidebarActiveScale(scale: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateSidebarActiveScale(scale)
+        }
+    }
+
+    fun updateSidebarPopOutDp(popOut: Int) {
+        viewModelScope.launch {
+            settingsRepository.updateSidebarPopOutDp(popOut)
+        }
+    }
+
+    fun updateSidebarWaveSpread(spread: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateSidebarWaveSpread(spread)
+        }
+    }
+
+    fun updateFastScrollerActiveItemScale(scale: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateFastScrollerActiveItemScale(scale)
+        }
+    }
+
     fun updateWeatherDisplay(display: WeatherDisplayOption) {
         viewModelScope.launch {
             settingsRepository.updateWeatherDisplay(display)
@@ -429,5 +459,11 @@ data class SettingsUiState(
 
     val allAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
     val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
-    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL
+    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    // Sidebar customization
+    val sidebarActiveScale: Float = 1.4f,
+    val sidebarPopOutDp: Int = 16,
+    val sidebarWaveSpread: Float = 1.5f,
+    val fastScrollerActiveItemScale: Float = 1.06f
 )

@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppIconStyleOption
 
+private const val GRID_TILE_ASPECT_RATIO = 0.85f
+
 /**
  * Grid item that shows only the app icon.
  */
@@ -23,11 +25,12 @@ fun AppGridItemIconOnly(
     app: AppInfo,
     iconStyle: AppIconStyleOption,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
-            .aspectRatio(1f)
+        modifier = modifier
+            .aspectRatio(GRID_TILE_ASPECT_RATIO)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -60,10 +63,12 @@ fun AppGridItemWithText(
     app: AppInfo,
     iconStyle: AppIconStyleOption,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
+            .aspectRatio(GRID_TILE_ASPECT_RATIO)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -73,8 +78,8 @@ fun AppGridItemWithText(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -91,7 +96,9 @@ fun AppGridItemWithText(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp)
             )
         }
     }
@@ -105,11 +112,12 @@ fun AppGridItemWithText(
 fun AppGridItemTextOnly(
     app: AppInfo,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .aspectRatio(GRID_TILE_ASPECT_RATIO)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -119,7 +127,7 @@ fun AppGridItemTextOnly(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(12.dp),
             contentAlignment = Alignment.Center
         ) {

@@ -171,7 +171,16 @@ fun SettingsScreen(
                 uiDensity = uiState.uiDensity,
                 onUpdateUiDensity = viewModel::updateUiDensity,
                 enableAnimations = uiState.enableAnimations,
-                onToggleAnimations = viewModel::updateAnimationsEnabled
+                onToggleAnimations = viewModel::updateAnimationsEnabled,
+                // Sidebar settings
+                sidebarActiveScale = uiState.sidebarActiveScale,
+                onUpdateSidebarActiveScale = viewModel::updateSidebarActiveScale,
+                sidebarPopOutDp = uiState.sidebarPopOutDp,
+                onUpdateSidebarPopOutDp = viewModel::updateSidebarPopOutDp,
+                sidebarWaveSpread = uiState.sidebarWaveSpread,
+                onUpdateSidebarWaveSpread = viewModel::updateSidebarWaveSpread,
+                fastScrollerActiveItemScale = uiState.fastScrollerActiveItemScale,
+                onUpdateFastScrollerActiveItemScale = viewModel::updateFastScrollerActiveItemScale
             )
             3 -> DistractingAppsSettingsScreen(
                 uiState = uiState,

@@ -71,6 +71,7 @@ import com.talauncher.utils.PermissionsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
+import com.talauncher.ui.home.ScrollIndexMapper
 
 private fun UiDensityOption.toUiDensity(): UiDensity = when (this) {
     UiDensityOption.COMPACT -> UiDensity.Compact
@@ -264,6 +265,7 @@ fun HomeScreen(
                 // Apps Section with Recent Apps and Alphabet Index
                 val listState = rememberLazyListState()
                 val scope = rememberCoroutineScope()
+                var activeGlobalIndex by remember { mutableStateOf<Int?>(null) }
 
                 // Handle alphabet index scrolling
                 LaunchedEffect(uiState.alphabetIndexActiveKey) {
@@ -306,17 +308,19 @@ fun HomeScreen(
                     ) {
                         // Pinned Apps Section
                         if (uiState.pinnedApps.isNotEmpty()) {
-                            item {
-                                Text(
-                                    text = "📌 Pinned",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(
-                                        start = PrimerSpacing.md,
-                                        top = PrimerSpacing.md,
-                                        bottom = PrimerSpacing.sm
+                            if (uiState.pinnedAppsLayout == com.talauncher.data.model.AppSectionLayoutOption.LIST) {
+                                item {
+                                    Text(
+                                        text = "📌 Pinned",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(
+                                            start = PrimerSpacing.md,
+                                            top = PrimerSpacing.md,
+                                            bottom = PrimerSpacing.sm
+                                        )
                                     )
-                                )
+                                }
                             }
 
                             appSectionItems(
@@ -331,27 +335,32 @@ fun HomeScreen(
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.showAppActionDialog(app)
                                 },
-                                keyPrefix = "pinned"
+                                keyPrefix = "pinned",
+                                activeGlobalIndex = activeGlobalIndex,
+                                sectionGlobalStartIndex = 0,
+                                activeHighlightScale = uiState.fastScrollerActiveItemScale
                             )
 
-                            item {
-                                Spacer(modifier = Modifier.height(PrimerSpacing.lg))
+                            if (uiState.pinnedAppsLayout == com.talauncher.data.model.AppSectionLayoutOption.LIST) {
+                                item { Spacer(modifier = Modifier.height(PrimerSpacing.lg)) }
                             }
                         }
 
                         // Recently Used Apps Section
                         if (uiState.recentApps.isNotEmpty()) {
-                            item {
-                                Text(
-                                    text = stringResource(R.string.home_recent_apps_section),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(
-                                        start = PrimerSpacing.md,
-                                        top = PrimerSpacing.md,
-                                        bottom = PrimerSpacing.sm
+                            if (uiState.recentAppsLayout == com.talauncher.data.model.AppSectionLayoutOption.LIST) {
+                                item {
+                                    Text(
+                                        text = stringResource(R.string.home_recent_apps_section),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(
+                                            start = PrimerSpacing.md,
+                                            top = PrimerSpacing.md,
+                                            bottom = PrimerSpacing.sm
+                                        )
                                     )
-                                )
+                                }
                             }
 
                             appSectionItems(
@@ -366,20 +375,24 @@ fun HomeScreen(
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     viewModel.showAppActionDialog(app)
                                 },
-                                keyPrefix = "recent"
+                                keyPrefix = "recent",
+                                activeGlobalIndex = activeGlobalIndex,
+                                sectionGlobalStartIndex = uiState.pinnedApps.size,
+                                activeHighlightScale = uiState.fastScrollerActiveItemScale
                             )
-
-                            item {
-                                Spacer(modifier = Modifier.height(PrimerSpacing.lg))
-                                Text(
-                                    text = stringResource(R.string.home_all_apps_section),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(
-                                        start = PrimerSpacing.md,
-                                        bottom = PrimerSpacing.sm
+                            if (uiState.allAppsLayout == com.talauncher.data.model.AppSectionLayoutOption.LIST) {
+                                item {
+                                    Spacer(modifier = Modifier.height(PrimerSpacing.lg))
+                                    Text(
+                                        text = stringResource(R.string.home_all_apps_section),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(
+                                            start = PrimerSpacing.md,
+                                            bottom = PrimerSpacing.sm
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
 
@@ -396,7 +409,10 @@ fun HomeScreen(
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.showAppActionDialog(app)
                             },
-                            keyPrefix = "all"
+                            keyPrefix = "all",
+                            activeGlobalIndex = activeGlobalIndex,
+                            sectionGlobalStartIndex = uiState.pinnedApps.size + uiState.recentApps.size,
+                            activeHighlightScale = uiState.fastScrollerActiveItemScale
                         )
 
                         if (uiState.hiddenApps.isNotEmpty()) {
@@ -438,14 +454,33 @@ fun HomeScreen(
                             onScrollToIndex = { globalIndex ->
                                 scope.launch {
                                     try {
-                                        // globalIndex already accounts for recent apps section
-                                        // Instant scroll for smooth per-app targeting
-                                        listState.scrollToItem(globalIndex)
+                                        val snapGlobal = ScrollIndexMapper.snapGlobalIndexToRowStart(
+                                            globalIndex = globalIndex,
+                                            pinnedCount = uiState.pinnedApps.size,
+                                            recentCount = uiState.recentApps.size,
+                                            pinnedLayout = uiState.pinnedAppsLayout,
+                                            recentLayout = uiState.recentAppsLayout,
+                                            allLayout = uiState.allAppsLayout
+                                        )
+                                        val adapterIndex = ScrollIndexMapper.globalToAdapterIndex(
+                                            globalIndex = snapGlobal,
+                                            pinnedCount = uiState.pinnedApps.size,
+                                            recentCount = uiState.recentApps.size,
+                                            allCount = uiState.allVisibleApps.size,
+                                            pinnedLayout = uiState.pinnedAppsLayout,
+                                            recentLayout = uiState.recentAppsLayout,
+                                            allLayout = uiState.allAppsLayout
+                                        )
+                                        listState.scrollToItem(adapterIndex)
                                     } catch (e: Exception) {
                                         Log.e("HomeScreen", "Error scrolling to index $globalIndex", e)
                                     }
                                 }
-                            }
+                            },
+                            onActiveGlobalIndexChanged = { idx -> activeGlobalIndex = idx },
+                            activeScale = uiState.sidebarActiveScale,
+                            popOutDp = uiState.sidebarPopOutDp.toFloat(),
+                            waveSpread = uiState.sidebarWaveSpread
                         )
                     }
 
@@ -463,7 +498,10 @@ fun HomeScreen(
                             },
                             onScrubbingChanged = { isScrubbing ->
                                 viewModel.onAlphabetScrubbingChanged(isScrubbing)
-                            }
+                            },
+                            activeScale = uiState.sidebarActiveScale,
+                            popOutDp = uiState.sidebarPopOutDp.toFloat(),
+                            waveSpread = uiState.sidebarWaveSpread
                         )
                     }
                     */

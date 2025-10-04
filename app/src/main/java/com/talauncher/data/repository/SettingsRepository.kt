@@ -221,4 +221,29 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val settings = getSettingsSync()
         updateSettings(settings.copy(allAppsIconColor = color))
     }
+
+    // Sidebar / Alphabet Index customization
+    suspend fun updateSidebarActiveScale(scale: Float) {
+        val settings = getSettingsSync()
+        val clamped = scale.coerceIn(1.0f, 3.0f)
+        updateSettings(settings.copy(sidebarActiveScale = clamped))
+    }
+
+    suspend fun updateSidebarPopOutDp(popOut: Int) {
+        val settings = getSettingsSync()
+        val clamped = popOut.coerceIn(0, 64)
+        updateSettings(settings.copy(sidebarPopOutDp = clamped))
+    }
+
+    suspend fun updateSidebarWaveSpread(spread: Float) {
+        val settings = getSettingsSync()
+        val clamped = spread.coerceIn(0.0f, 5.0f)
+        updateSettings(settings.copy(sidebarWaveSpread = clamped))
+    }
+
+    suspend fun updateFastScrollerActiveItemScale(scale: Float) {
+        val settings = getSettingsSync()
+        val clamped = scale.coerceIn(1.0f, 1.2f)
+        updateSettings(settings.copy(fastScrollerActiveItemScale = clamped))
+    }
 }
