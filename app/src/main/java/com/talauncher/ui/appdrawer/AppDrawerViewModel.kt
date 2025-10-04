@@ -148,6 +148,14 @@ class AppDrawerViewModel(
                 val combinedApps = visibleApps + hiddenApps
 
                 withContext(Dispatchers.Main.immediate) {
+                    // Resolve locale and normalized, case-insensitive collator
+                    val resolvedLocale = _uiState.value.locale ?: Locale.getDefault()
+                    val normalizedCollator = (_uiState.value.collator
+                        ?: Collator.getInstance(resolvedLocale)).apply {
+                        strength = Collator.PRIMARY
+                    }
+
+                    // Persist normalized collator and locale so subsequent rebuilds reuse them
                     val newState = _uiState.value.copy(
                         allApps = combinedApps,
                         hiddenApps = hiddenApps,
@@ -156,23 +164,19 @@ class AppDrawerViewModel(
                         showPhoneAction = settings?.showPhoneAction ?: true,
                         showMessageAction = settings?.showMessageAction ?: true,
                         showWhatsAppAction = (settings?.showWhatsAppAction ?: true) && isWhatsAppInstalled,
-                        uiSettings = uiSettings
+                        uiSettings = uiSettings,
+                        locale = resolvedLocale,
+                        collator = normalizedCollator
                     )
                     _uiState.value = newState
 
-                    val updatedState = newState
-                    val locale = updatedState.locale ?: Locale.getDefault()
-                    // Ensure case-insensitive, locale-aware sorting for the apps screen
-                    val collator = (updatedState.collator ?: Collator.getInstance(locale)).apply {
-                        strength = Collator.PRIMARY
-                    }
-                    val searchQuery = updatedState.searchQuery
+                    val searchQuery = newState.searchQuery
                     buildSectionsAndIndex(
                         visibleApps,
                         recentApps,
                         searchQuery,
-                        locale,
-                        collator
+                        resolvedLocale,
+                        normalizedCollator
                     )
                 }
             }.collect { }
@@ -455,7 +459,8 @@ class AppDrawerViewModel(
             val apps = _uiState.value.allApps
             val recentApps = _uiState.value.recentApps
             val locale = _uiState.value.locale ?: Locale.getDefault()
-            val collator = _uiState.value.collator ?: Collator.getInstance()
+            val collator = _uiState.value.collator
+                ?: Collator.getInstance(locale).apply { strength = Collator.PRIMARY }
 
             buildSectionsAndIndexAsync(apps, recentApps, query, locale, collator)
         }
