@@ -9,11 +9,14 @@ import androidx.compose.ui.unit.dp
 import com.talauncher.R
 import com.talauncher.data.model.WeatherDisplayOption
 import com.talauncher.data.model.WeatherTemperatureUnit
+import com.talauncher.data.model.NewsCategory
+import com.talauncher.data.model.NewsRefreshInterval
 import com.talauncher.ui.components.CollapsibleSection
 import com.talauncher.ui.components.CollapsibleSectionContainer
 import com.talauncher.ui.components.SettingItem
 import com.talauncher.ui.components.SettingsLazyColumn
 import com.talauncher.ui.components.SliderSetting
+import com.talauncher.ui.components.CheckboxItem
 import com.talauncher.utils.PermissionsHelper
 import kotlin.math.roundToInt
 
@@ -25,6 +28,12 @@ fun GeneralSettingsScreen(
     onUpdateWeatherDisplay: (WeatherDisplayOption) -> Unit,
     weatherTemperatureUnit: WeatherTemperatureUnit,
     onUpdateWeatherTemperatureUnit: (WeatherTemperatureUnit) -> Unit,
+    showNewsWidget: Boolean,
+    onToggleNewsWidget: () -> Unit,
+    newsRefreshInterval: NewsRefreshInterval,
+    onUpdateNewsRefreshInterval: (NewsRefreshInterval) -> Unit,
+    newsSelectedCategories: Set<NewsCategory>,
+    onToggleNewsCategory: (NewsCategory) -> Unit,
     permissionsHelper: PermissionsHelper,
     buildCommitHash: String?,
     buildBranch: String?,
@@ -53,6 +62,21 @@ fun GeneralSettingsScreen(
                     weatherTemperatureUnit = weatherTemperatureUnit,
                     onUpdateWeatherTemperatureUnit = onUpdateWeatherTemperatureUnit,
                     permissionsHelper = permissionsHelper
+                )
+            }
+        )
+        add(
+            CollapsibleSection(
+                id = "news",
+                title = "News"
+            ) {
+                NewsContent(
+                    showNewsWidget = showNewsWidget,
+                    onToggleNewsWidget = onToggleNewsWidget,
+                    refreshInterval = newsRefreshInterval,
+                    onUpdateRefreshInterval = onUpdateNewsRefreshInterval,
+                    selectedCategories = newsSelectedCategories,
+                    onToggleCategory = onToggleNewsCategory
                 )
             }
         )
@@ -160,6 +184,75 @@ private fun WeatherContent(
                 onClick = { onUpdateWeatherTemperatureUnit(option) },
                 label = { Text("°${option.symbol}") },
                 modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun NewsContent(
+    showNewsWidget: Boolean,
+    onToggleNewsWidget: () -> Unit,
+    refreshInterval: NewsRefreshInterval,
+    onUpdateRefreshInterval: (NewsRefreshInterval) -> Unit,
+    selectedCategories: Set<NewsCategory>,
+    onToggleCategory: (NewsCategory) -> Unit
+) {
+    SettingItem(
+        title = "Show News Widget",
+        subtitle = "Display news articles on the home screen when music is not playing",
+        checked = showNewsWidget,
+        onCheckedChange = { onToggleNewsWidget() }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = "Refresh Frequency",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        FilterChip(
+            selected = refreshInterval == NewsRefreshInterval.DAILY,
+            onClick = { onUpdateRefreshInterval(NewsRefreshInterval.DAILY) },
+            label = { Text("Daily") }
+        )
+        FilterChip(
+            selected = refreshInterval == NewsRefreshInterval.HOURLY,
+            onClick = { onUpdateRefreshInterval(NewsRefreshInterval.HOURLY) },
+            label = { Text("Hourly") }
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Text(
+        text = "Categories",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        NewsCategory.entries.forEach { category ->
+            CheckboxItem(
+                label = category.label,
+                checked = selectedCategories.contains(category),
+                onCheckedChange = { onToggleCategory(category) }
+            )
+        }
+        if (selectedCategories.isEmpty()) {
+            Text(
+                text = "Select at least one category to enable news.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
     }

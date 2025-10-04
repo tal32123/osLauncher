@@ -167,7 +167,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
 
-                        // Weather display next to time; date shows under weather
+                        // Weather display next to time; date shows under weather or time
                         if (uiState.weatherDisplay != WeatherDisplayOption.OFF && uiState.weatherData != null) {
                             Spacer(modifier = Modifier.width(12.dp))
                             val shouldShowTemperature = uiState.weatherDisplay != WeatherDisplayOption.DAILY ||
@@ -193,10 +193,32 @@ fun HomeScreen(
                         }
                     }
                 }
+
+                // Show date when weather is off
+                if (uiState.showDate && (uiState.weatherDisplay == WeatherDisplayOption.OFF || uiState.weatherData == null)) {
+                    Spacer(modifier = Modifier.height(PrimerSpacing.xs))
+                    Text(
+                        text = uiState.currentDate,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
 
-            // News carousel below the time/date area
-            if (uiState.newsArticles.isNotEmpty()) {
+            // Music widget or News carousel below the time/date area
+            // Show music widget when music is playing, otherwise show news if enabled
+            if (uiState.musicPlaybackState.hasActivePlayback) {
+                Spacer(modifier = Modifier.height(PrimerSpacing.sm))
+                com.talauncher.ui.components.MusicWidget(
+                    playbackState = uiState.musicPlaybackState,
+                    onPlayPause = viewModel::onPlayPause,
+                    onPrevious = viewModel::onPreviousTrack,
+                    onNext = viewModel::onNextTrack,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            } else if (uiState.showNewsWidget && uiState.newsArticles.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(PrimerSpacing.sm))
                 com.talauncher.ui.components.NewsCarousel(
                     articles = uiState.newsArticles,

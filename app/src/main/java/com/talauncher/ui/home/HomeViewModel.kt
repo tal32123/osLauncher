@@ -27,6 +27,7 @@ import com.talauncher.data.repository.NewsRepository
 import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.service.WeatherService
+import com.talauncher.service.MusicPlaybackMonitor
 import com.talauncher.utils.ContactHelper
 import com.talauncher.utils.ContactInfo
 import com.talauncher.utils.ErrorHandler
@@ -102,7 +103,8 @@ class HomeViewModel(
     private val searchAppsUseCase: SearchAppsUseCase = SearchAppsUseCase(),
     private val buildAlphabetIndexUseCase: BuildAlphabetIndexUseCase = BuildAlphabetIndexUseCase(),
     private val getRecentAppsUseCase: GetRecentAppsUseCase = GetRecentAppsUseCase(usageStatsHelper),
-    private val newsRepository: NewsRepository? = null
+    private val newsRepository: NewsRepository? = null,
+    private val musicPlaybackMonitor: MusicPlaybackMonitor = MusicPlaybackMonitor(appContext)
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -161,11 +163,21 @@ class HomeViewModel(
     init {
         observeData()
         observeNews()
+        observeMusicPlayback()
         updateTime()
         setupDebouncedContactSearch()
         registerTimeReceiver()
+        musicPlaybackMonitor.startMonitoring()
         // Trigger initial refresh respecting settings
         viewModelScope.launch { runCatching { newsRepository?.refreshIfNeeded() } }
+    }
+
+    private fun observeMusicPlayback() {
+        viewModelScope.launch {
+            musicPlaybackMonitor.playbackState.collect { playbackState ->
+                _uiState.value = _uiState.value.copy(musicPlaybackState = playbackState)
+            }
+        }
     }
 
     private fun observeNews() {
@@ -307,6 +319,9 @@ class HomeViewModel(
                             searchLayout = settings?.searchLayout ?: AppSectionLayoutOption.LIST,
                             searchDisplayStyle = settings?.searchDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
                             searchIconColor = settings?.searchIconColor ?: IconColorOption.ORIGINAL,
+
+                            // News widget setting
+                            showNewsWidget = settings?.showNewsWidget ?: true,
 
                             // Sidebar customization from settings
                             sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
@@ -890,11 +905,24 @@ class HomeViewModel(
         }
     }
 
+    fun onPlayPause() {
+        musicPlaybackMonitor.sendPlayPauseCommand()
+    }
+
+    fun onPreviousTrack() {
+        musicPlaybackMonitor.sendPreviousCommand()
+    }
+
+    fun onNextTrack() {
+        musicPlaybackMonitor.sendNextCommand()
+    }
+
     override fun onCleared() {
         super.onCleared()
         unregisterTimeReceiver()
         weatherUpdateJob?.cancel()
         contactSearchJob?.cancel()
+        musicPlaybackMonitor.stopMonitoring()
     }
 
     fun onAlphabetIndexFocused(entry: AlphabetIndexEntry, fraction: Float) {
@@ -1176,5 +1204,7 @@ data class HomeUiState(
     val searchDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
     val searchIconColor: IconColorOption = IconColorOption.ORIGINAL,
 
-    val newsArticles: List<com.talauncher.data.model.NewsArticle> = emptyList()
+    val newsArticles: List<com.talauncher.data.model.NewsArticle> = emptyList(),
+    val showNewsWidget: Boolean = true,
+    val musicPlaybackState: com.talauncher.data.model.MusicPlaybackState = com.talauncher.data.model.MusicPlaybackState.EMPTY
 )
