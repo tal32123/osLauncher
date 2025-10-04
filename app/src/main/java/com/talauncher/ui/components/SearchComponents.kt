@@ -37,11 +37,17 @@ fun UnifiedSearchResults(
     onGoogleSearch: (String) -> Unit,
     showContactsPermissionMissing: Boolean,
     onGrantContactsPermission: () -> Unit,
+    searchLayout: com.talauncher.data.model.AppSectionLayoutOption = com.talauncher.data.model.AppSectionLayoutOption.LIST,
+    searchDisplayStyle: com.talauncher.data.model.AppDisplayStyleOption = com.talauncher.data.model.AppDisplayStyleOption.ICON_AND_TEXT,
+    searchIconColor: com.talauncher.data.model.IconColorOption = com.talauncher.data.model.IconColorOption.ORIGINAL,
     uiSettings: UiSettings = UiSettings(),
     modifier: Modifier = Modifier
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
+
+    val isGridMode = searchLayout == com.talauncher.data.model.AppSectionLayoutOption.GRID_3 ||
+                     searchLayout == com.talauncher.data.model.AppSectionLayoutOption.GRID_4
 
     LazyColumn(
         modifier = modifier,
@@ -59,56 +65,132 @@ fun UnifiedSearchResults(
             )
         }
 
-        // Show unified search results (apps and contacts ordered by relevance)
+        // Show unified results (apps and contacts integrated by ranking)
         if (searchResults.isNotEmpty()) {
-            items(searchResults, key = {
-                when (it) {
-                    is SearchItem.App -> "app_${it.appInfo.packageName}"
-                    is SearchItem.Contact -> "contact_${it.contactInfo.id}"
-                }
-            }) { searchItem ->
-                when (searchItem) {
-                    is SearchItem.App -> {
-                        ModernAppItem(
-                            appName = searchItem.appInfo.appName,
-                            packageName = searchItem.appInfo.packageName,
-                            isHidden = searchItem.appInfo.isHidden,
-                            onClick = {
-                                keyboardController?.hide()
-                                onAppClick(searchItem.appInfo.packageName)
-                            },
-                            onLongClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onAppLongClick(searchItem)
-                            },
-                            enableGlassmorphism = uiSettings.enableGlassmorphism,
-                            uiDensity = uiSettings.getUiDensity(),
-                            appIconStyle = uiSettings.appIconStyle
-                        )
+            if (isGridMode) {
+                // Grid mode: chunk unified results and render in grid rows
+                val columns = searchLayout.columns
+                val chunkedResults = searchResults.chunked(columns)
+
+                items(chunkedResults.size, key = { rowIndex -> "search_row_$rowIndex" }) { rowIndex ->
+                    val rowItems = chunkedResults[rowIndex]
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowItems.forEach { searchItem ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                when (searchItem) {
+                                    is SearchItem.App -> {
+                                        AppGridItemWithText(
+                                            app = searchItem.appInfo,
+                                            iconStyle = when {
+                                                searchDisplayStyle == com.talauncher.data.model.AppDisplayStyleOption.TEXT_ONLY -> com.talauncher.data.model.AppIconStyleOption.HIDDEN
+                                                searchIconColor == com.talauncher.data.model.IconColorOption.MONOCHROME -> com.talauncher.data.model.AppIconStyleOption.BLACK_AND_WHITE
+                                                else -> com.talauncher.data.model.AppIconStyleOption.ORIGINAL
+                                            },
+                                            onClick = {
+                                                keyboardController?.hide()
+                                                onAppClick(searchItem.appInfo.packageName)
+                                            },
+                                            onLongClick = {
+                                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                onAppLongClick(searchItem)
+                                            }
+                                        )
+                                    }
+                                    is SearchItem.Contact -> {
+                                        ContactGridItem(
+                                            contact = searchItem.contactInfo,
+                                            onCall = {
+                                                keyboardController?.hide()
+                                                onContactCall(searchItem)
+                                            },
+                                            onMessage = {
+                                                keyboardController?.hide()
+                                                onContactMessage(searchItem)
+                                            },
+                                            onWhatsApp = {
+                                                keyboardController?.hide()
+                                                onContactWhatsApp(searchItem)
+                                            },
+                                            onOpenContact = {
+                                                keyboardController?.hide()
+                                                onContactOpen(searchItem)
+                                            },
+                                            showPhoneAction = showPhoneAction,
+                                            showMessageAction = showMessageAction,
+                                            showWhatsAppAction = showWhatsAppAction
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Fill remaining cells with empty space
+                        repeat(columns - rowItems.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
                     }
-                    is SearchItem.Contact -> {
-                        ContactItem(
-                            contact = searchItem.contactInfo,
-                            onCall = {
-                                keyboardController?.hide()
-                                onContactCall(searchItem)
-                            },
-                            onMessage = {
-                                keyboardController?.hide()
-                                onContactMessage(searchItem)
-                            },
-                            onWhatsApp = {
-                                keyboardController?.hide()
-                                onContactWhatsApp(searchItem)
-                            },
-                            onOpenContact = {
-                                keyboardController?.hide()
-                                onContactOpen(searchItem)
-                            },
-                            showPhoneAction = showPhoneAction,
-                            showMessageAction = showMessageAction,
-                            showWhatsAppAction = showWhatsAppAction
-                        )
+                }
+            } else {
+                // List mode: render items in order
+                items(searchResults, key = {
+                    when (it) {
+                        is SearchItem.App -> "app_${it.appInfo.packageName}"
+                        is SearchItem.Contact -> "contact_${it.contactInfo.id}"
+                    }
+                }) { searchItem ->
+                    when (searchItem) {
+                        is SearchItem.App -> {
+                            ModernAppItem(
+                                appName = searchItem.appInfo.appName,
+                                packageName = searchItem.appInfo.packageName,
+                                isHidden = searchItem.appInfo.isHidden,
+                                onClick = {
+                                    keyboardController?.hide()
+                                    onAppClick(searchItem.appInfo.packageName)
+                                },
+                                onLongClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onAppLongClick(searchItem)
+                                },
+                                enableGlassmorphism = uiSettings.enableGlassmorphism,
+                                uiDensity = uiSettings.getUiDensity(),
+                                appIconStyle = when {
+                                    searchDisplayStyle == com.talauncher.data.model.AppDisplayStyleOption.TEXT_ONLY -> com.talauncher.data.model.AppIconStyleOption.HIDDEN
+                                    searchIconColor == com.talauncher.data.model.IconColorOption.MONOCHROME -> com.talauncher.data.model.AppIconStyleOption.BLACK_AND_WHITE
+                                    else -> uiSettings.appIconStyle
+                                }
+                            )
+                        }
+                        is SearchItem.Contact -> {
+                            ContactItem(
+                                contact = searchItem.contactInfo,
+                                layout = searchLayout,
+                                onCall = {
+                                    keyboardController?.hide()
+                                    onContactCall(searchItem)
+                                },
+                                onMessage = {
+                                    keyboardController?.hide()
+                                    onContactMessage(searchItem)
+                                },
+                                onWhatsApp = {
+                                    keyboardController?.hide()
+                                    onContactWhatsApp(searchItem)
+                                },
+                                onOpenContact = {
+                                    keyboardController?.hide()
+                                    onContactOpen(searchItem)
+                                },
+                                showPhoneAction = showPhoneAction,
+                                showMessageAction = showMessageAction,
+                                showWhatsAppAction = showWhatsAppAction
+                            )
+                        }
                     }
                 }
             }

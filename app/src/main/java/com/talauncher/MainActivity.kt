@@ -246,6 +246,9 @@ class MainActivity : ComponentActivity() {
         if (::permissionsHelper.isInitialized) {
             permissionsHelper.handlePermissionResult(requestCode, permissions, grantResults)
         }
+        if (::errorHandler.isInitialized) {
+            errorHandler.onPermissionResult(requestCode, permissions, grantResults)
+        }
     }
 
 }
