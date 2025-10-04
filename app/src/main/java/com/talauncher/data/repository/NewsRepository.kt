@@ -51,15 +51,20 @@ class NewsRepository(
     }
 
     private suspend fun fetchAndStore(categories: Set<NewsCategory>) {
+        // Fetch new articles first - don't clear until we have successful data
         val articles = newsService.fetchArticles(categories)
-        withContext(Dispatchers.IO) {
-            newsDao.clearAll()
-            if (articles.isNotEmpty()) {
+
+        // Only update database if we got articles
+        if (articles.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
+                newsDao.clearAll()
                 newsDao.insertAll(articles)
             }
+            // Only update timestamp on successful fetch
+            val settings = settingsRepository.getSettingsSync()
+            settingsRepository.updateSettings(settings.copy(newsLastFetchedAt = System.currentTimeMillis()))
         }
-        val settings = settingsRepository.getSettingsSync()
-        settingsRepository.updateSettings(settings.copy(newsLastFetchedAt = System.currentTimeMillis()))
+        // If fetch failed or returned empty, keep existing articles and don't update timestamp
     }
 
     private fun parseCategories(settings: LauncherSettings): Set<NewsCategory> {
