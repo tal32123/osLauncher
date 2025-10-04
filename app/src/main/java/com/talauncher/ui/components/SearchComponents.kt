@@ -37,11 +37,18 @@ fun UnifiedSearchResults(
     onGoogleSearch: (String) -> Unit,
     showContactsPermissionMissing: Boolean,
     onGrantContactsPermission: () -> Unit,
+    searchLayout: com.talauncher.data.model.AppSectionLayoutOption = com.talauncher.data.model.AppSectionLayoutOption.LIST,
+    searchDisplayStyle: com.talauncher.data.model.AppDisplayStyleOption = com.talauncher.data.model.AppDisplayStyleOption.ICON_AND_TEXT,
+    searchIconColor: com.talauncher.data.model.IconColorOption = com.talauncher.data.model.IconColorOption.ORIGINAL,
     uiSettings: UiSettings = UiSettings(),
     modifier: Modifier = Modifier
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
+
+    // Separate apps and contacts from unified results
+    val appResults = searchResults.filterIsInstance<SearchItem.App>().map { it.appInfo }
+    val contactResults = searchResults.filterIsInstance<SearchItem.Contact>()
 
     LazyColumn(
         modifier = modifier,
@@ -59,58 +66,58 @@ fun UnifiedSearchResults(
             )
         }
 
-        // Show unified search results (apps and contacts ordered by relevance)
-        if (searchResults.isNotEmpty()) {
-            items(searchResults, key = {
-                when (it) {
-                    is SearchItem.App -> "app_${it.appInfo.packageName}"
-                    is SearchItem.Contact -> "contact_${it.contactInfo.id}"
-                }
-            }) { searchItem ->
-                when (searchItem) {
-                    is SearchItem.App -> {
-                        ModernAppItem(
-                            appName = searchItem.appInfo.appName,
-                            packageName = searchItem.appInfo.packageName,
-                            isHidden = searchItem.appInfo.isHidden,
-                            onClick = {
-                                keyboardController?.hide()
-                                onAppClick(searchItem.appInfo.packageName)
-                            },
-                            onLongClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onAppLongClick(searchItem)
-                            },
-                            enableGlassmorphism = uiSettings.enableGlassmorphism,
-                            uiDensity = uiSettings.getUiDensity(),
-                            appIconStyle = uiSettings.appIconStyle
-                        )
-                    }
-                    is SearchItem.Contact -> {
-                        ContactItem(
-                            contact = searchItem.contactInfo,
-                            onCall = {
-                                keyboardController?.hide()
-                                onContactCall(searchItem)
-                            },
-                            onMessage = {
-                                keyboardController?.hide()
-                                onContactMessage(searchItem)
-                            },
-                            onWhatsApp = {
-                                keyboardController?.hide()
-                                onContactWhatsApp(searchItem)
-                            },
-                            onOpenContact = {
-                                keyboardController?.hide()
-                                onContactOpen(searchItem)
-                            },
-                            showPhoneAction = showPhoneAction,
-                            showMessageAction = showMessageAction,
-                            showWhatsAppAction = showWhatsAppAction
-                        )
-                    }
-                }
+        // Show app results using appSectionItems
+        if (appResults.isNotEmpty()) {
+            appSectionItems(
+                apps = appResults,
+                layout = searchLayout,
+                displayStyle = searchDisplayStyle,
+                iconColor = searchIconColor,
+                enableGlassmorphism = uiSettings.enableGlassmorphism,
+                uiDensity = uiSettings.getUiDensity(),
+                onClick = { app ->
+                    keyboardController?.hide()
+                    onAppClick(app.packageName)
+                },
+                onLongClick = { app ->
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    val searchItem = SearchItem.App(
+                        appInfo = app,
+                        relevanceScore = 0,
+                        lastInteractionTimestamp = null
+                    )
+                    onAppLongClick(searchItem)
+                },
+                keyPrefix = "search"
+            )
+        }
+
+        // Show contact results
+        if (contactResults.isNotEmpty()) {
+            items(contactResults, key = { "contact_${it.contactInfo.id}" }) { searchItem ->
+                ContactItem(
+                    contact = searchItem.contactInfo,
+                    layout = searchLayout,
+                    onCall = {
+                        keyboardController?.hide()
+                        onContactCall(searchItem)
+                    },
+                    onMessage = {
+                        keyboardController?.hide()
+                        onContactMessage(searchItem)
+                    },
+                    onWhatsApp = {
+                        keyboardController?.hide()
+                        onContactWhatsApp(searchItem)
+                    },
+                    onOpenContact = {
+                        keyboardController?.hide()
+                        onContactOpen(searchItem)
+                    },
+                    showPhoneAction = showPhoneAction,
+                    showMessageAction = showMessageAction,
+                    showWhatsAppAction = showWhatsAppAction
+                )
             }
         }
 

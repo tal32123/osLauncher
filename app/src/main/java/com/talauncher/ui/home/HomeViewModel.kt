@@ -289,6 +289,10 @@ class HomeViewModel(
                             allAppsDisplayStyle = settings?.allAppsDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
                             allAppsIconColor = settings?.allAppsIconColor ?: IconColorOption.ORIGINAL,
 
+                            searchLayout = settings?.searchLayout ?: AppSectionLayoutOption.LIST,
+                            searchDisplayStyle = settings?.searchDisplayStyle ?: AppDisplayStyleOption.ICON_AND_TEXT,
+                            searchIconColor = settings?.searchIconColor ?: IconColorOption.ORIGINAL,
+
                             // Sidebar customization from settings
                             sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
                             sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
@@ -1148,5 +1152,9 @@ data class HomeUiState(
 
     val allAppsLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
     val allAppsDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
-    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL
+    val allAppsIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val searchLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
+    val searchDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
+    val searchIconColor: IconColorOption = IconColorOption.ORIGINAL
 )

@@ -249,6 +249,9 @@ fun HomeScreen(
                     onGrantContactsPermission = {
                         viewModel.showContactsPermissionPrompt()
                     },
+                    searchLayout = uiState.searchLayout,
+                    searchDisplayStyle = uiState.searchDisplayStyle,
+                    searchIconColor = uiState.searchIconColor,
                     uiSettings = UiSettings(
                         colorPalette = uiState.colorPalette,
                         appIconStyle = uiState.appIconStyle,

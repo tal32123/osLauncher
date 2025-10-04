@@ -24,6 +24,7 @@ import com.talauncher.utils.ContactInfo
 @Composable
 fun ContactItem(
     contact: ContactInfo,
+    layout: com.talauncher.data.model.AppSectionLayoutOption = com.talauncher.data.model.AppSectionLayoutOption.LIST,
     onCall: () -> Unit,
     onMessage: () -> Unit,
     onWhatsApp: () -> Unit,
@@ -32,6 +33,8 @@ fun ContactItem(
     showMessageAction: Boolean,
     showWhatsAppAction: Boolean
 ) {
+    val isGridMode = layout == com.talauncher.data.model.AppSectionLayoutOption.GRID_3 ||
+                     layout == com.talauncher.data.model.AppSectionLayoutOption.GRID_4
     PrimerCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -47,26 +50,28 @@ fun ContactItem(
                 .padding(PrimerSpacing.md),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Contact initial
-            Surface(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape),
-                color = PrimerGreen.copy(alpha = 0.1f),
-                border = BorderStroke(1.dp, PrimerGreen.copy(alpha = 0.3f))
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center
+            // Contact initial - hide in grid mode if contact has a name
+            if (!isGridMode || contact.name.isBlank()) {
+                Surface(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape),
+                    color = PrimerGreen.copy(alpha = 0.1f),
+                    border = BorderStroke(1.dp, PrimerGreen.copy(alpha = 0.3f))
                 ) {
-                    Text(
-                        text = contact.name.firstOrNull()?.uppercase() ?: "?",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = PrimerGreen
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = contact.name.firstOrNull()?.uppercase() ?: "?",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = PrimerGreen
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.width(PrimerSpacing.md))
+                Spacer(modifier = Modifier.width(PrimerSpacing.md))
+            }
 
             Column(
                 modifier = Modifier.weight(1f)
@@ -79,14 +84,17 @@ fun ContactItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                contact.phoneNumber?.let { phone ->
-                    Text(
-                        text = phone,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                // Hide phone number in grid mode if contact has a name
+                if (!isGridMode || contact.name.isBlank()) {
+                    contact.phoneNumber?.let { phone ->
+                        Text(
+                            text = phone,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
 
