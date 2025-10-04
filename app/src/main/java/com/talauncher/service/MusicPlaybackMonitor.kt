@@ -32,7 +32,7 @@ class MusicPlaybackMonitor(private val context: Context) {
     fun startMonitoring() {
         try {
             mediaSessionManager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as? MediaSessionManager
-            val notificationListener = ComponentName(context, "com.talauncher.service.NotificationListenerService")
+            val notificationListener = ComponentName(context, MusicNotificationListener::class.java)
 
             // Register listener
             mediaSessionManager?.addOnActiveSessionsChangedListener(sessionListener, notificationListener)
