@@ -50,7 +50,9 @@ fun UIThemeSettingsScreen(
     sidebarPopOutDp: Int,
     onUpdateSidebarPopOutDp: (Int) -> Unit,
     sidebarWaveSpread: Float,
-    onUpdateSidebarWaveSpread: (Float) -> Unit
+    onUpdateSidebarWaveSpread: (Float) -> Unit,
+    fastScrollerActiveItemScale: Float,
+    onUpdateFastScrollerActiveItemScale: (Float) -> Unit
 ) {
     val sections = listOf(
         CollapsibleSection(
@@ -124,7 +126,9 @@ fun UIThemeSettingsScreen(
                 popOutDp = sidebarPopOutDp,
                 onPopOutDpChange = onUpdateSidebarPopOutDp,
                 waveSpread = sidebarWaveSpread,
-                onWaveSpreadChange = onUpdateSidebarWaveSpread
+                onWaveSpreadChange = onUpdateSidebarWaveSpread,
+                activeItemScale = fastScrollerActiveItemScale,
+                onActiveItemScaleChange = onUpdateFastScrollerActiveItemScale
             )
         }
     )
@@ -338,7 +342,9 @@ private fun SidebarSettingsContent(
     popOutDp: Int,
     onPopOutDpChange: (Int) -> Unit,
     waveSpread: Float,
-    onWaveSpreadChange: (Float) -> Unit
+    onWaveSpreadChange: (Float) -> Unit,
+    activeItemScale: Float,
+    onActiveItemScaleChange: (Float) -> Unit
 ) {
     SettingsSectionCard(title = stringResource(R.string.settings_sidebar_title)) {
         Text(
@@ -365,6 +371,16 @@ private fun SidebarSettingsContent(
             valueRange = 0f..48f,
             onValueChangeFinished = { onPopOutDpChange(popOut.toInt()) },
             valueLabel = "${popOut.toInt()} dp"
+        )
+
+        var highlightScale by remember { mutableStateOf(activeItemScale) }
+        SliderSetting(
+            label = stringResource(R.string.settings_sidebar_highlight_scale),
+            value = highlightScale,
+            onValueChange = { highlightScale = it },
+            valueRange = 1.0f..1.2f,
+            onValueChangeFinished = { onActiveItemScaleChange(highlightScale) },
+            valueLabel = String.format("%.2fx", highlightScale)
         )
 
         var spread by remember { mutableStateOf(waveSpread) }

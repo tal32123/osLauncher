@@ -240,4 +240,10 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val clamped = spread.coerceIn(0.0f, 4.0f)
         updateSettings(settings.copy(sidebarWaveSpread = clamped))
     }
+
+    suspend fun updateFastScrollerActiveItemScale(scale: Float) {
+        val settings = getSettingsSync()
+        val clamped = scale.coerceIn(1.0f, 1.2f)
+        updateSettings(settings.copy(fastScrollerActiveItemScale = clamped))
+    }
 }

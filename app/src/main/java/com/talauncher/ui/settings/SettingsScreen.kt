@@ -178,7 +178,9 @@ fun SettingsScreen(
                 sidebarPopOutDp = uiState.sidebarPopOutDp,
                 onUpdateSidebarPopOutDp = viewModel::updateSidebarPopOutDp,
                 sidebarWaveSpread = uiState.sidebarWaveSpread,
-                onUpdateSidebarWaveSpread = viewModel::updateSidebarWaveSpread
+                onUpdateSidebarWaveSpread = viewModel::updateSidebarWaveSpread,
+                fastScrollerActiveItemScale = uiState.fastScrollerActiveItemScale,
+                onUpdateFastScrollerActiveItemScale = viewModel::updateFastScrollerActiveItemScale
             )
             3 -> DistractingAppsSettingsScreen(
                 uiState = uiState,

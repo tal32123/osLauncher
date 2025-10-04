@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,12 +29,14 @@ fun LazyListScope.appSectionItems(
     onLongClick: ((AppInfo) -> Unit)? = null,
     keyPrefix: String = "",
     activeGlobalIndex: Int? = null,
-    sectionGlobalStartIndex: Int = 0
+    sectionGlobalStartIndex: Int = 0,
+    activeHighlightScale: Float = 1.06f
 ) {
     when (layout) {
         AppSectionLayoutOption.LIST -> {
             // Standard list layout - one app per row
-            items(apps, key = { "${keyPrefix}_${it.packageName}" }) { app ->
+            itemsIndexed(apps, key = { index, app -> "${keyPrefix}_${app.packageName}" }) { index, app ->
+                val isActive = activeGlobalIndex == (sectionGlobalStartIndex + index)
                 AppListItem(
                     app = app,
                     displayStyle = displayStyle,
@@ -41,7 +44,9 @@ fun LazyListScope.appSectionItems(
                     enableGlassmorphism = enableGlassmorphism,
                     uiDensity = uiDensity,
                     onClick = { onClick(app) },
-                    onLongClick = onLongClick?.let { { it(app) } }
+                    onLongClick = onLongClick?.let { { it(app) } },
+                    isActive = isActive,
+                    activeHighlightScale = activeHighlightScale
                 )
             }
         }
@@ -62,7 +67,8 @@ fun LazyListScope.appSectionItems(
                     onClick = onClick,
                     onLongClick = onLongClick,
                     rowStartGlobalIndex = rowStartGlobalIndex,
-                    activeGlobalIndex = activeGlobalIndex
+                    activeGlobalIndex = activeGlobalIndex,
+                    activeHighlightScale = activeHighlightScale
                 )
             }
         }
@@ -80,7 +86,9 @@ private fun AppListItem(
     enableGlassmorphism: Boolean,
     uiDensity: UiDensity,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)?
+    onLongClick: (() -> Unit)?,
+    isActive: Boolean,
+    activeHighlightScale: Float
 ) {
     val iconStyle = when {
         displayStyle == AppDisplayStyleOption.TEXT_ONLY -> AppIconStyleOption.HIDDEN
@@ -88,11 +96,14 @@ private fun AppListItem(
         else -> AppIconStyleOption.ORIGINAL
     }
 
+    val scale = if (isActive) activeHighlightScale else 1.0f
+
     ModernAppItem(
         appName = app.appName,
         packageName = app.packageName,
         onClick = onClick,
         onLongClick = onLongClick,
+        modifier = Modifier.graphicsLayer(scaleX = scale, scaleY = scale),
         appIconStyle = iconStyle,
         enableGlassmorphism = enableGlassmorphism,
         uiDensity = uiDensity
@@ -111,7 +122,8 @@ private fun AppGridRow(
     onClick: (AppInfo) -> Unit,
     onLongClick: ((AppInfo) -> Unit)?,
     rowStartGlobalIndex: Int,
-    activeGlobalIndex: Int?
+    activeGlobalIndex: Int?,
+    activeHighlightScale: Float
 ) {
     Row(
         modifier = Modifier
@@ -127,7 +139,8 @@ private fun AppGridRow(
                     iconColor = iconColor,
                     onClick = { onClick(app) },
                     onLongClick = onLongClick?.let { { it(app) } },
-                    isActive = (activeGlobalIndex == (rowStartGlobalIndex + colIndex))
+                    isActive = (activeGlobalIndex == (rowStartGlobalIndex + colIndex)),
+                    activeHighlightScale = activeHighlightScale
                 )
             }
         }
@@ -149,7 +162,8 @@ private fun AppGridItem(
     iconColor: IconColorOption,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)?,
-    isActive: Boolean = false
+    isActive: Boolean = false,
+    activeHighlightScale: Float
 ) {
     val iconStyle = when {
         displayStyle == AppDisplayStyleOption.TEXT_ONLY -> AppIconStyleOption.HIDDEN
@@ -157,7 +171,7 @@ private fun AppGridItem(
         else -> AppIconStyleOption.ORIGINAL
     }
 
-    val scale = if (isActive) 1.06f else 1.0f
+    val scale = if (isActive) activeHighlightScale else 1.0f
 
     when (displayStyle) {
         AppDisplayStyleOption.ICON_ONLY -> {
