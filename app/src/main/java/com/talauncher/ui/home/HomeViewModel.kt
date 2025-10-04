@@ -23,6 +23,7 @@ import com.talauncher.data.model.AppDisplayStyleOption
 import com.talauncher.data.model.IconColorOption
 import com.talauncher.data.repository.AppRepository
 import com.talauncher.data.repository.SearchInteractionRepository
+import com.talauncher.data.repository.NewsRepository
 import com.talauncher.data.repository.SearchInteractionRepository.ContactAction
 import com.talauncher.data.repository.SettingsRepository
 import com.talauncher.service.WeatherService
@@ -100,7 +101,8 @@ class HomeViewModel(
     private val formatTimeUseCase: FormatTimeUseCase = FormatTimeUseCase(),
     private val searchAppsUseCase: SearchAppsUseCase = SearchAppsUseCase(),
     private val buildAlphabetIndexUseCase: BuildAlphabetIndexUseCase = BuildAlphabetIndexUseCase(),
-    private val getRecentAppsUseCase: GetRecentAppsUseCase = GetRecentAppsUseCase(usageStatsHelper)
+    private val getRecentAppsUseCase: GetRecentAppsUseCase = GetRecentAppsUseCase(usageStatsHelper),
+    private val newsRepository: NewsRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -158,9 +160,22 @@ class HomeViewModel(
 
     init {
         observeData()
+        observeNews()
         updateTime()
         setupDebouncedContactSearch()
         registerTimeReceiver()
+        // Trigger initial refresh respecting settings
+        viewModelScope.launch { runCatching { newsRepository?.refreshIfNeeded() } }
+    }
+
+    private fun observeNews() {
+        viewModelScope.launch {
+            runCatching {
+                newsRepository?.getLatestArticles()?.collect { articles ->
+                    _uiState.value = _uiState.value.copy(newsArticles = articles)
+                }
+            }
+        }
     }
 
     private fun observeData() {
@@ -322,6 +337,9 @@ class HomeViewModel(
                             )
                         }
                     }
+
+                    // Refresh news according to user settings
+                    runCatching { newsRepository?.refreshIfNeeded() }
 
                     if (weatherDisplay != WeatherDisplayOption.OFF) {
                         updateWeatherData(
@@ -1156,5 +1174,7 @@ data class HomeUiState(
 
     val searchLayout: AppSectionLayoutOption = AppSectionLayoutOption.LIST,
     val searchDisplayStyle: AppDisplayStyleOption = AppDisplayStyleOption.ICON_AND_TEXT,
-    val searchIconColor: IconColorOption = IconColorOption.ORIGINAL
+    val searchIconColor: IconColorOption = IconColorOption.ORIGINAL,
+
+    val newsArticles: List<com.talauncher.data.model.NewsArticle> = emptyList()
 )

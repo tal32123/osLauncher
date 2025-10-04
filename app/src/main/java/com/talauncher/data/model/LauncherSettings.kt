@@ -74,4 +74,9 @@ data class LauncherSettings(
     val sidebarWaveSpread: Float = 1.5f,
     // Scale applied to the app currently highlighted by fast scroll (1.0 = no scale)
     val fastScrollerActiveItemScale: Float = 1.06f
+    ,
+    // News settings
+    val newsRefreshInterval: NewsRefreshInterval = NewsRefreshInterval.DAILY,
+    val newsCategoriesCsv: String? = null, // Comma-separated NewsCategory names
+    val newsLastFetchedAt: Long? = null
 )
