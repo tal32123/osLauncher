@@ -358,7 +358,7 @@ private fun SidebarSettingsContent(
             label = stringResource(R.string.settings_sidebar_active_scale),
             value = scale,
             onValueChange = { scale = it },
-            valueRange = 1.0f..2.5f,
+            valueRange = 1.0f..3.0f,
             onValueChangeFinished = { onActiveScaleChange(scale) },
             valueLabel = String.format("%.2fx", scale)
         )
@@ -368,7 +368,7 @@ private fun SidebarSettingsContent(
             label = stringResource(R.string.settings_sidebar_popout),
             value = popOut,
             onValueChange = { popOut = it },
-            valueRange = 0f..48f,
+            valueRange = 0f..64f,
             onValueChangeFinished = { onPopOutDpChange(popOut.toInt()) },
             valueLabel = "${popOut.toInt()} dp"
         )
@@ -388,7 +388,7 @@ private fun SidebarSettingsContent(
             label = stringResource(R.string.settings_sidebar_wave_spread),
             value = spread,
             onValueChange = { spread = it },
-            valueRange = 0.0f..4.0f,
+            valueRange = 0.0f..5.0f,
             onValueChangeFinished = { onWaveSpreadChange(spread) },
             valueLabel = String.format("%.2f", spread)
         )
