@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import com.talauncher.data.model.AppInfo
 import com.talauncher.data.model.AppIconStyleOption
 
+private const val GRID_TILE_ASPECT_RATIO = 0.85f
+
 /**
  * Grid item that shows only the app icon.
  */
@@ -28,7 +30,7 @@ fun AppGridItemIconOnly(
 ) {
     Surface(
         modifier = modifier
-            .aspectRatio(1f)
+            .aspectRatio(GRID_TILE_ASPECT_RATIO)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -66,7 +68,7 @@ fun AppGridItemWithText(
 ) {
     Surface(
         modifier = modifier
-            .aspectRatio(1f)
+            .aspectRatio(GRID_TILE_ASPECT_RATIO)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -77,7 +79,7 @@ fun AppGridItemWithText(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -94,7 +96,9 @@ fun AppGridItemWithText(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp)
             )
         }
     }
@@ -113,7 +117,7 @@ fun AppGridItemTextOnly(
 ) {
     Surface(
         modifier = modifier
-            .aspectRatio(1f)
+            .aspectRatio(GRID_TILE_ASPECT_RATIO)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
