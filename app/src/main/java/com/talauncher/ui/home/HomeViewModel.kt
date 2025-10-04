@@ -292,7 +292,8 @@ class HomeViewModel(
                             // Sidebar customization from settings
                             sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
                             sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
-                            sidebarWaveSpread = settings?.sidebarWaveSpread ?: 1.5f
+                            sidebarWaveSpread = settings?.sidebarWaveSpread ?: 1.5f,
+                            fastScrollerActiveItemScale = settings?.fastScrollerActiveItemScale ?: 1.06f
                         ).let { updated ->
                             val keepExpanded = wasExpanded && hiddenApps.isNotEmpty()
                             if (updated.isOtherAppsExpanded != keepExpanded) {
@@ -1128,6 +1129,7 @@ data class HomeUiState(
     val sidebarActiveScale: Float = 1.4f,
     val sidebarPopOutDp: Int = 16,
     val sidebarWaveSpread: Float = 1.5f,
+    val fastScrollerActiveItemScale: Float = 1.06f,
     val showAppActionDialog: Boolean = false,
     val selectedAppForAction: AppInfo? = null,
     val selectedAppSupportsUninstall: Boolean = false,

@@ -337,7 +337,8 @@ fun HomeScreen(
                                 },
                                 keyPrefix = "pinned",
                                 activeGlobalIndex = activeGlobalIndex,
-                                sectionGlobalStartIndex = 0
+                                sectionGlobalStartIndex = 0,
+                                activeHighlightScale = uiState.fastScrollerActiveItemScale
                             )
 
                             if (uiState.pinnedAppsLayout == com.talauncher.data.model.AppSectionLayoutOption.LIST) {
@@ -376,7 +377,8 @@ fun HomeScreen(
                                 },
                                 keyPrefix = "recent",
                                 activeGlobalIndex = activeGlobalIndex,
-                                sectionGlobalStartIndex = uiState.pinnedApps.size
+                                sectionGlobalStartIndex = uiState.pinnedApps.size,
+                                activeHighlightScale = uiState.fastScrollerActiveItemScale
                             )
                             if (uiState.allAppsLayout == com.talauncher.data.model.AppSectionLayoutOption.LIST) {
                                 item {
@@ -409,7 +411,8 @@ fun HomeScreen(
                             },
                             keyPrefix = "all",
                             activeGlobalIndex = activeGlobalIndex,
-                            sectionGlobalStartIndex = uiState.pinnedApps.size + uiState.recentApps.size
+                            sectionGlobalStartIndex = uiState.pinnedApps.size + uiState.recentApps.size,
+                            activeHighlightScale = uiState.fastScrollerActiveItemScale
                         )
 
                         if (uiState.hiddenApps.isNotEmpty()) {

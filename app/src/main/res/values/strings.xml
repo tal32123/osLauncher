@@ -241,6 +241,7 @@
     <string name="settings_sidebar_subtitle">Control how the alphabetical sidebar feels</string>
     <string name="settings_sidebar_active_scale">Active letter size</string>
     <string name="settings_sidebar_popout">Active letter pop-out</string>
+    <string name="settings_sidebar_highlight_scale">Highlighted app size</string>
     <string name="settings_sidebar_wave_spread">Wave effect size</string>
 
 

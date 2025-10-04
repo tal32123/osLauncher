@@ -105,6 +105,7 @@ class SettingsViewModel(
                     sidebarActiveScale = settings?.sidebarActiveScale ?: 1.4f,
                     sidebarPopOutDp = settings?.sidebarPopOutDp ?: 16,
                     sidebarWaveSpread = settings?.sidebarWaveSpread ?: 1.5f,
+                    fastScrollerActiveItemScale = settings?.fastScrollerActiveItemScale ?: 1.06f,
                     availableApps = allInstalledApps,
                     isLoading = false
                 )
@@ -309,6 +310,12 @@ class SettingsViewModel(
         }
     }
 
+    fun updateFastScrollerActiveItemScale(scale: Float) {
+        viewModelScope.launch {
+            settingsRepository.updateFastScrollerActiveItemScale(scale)
+        }
+    }
+
     fun updateWeatherDisplay(display: WeatherDisplayOption) {
         viewModelScope.launch {
             settingsRepository.updateWeatherDisplay(display)
@@ -457,5 +464,6 @@ data class SettingsUiState(
     // Sidebar customization
     val sidebarActiveScale: Float = 1.4f,
     val sidebarPopOutDp: Int = 16,
-    val sidebarWaveSpread: Float = 1.5f
+    val sidebarWaveSpread: Float = 1.5f,
+    val fastScrollerActiveItemScale: Float = 1.06f
 )

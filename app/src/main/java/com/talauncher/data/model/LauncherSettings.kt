@@ -67,5 +67,7 @@ data class LauncherSettings(
     // How far the active letter pops out in dp (0 = no offset)
     val sidebarPopOutDp: Int = 16,
     // Controls how far the wave effect spreads to neighbor letters (higher = farther)
-    val sidebarWaveSpread: Float = 1.5f
+    val sidebarWaveSpread: Float = 1.5f,
+    // Scale applied to the app currently highlighted by fast scroll (1.0 = no scale)
+    val fastScrollerActiveItemScale: Float = 1.06f
 )
