@@ -245,6 +245,18 @@
     <string name="settings_sidebar_highlight_scale">Highlighted app size</string>
     <string name="settings_sidebar_wave_spread">Wave effect size</string>
 
+    <!-- Widget Backgrounds -->
+    <string name="widget_backgrounds_title">Widget Backgrounds</string>
+    <string name="widget_backgrounds_subtitle">Wrap widgets with themed glass background for clarity</string>
+    <string name="setting_time_background_title">Time background</string>
+    <string name="setting_time_background_subtitle">Wrap the time display in a subtle card</string>
+    <string name="setting_date_background_title">Date background</string>
+    <string name="setting_date_background_subtitle">Wrap the date label in a subtle card</string>
+    <string name="setting_weather_background_title">Weather background</string>
+    <string name="setting_weather_background_subtitle">Wrap the weather panel in a subtle card</string>
+    <string name="setting_music_background_title">Music background</string>
+    <string name="setting_music_background_subtitle">Wrap the now playing widget in a subtle card</string>
+
 
     <!-- Onboarding (revamped wizard) -->
     <string name="onboarding_title_welcome">Welcome to %1$s</string>

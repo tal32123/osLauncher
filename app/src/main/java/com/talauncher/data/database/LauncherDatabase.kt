@@ -13,7 +13,7 @@ import com.talauncher.data.model.SearchInteractionEntity
 
 @Database(
     entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class, com.talauncher.data.model.NewsArticle::class],
-    version = 23,
+    version = 24,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -334,6 +334,24 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add per-widget background toggle flags
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN showTimeBackground INTEGER NOT NULL DEFAULT 0"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN showDateBackground INTEGER NOT NULL DEFAULT 0"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN showWeatherBackground INTEGER NOT NULL DEFAULT 0"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN showMusicBackground INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -361,7 +379,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_18_19,
                     MIGRATION_20_21,
                     MIGRATION_21_22,
-                    MIGRATION_22_23
+                    MIGRATION_22_23,
+                    MIGRATION_23_24
                 ).build()
                 INSTANCE = instance
                 instance

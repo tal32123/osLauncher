@@ -160,12 +160,28 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = uiState.currentTime,
-                            style = MaterialTheme.typography.displayLarge,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                        if (uiState.showTimeBackground) {
+                            ModernGlassCard(
+                                enableGlassmorphism = uiState.enableGlassmorphism,
+                                cornerRadius = 12,
+                                elevation = 2
+                            ) {
+                                Text(
+                                    text = uiState.currentTime,
+                                    style = MaterialTheme.typography.displayLarge,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = uiState.currentTime,
+                                style = MaterialTheme.typography.displayLarge,
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
 
                         // Weather display next to time; date shows under weather or time
                         if (uiState.weatherDisplay != WeatherDisplayOption.OFF && uiState.weatherData != null) {
@@ -173,21 +189,53 @@ fun HomeScreen(
                             val shouldShowTemperature = uiState.weatherDisplay != WeatherDisplayOption.DAILY ||
                                 uiState.weatherDailyHigh == null || uiState.weatherDailyLow == null
                             Column(horizontalAlignment = Alignment.Start) {
-                                com.talauncher.ui.components.WeatherDisplay(
-                                    weatherData = uiState.weatherData,
-                                    showTemperature = shouldShowTemperature,
-                                    temperatureUnit = uiState.weatherTemperatureUnit,
-                                    dailyHigh = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyHigh else null,
-                                    dailyLow = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyLow else null
-                                )
+                                if (uiState.showWeatherBackground) {
+                                    ModernGlassCard(
+                                        enableGlassmorphism = uiState.enableGlassmorphism,
+                                        cornerRadius = 12,
+                                        elevation = 2
+                                    ) {
+                                        com.talauncher.ui.components.WeatherDisplay(
+                                            weatherData = uiState.weatherData,
+                                            showTemperature = shouldShowTemperature,
+                                            temperatureUnit = uiState.weatherTemperatureUnit,
+                                            dailyHigh = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyHigh else null,
+                                            dailyLow = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyLow else null
+                                        )
+                                    }
+                                } else {
+                                    com.talauncher.ui.components.WeatherDisplay(
+                                        weatherData = uiState.weatherData,
+                                        showTemperature = shouldShowTemperature,
+                                        temperatureUnit = uiState.weatherTemperatureUnit,
+                                        dailyHigh = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyHigh else null,
+                                        dailyLow = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyLow else null
+                                    )
+                                }
                                 if (uiState.showDate) {
                                     Spacer(modifier = Modifier.height(PrimerSpacing.xs))
-                                    Text(
-                                        text = uiState.currentDate,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        textAlign = TextAlign.Start,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    if (uiState.showDateBackground) {
+                                        ModernGlassCard(
+                                            enableGlassmorphism = uiState.enableGlassmorphism,
+                                            cornerRadius = 12,
+                                            elevation = 2
+                                        ) {
+                                            Text(
+                                                text = uiState.currentDate,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                textAlign = TextAlign.Start,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                            )
+                                        }
+                                    } else {
+                                        Text(
+                                            text = uiState.currentDate,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            textAlign = TextAlign.Start,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -197,13 +245,31 @@ fun HomeScreen(
                 // Show date when weather is off
                 if (uiState.showDate && (uiState.weatherDisplay == WeatherDisplayOption.OFF || uiState.weatherData == null)) {
                     Spacer(modifier = Modifier.height(PrimerSpacing.xs))
-                    Text(
-                        text = uiState.currentDate,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (uiState.showDateBackground) {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            ModernGlassCard(
+                                enableGlassmorphism = uiState.enableGlassmorphism,
+                                cornerRadius = 12,
+                                elevation = 2
+                            ) {
+                                Text(
+                                    text = uiState.currentDate,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = uiState.currentDate,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 
@@ -211,13 +277,29 @@ fun HomeScreen(
             // Show music widget when music is playing, otherwise show news if enabled
             if (uiState.musicPlaybackState.hasActivePlayback) {
                 Spacer(modifier = Modifier.height(PrimerSpacing.sm))
-                com.talauncher.ui.components.MusicWidget(
-                    playbackState = uiState.musicPlaybackState,
-                    onPlayPause = viewModel::onPlayPause,
-                    onPrevious = viewModel::onPreviousTrack,
-                    onNext = viewModel::onNextTrack,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (uiState.showMusicBackground) {
+                    ModernGlassCard(
+                        enableGlassmorphism = uiState.enableGlassmorphism,
+                        cornerRadius = 16,
+                        elevation = 2
+                    ) {
+                        com.talauncher.ui.components.MusicWidget(
+                            playbackState = uiState.musicPlaybackState,
+                            onPlayPause = viewModel::onPlayPause,
+                            onPrevious = viewModel::onPreviousTrack,
+                            onNext = viewModel::onNextTrack,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                } else {
+                    com.talauncher.ui.components.MusicWidget(
+                        playbackState = uiState.musicPlaybackState,
+                        onPlayPause = viewModel::onPlayPause,
+                        onPrevious = viewModel::onPreviousTrack,
+                        onNext = viewModel::onNextTrack,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             } else if (uiState.showNewsWidget && uiState.newsArticles.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(PrimerSpacing.sm))
                 com.talauncher.ui.components.NewsCarousel(

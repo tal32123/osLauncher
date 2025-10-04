@@ -304,6 +304,11 @@ class HomeViewModel(
                             enableGlassmorphism = settings?.enableGlassmorphism ?: true,
                             uiDensity = settings?.uiDensity ?: UiDensityOption.COMPACT,
                             enableAnimations = settings?.enableAnimations ?: true,
+                            // Widget background toggles
+                            showTimeBackground = settings?.showTimeBackground ?: false,
+                            showDateBackground = settings?.showDateBackground ?: false,
+                            showWeatherBackground = settings?.showWeatherBackground ?: false,
+                            showMusicBackground = settings?.showMusicBackground ?: false,
                             // App drawer functionality moved to home screen
                             pinnedApps = pinnedApps,
                             recentApps = recentApps,
@@ -1176,6 +1181,11 @@ data class HomeUiState(
     val enableGlassmorphism: Boolean = true,
     val uiDensity: UiDensityOption = UiDensityOption.COMPACT,
     val enableAnimations: Boolean = true,
+    // Widget background toggles
+    val showTimeBackground: Boolean = false,
+    val showDateBackground: Boolean = false,
+    val showWeatherBackground: Boolean = false,
+    val showMusicBackground: Boolean = false,
     // App drawer functionality moved to home screen
     val pinnedApps: List<AppInfo> = emptyList(),
     val recentApps: List<AppInfo> = emptyList(),
