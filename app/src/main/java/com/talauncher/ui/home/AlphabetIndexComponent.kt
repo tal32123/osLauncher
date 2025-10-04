@@ -1,20 +1,11 @@
 package com.talauncher.ui.home
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -22,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -32,19 +22,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
-// Removed duplicate LocalDensity import
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.talauncher.ui.theme.PrimerSpacing
 import com.talauncher.domain.model.AlphabetIndexEntry
-import com.talauncher.domain.model.RECENT_APPS_INDEX_KEY
 import com.talauncher.domain.model.SectionIndex
 import com.talauncher.infrastructure.fastscroll.A11yAnnouncerImpl
 import com.talauncher.infrastructure.fastscroll.HapticsImpl
 import com.talauncher.ui.fastscroll.FastScrollController
-import kotlin.math.max
-import kotlin.math.min
 @Composable
 fun AlphabetIndex(
     entries: List<AlphabetIndexEntry>,
@@ -219,21 +205,19 @@ private fun AlphabetIndexItem(
 }
 
 /**
- * Enhanced alphabet fast scroller with per-app targeting and floating preview bubble.
+ * Enhanced alphabet fast scroller with per-app targeting.
  *
  * Architecture:
  * - Uses FastScrollController for state management and coordination
  * - Integrates haptic feedback and accessibility announcements
  * - Provides per-app scrubbing with O(1) touch mapping
- * - Shows floating preview bubble with current app name
  *
  * Features:
  * - Per-app targeting (not just section headers)
- * - Floating preview bubble showing current app name
  * - Haptic feedback on letter/app changes
  * - TalkBack accessibility support
  * - 60fps smooth scrolling with throttling
- * - Fade in/out animations for bubble
+ * - No additional overlay or bubble indicators
  *
  * Performance:
  * - Zero allocations during drag
@@ -259,7 +243,6 @@ fun EnhancedAlphabetFastScroller(
 ) {
     val context = LocalContext.current
     val view = LocalView.current
-    val density = LocalDensity.current
 
     // Initialize controller with haptics and accessibility
     val controller = remember {
@@ -278,17 +261,6 @@ fun EnhancedAlphabetFastScroller(
     val state by controller.state.collectAsState()
 
     var railSize by remember { mutableStateOf(IntSize.Zero) }
-    var bubblePositionY by remember { mutableStateOf(0f) }
-    var bubbleHeightPx by remember { mutableStateOf(0) }
-
-    val bubbleOffsetDp = with(density) {
-        val railHeightPx = railSize.height.toFloat()
-        val bubbleHeight = bubbleHeightPx.toFloat()
-        val halfBubble = bubbleHeight / 2f
-        val maxOffset = max(0f, railHeightPx - bubbleHeight)
-        val rawOffset = bubblePositionY - halfBubble
-        rawOffset.coerceIn(0f, maxOffset).toDp()
-    }
 
     Box(
         modifier = modifier
@@ -303,7 +275,6 @@ fun EnhancedAlphabetFastScroller(
                         try {
                             val down = awaitFirstDown(requireUnconsumed = false)
                             controller.onTouchStart()
-                            bubblePositionY = down.position.y
 
                             // Handle initial touch
                             try {
@@ -323,7 +294,6 @@ fun EnhancedAlphabetFastScroller(
                             try {
                                 drag(down.id) { change ->
                                     try {
-                                        bubblePositionY = change.position.y
                                         controller.onTouch(
                                             touchY = change.position.y,
                                             railHeight = railSize.height.toFloat(),
@@ -384,29 +354,6 @@ fun EnhancedAlphabetFastScroller(
             }
         }
 
-        // Floating preview bubble
-        AnimatedVisibility(
-            visible = state.isActive && state.currentAppName != null,
-            enter = fadeIn(animationSpec = tween(100)) + scaleIn(
-                initialScale = 0.8f,
-                animationSpec = tween(100)
-            ),
-            exit = fadeOut(animationSpec = tween(150)) + scaleOut(
-                targetScale = 0.8f,
-                animationSpec = tween(150)
-            ),
-            modifier = Modifier.align(Alignment.TopStart)
-        ) {
-            state.currentAppName?.let { appName ->
-                SectionBubble(
-                    appName = appName,
-                    letter = state.currentLetter ?: "",
-                    modifier = Modifier
-                        .offset(x = (-80).dp, y = bubbleOffsetDp)
-                        .onSizeChanged { bubbleHeightPx = it.height }
-                )
-            }
-        }
     }
 }
 
@@ -472,52 +419,5 @@ private fun EnhancedAlphabetItem(
             .alpha(alpha)
             .testTag("enhanced_alphabet_item_${section.key}")
     )
-}
-
-/**
- * Floating preview bubble showing current app name.
- *
- * Architecture:
- * - Composable following Material Design 3 elevated card style
- * - Animated appearance/disappearance
- * - Shows both letter and app name for context
- *
- * Design:
- * - Rounded elevated card
- * - Large readable text
- * - Positioned to the left of the rail
- * - Follows finger Y position
- *
- * @param appName Current app name to display
- * @param letter Current section letter
- * @param modifier Modifier for the bubble (used to position and size the bubble)
- */
-@Composable
-private fun SectionBubble(
-    appName: String,
-    letter: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .padding(horizontal = PrimerSpacing.md),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Letter indicator - made large and prominent
-            Text(
-                text = letter,
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-        }
-    }
 }
 
