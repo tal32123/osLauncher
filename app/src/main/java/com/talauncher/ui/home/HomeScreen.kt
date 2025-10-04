@@ -167,31 +167,41 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onBackground
                         )
 
-                        // Weather display next to time
+                        // Weather display next to time; date shows under weather
                         if (uiState.weatherDisplay != WeatherDisplayOption.OFF && uiState.weatherData != null) {
                             Spacer(modifier = Modifier.width(12.dp))
                             val shouldShowTemperature = uiState.weatherDisplay != WeatherDisplayOption.DAILY ||
                                 uiState.weatherDailyHigh == null || uiState.weatherDailyLow == null
-                            com.talauncher.ui.components.WeatherDisplay(
-                                weatherData = uiState.weatherData,
-                                showTemperature = shouldShowTemperature,
-                                temperatureUnit = uiState.weatherTemperatureUnit,
-                                dailyHigh = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyHigh else null,
-                                dailyLow = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyLow else null
-                            )
+                            Column(horizontalAlignment = Alignment.Start) {
+                                com.talauncher.ui.components.WeatherDisplay(
+                                    weatherData = uiState.weatherData,
+                                    showTemperature = shouldShowTemperature,
+                                    temperatureUnit = uiState.weatherTemperatureUnit,
+                                    dailyHigh = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyHigh else null,
+                                    dailyLow = if (uiState.weatherDisplay == WeatherDisplayOption.DAILY) uiState.weatherDailyLow else null
+                                )
+                                if (uiState.showDate) {
+                                    Spacer(modifier = Modifier.height(PrimerSpacing.xs))
+                                    Text(
+                                        text = uiState.currentDate,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        textAlign = TextAlign.Start,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+            }
 
-                if (uiState.showDate) {
-                    Spacer(modifier = Modifier.height(PrimerSpacing.sm))
-                    Text(
-                        text = uiState.currentDate,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            // News carousel below the time/date area
+            if (uiState.newsArticles.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(PrimerSpacing.sm))
+                com.talauncher.ui.components.NewsCarousel(
+                    articles = uiState.newsArticles,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.height(PrimerSpacing.xl))

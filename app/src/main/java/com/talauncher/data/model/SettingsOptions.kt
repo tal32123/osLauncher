@@ -150,3 +150,40 @@ enum class IconColorOption(val label: String) {
         }
     }
 }
+
+// News related options
+enum class NewsRefreshInterval(val label: String) {
+    DAILY("Daily"),
+    HOURLY("Hourly");
+
+    val storageValue: String
+        get() = name
+
+    companion object {
+        fun fromStorageValue(value: String?): NewsRefreshInterval {
+            val normalized = value?.lowercase(Locale.US)
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized } ?: DAILY
+        }
+    }
+}
+
+enum class NewsCategory(val label: String, val wsjPath: String) {
+    WORLD("World", "/news/world"),
+    US("U.S.", "/news/us"),
+    POLITICS("Politics", "/news/politics"),
+    ECONOMY("Economy", "/news/economy"),
+    BUSINESS("Business", "/news/business"),
+    TECH("Technology", "/news/technology"),
+    MARKETS("Markets", "/news/markets"),
+    OPINION("Opinion", "/news/opinion");
+
+    val storageValue: String
+        get() = name
+
+    companion object {
+        fun fromStorageValue(value: String?): NewsCategory? {
+            val normalized = value?.lowercase(Locale.US)
+            return entries.firstOrNull { it.name.lowercase(Locale.US) == normalized }
+        }
+    }
+}

@@ -11,6 +11,8 @@ import com.talauncher.data.model.WeatherTemperatureUnit
 import com.talauncher.data.model.AppSectionLayoutOption
 import com.talauncher.data.model.AppDisplayStyleOption
 import com.talauncher.data.model.IconColorOption
+import com.talauncher.data.model.NewsRefreshInterval
+import com.talauncher.data.model.NewsCategory
 import kotlinx.coroutines.flow.Flow
 
 class SettingsRepository(private val settingsDao: SettingsDao) {
@@ -260,5 +262,17 @@ class SettingsRepository(private val settingsDao: SettingsDao) {
         val settings = getSettingsSync()
         val clamped = scale.coerceIn(1.0f, 1.2f)
         updateSettings(settings.copy(fastScrollerActiveItemScale = clamped))
+    }
+
+    // News settings
+    suspend fun updateNewsRefreshInterval(interval: NewsRefreshInterval) {
+        val settings = getSettingsSync()
+        updateSettings(settings.copy(newsRefreshInterval = interval))
+    }
+
+    suspend fun updateNewsCategories(categories: Set<NewsCategory>) {
+        val settings = getSettingsSync()
+        val csv = categories.joinToString(",") { it.name }
+        updateSettings(settings.copy(newsCategoriesCsv = csv))
     }
 }

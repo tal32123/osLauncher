@@ -12,8 +12,8 @@ import com.talauncher.data.model.LauncherSettings
 import com.talauncher.data.model.SearchInteractionEntity
 
 @Database(
-    entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class],
-    version = 22,
+    entities = [AppInfo::class, LauncherSettings::class, AppSession::class, SearchInteractionEntity::class, com.talauncher.data.model.NewsArticle::class],
+    version = 23,
     exportSchema = false
 )
 abstract class LauncherDatabase : RoomDatabase() {
@@ -21,6 +21,7 @@ abstract class LauncherDatabase : RoomDatabase() {
     abstract fun settingsDao(): SettingsDao
     abstract fun appSessionDao(): AppSessionDao
     abstract fun searchInteractionDao(): SearchInteractionDao
+    abstract fun newsDao(): NewsDao
 
     companion object {
         @Volatile
@@ -306,6 +307,33 @@ abstract class LauncherDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add news settings columns
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN newsRefreshInterval TEXT NOT NULL DEFAULT 'DAILY'"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN newsCategoriesCsv TEXT"
+                )
+                database.execSQL(
+                    "ALTER TABLE launcher_settings ADD COLUMN newsLastFetchedAt INTEGER"
+                )
+                // Create news_articles table
+                database.execSQL(
+                    """
+                        CREATE TABLE IF NOT EXISTS news_articles (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                            title TEXT NOT NULL,
+                            link TEXT NOT NULL,
+                            category TEXT,
+                            publishedAtMillis INTEGER NOT NULL
+                        )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): LauncherDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -332,7 +360,8 @@ abstract class LauncherDatabase : RoomDatabase() {
                     MIGRATION_17_18,
                     MIGRATION_18_19,
                     MIGRATION_20_21,
-                    MIGRATION_21_22
+                    MIGRATION_21_22,
+                    MIGRATION_22_23
                 ).build()
                 INSTANCE = instance
                 instance
