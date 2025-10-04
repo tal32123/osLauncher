@@ -306,6 +306,23 @@ class SettingsViewModel(
         }
     }
 
+    // Widget background toggles
+    fun updateShowTimeBackground(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateShowTimeBackground(enabled) }
+    }
+
+    fun updateShowDateBackground(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateShowDateBackground(enabled) }
+    }
+
+    fun updateShowWeatherBackground(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateShowWeatherBackground(enabled) }
+    }
+
+    fun updateShowMusicBackground(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateShowMusicBackground(enabled) }
+    }
+
     // Sidebar settings
     fun updateSidebarActiveScale(scale: Float) {
         viewModelScope.launch {
